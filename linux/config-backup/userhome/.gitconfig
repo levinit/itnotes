@@ -1,0 +1,25 @@
+[user]
+	name = levinit
+	email = levinit@outlook.com
+[core]
+	excludesfile = /Users/levin/.gitignore_global
+	editor = vim -u NONE
+	quotepath = false
+[difftool "sourcetree"]
+	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
+	path = 
+[mergetool "sourcetree"]
+	cmd = /Applications/Sourcetree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
+	trustExitCode = true
+[commit]
+	template = /Users/levin/.stCommitMsg
+[color]
+	ui = true
+[format]
+	pretty = oneline
+[url "https://mirrors.ustc.edu.cn/homebrew-core.git"]
+	insteadOf = https://github.com/Homebrew/homebrew-core
+[url "https://mirrors.ustc.edu.cn/linuxbrew-core.git"]
+	insteadOf = https://github.com/Homebrew/linuxbrew-core
+[url "https://mirrors.ustc.edu.cn/brew.git"]
+	insteadOf = https://github.com/Homebrew/brew

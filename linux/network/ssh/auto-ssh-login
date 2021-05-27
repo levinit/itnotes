@@ -1,0 +1,18 @@
+#!/bin/sh
+if [[ ! $(which expect 2>/dev/null) ]]
+then
+    echo "need install expect"
+fi
+
+host=
+port=
+username=
+password=
+expect -c "
+  spawn ssh username@host -p $port
+  expect {
+    "yes/no*" { send "yes"\r }
+    "password*" { send "$password"\r }
+  }
+  interact
+"

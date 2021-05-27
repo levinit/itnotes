@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <title>纯css实现自定义选择框样式 custom-style-checkbox-with-pure-css</title>
+</head>
+
+<body>
+  <div class="custom-checkbox-wrap">
+    <input type="checkbox" id="rember-pwd" hidden />
+    <label for="rember-pwd"></label>
+    <label for="rember-pwd">记住密码</label>
+  </div>
+  <style>
+    .custom-checkbox-wrap {
+      color: rgb(251, 178, 116);
+      margin: 0.2rem 0;
+      padding-left: 0.5rem;
+      font-size: 1.1em;
+      padding: 0.2rem;
+      cursor: pointer;
+    }
+
+    .custom-checkbox-wrap label {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    /* 选择框 */
+    #rember-pwd+label {
+      display: inline-block;
+      position: relative;
+      width: 0.8em;
+      height: 0.8em;
+      border: 2px solid orange;
+      border-radius: 2px;
+      box-shadow: 0 0 2px 0 orange;
+      transform: translateY(10%);
+      margin-right: 0.1rem;
+    }
+
+    /* 选择框中的对勾 */
+    #rember-pwd:checked+label::after {
+      content: "";
+      display: inline-block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 80%;
+      height: 40%;
+      border: 2px solid orange;
+      transform: rotate(-45deg);
+      border-top-color: transparent;
+      border-right-color: transparent;
+    }
+  </style>
+</body>
+
+</html>

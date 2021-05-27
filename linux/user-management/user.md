@@ -1,0 +1,14 @@
+
+
+
+
+
+
+
+
+# 
+
+```shell
+getent passwd
+```
+

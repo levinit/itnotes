@@ -1,0 +1,14 @@
+*~
+.~*
+.DS_Store
+desktop.ini
+Thumbs.db
+.localized
+$RECYCLE.BIN
+.tmp
+.lock
+__pycache__
+.pyc
+node_modules
+.dSYM
+storage/glusterfs/*.xz

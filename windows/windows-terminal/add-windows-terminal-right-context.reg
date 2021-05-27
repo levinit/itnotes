@@ -1,0 +1,20 @@
+Windows Registry Editor Version 5.00
+
+[-HKEY_CLASSES_ROOT\Directory\Background\shell\wt]
+[-HKEY_CLASSES_ROOT\Directory\Background\shell\runas]
+
+[HKEY_CLASSES_ROOT\Directory\Background\shell\wt]
+@="Windows terminal here"
+"Icon"="C:\apps\windows-terminal-right-context\terminal.ico"
+
+[HKEY_CLASSES_ROOT\Directory\Background\shell\wt\command]
+@="C:\\Users\\panle\\AppData\\Local\\Microsoft\\WindowsApps\\wt.exe"
+
+
+[HKEY_CLASSES_ROOT\Directory\Background\shell\runas]
+@="Windows terminal here(Administrator)"
+"Icon"="C:\apps\windows-terminal-right-context\terminal.ico"
+"ShowBasedOnVelocityId"=dword:00639bc8
+
+[HKEY_CLASSES_ROOT\Directory\Background\shell\runas\command]
+@="C:\\Users\\panle\\AppData\\Local\\Microsoft\\WindowsApps\\wt.exe"
