@@ -6,23 +6,41 @@ stat  <分区挂载点>
 
 在输出信息中可以看到IO block大小。
 
-# df卡住
+
+
+# df或ls卡住
+
+df卡住一般是网络文件系统挂载问题，查找原因：
 
 ```shell
 mount |column -t
-```
-
-找出可能引起卡死的挂载一般是nfs等网络挂载点，`strace`追踪：
-
-```shell
+cat /etc/mtab
 strace df
+fuser <挂载点>
 ```
 
-卸载之：
+ls卡住多在出问题的挂载目录中出现，尝试：
 
 ```shell
-umount -fl /mountedPoint  #mountedPoint换成实际挂载点
+strace ls -l
+unalias -a && ls -1 
 ```
+
+
+
+解决：
+
+- 检查网络文件系统服务端情况
+
+- 卸载挂载点
+
+  ```shell
+  umount -fl /mountedPoint  #mountedPoint换成实际挂载点
+  ```
+
+  
+
+
 
 # text file busy
 

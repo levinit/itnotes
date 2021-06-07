@@ -1011,11 +1011,24 @@ with Test():
   
 - 正则表达式模块  re
 
-- json模块
-
 - 时间相关模块：time datetime
 
 - 数学库：math random statistics
+
+## json模块
+
+json在pyton中是由list和dict组成。Json模块提供了四个功能
+
+- dumps    数据类型转换成字符串
+- dump      数据类型转换成字符串并存储在文件中
+- loads       字符串转换成数据类型
+- load         读取文件的字符串并转换成数据类型
+
+JSON编码的格式对于Python语法一些小的差异： True映射为true，False映射为false，None映射为null。
+
+提示：当数据的嵌套结构层次很深或者包含大量的字段时，通常很难通过简单的print来确定它的结构，可以考虑使用pprint模块的 `pprint()` 函数来代替普通的 `print()` 函数。
+
+
 
 ## 安装第三方模块
 

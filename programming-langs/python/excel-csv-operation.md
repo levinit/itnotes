@@ -75,6 +75,14 @@ with open('/tmp/a', 'w', newline='') as csvfile:
 
 
 
+避免位数过长的数字被csv阅读器（如ms office ,wps）以科学计数法显示，为该类数字后添加`\t`即可，例如：
+
+```shell
+'123456789'+'\t'
+```
+
+
+
 # execl
 
 以下使用openpyxl操作excel，可使用pip安装：`pip install openpyxl`。

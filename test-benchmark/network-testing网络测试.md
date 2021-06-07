@@ -14,21 +14,44 @@
 
 ## 网络可用性测试
 
-主要用以监测和诊断网络是否连通。
+主要用以监测和诊断网络是否连通，端口是否可达。
 
-### ping
+### ping回显测试
 
-`ping <host>`
+ping使用ICMP（因特网控制报文协议）测试目标地址是否可达
 
-### curl
+```shell
+#ping [option] <addr>
+ping 1.1.1.1
+ping z.cn
+ping -c 4 localhost  #-c count发送指定次数的数据包
+```
 
-ping被禁止时可以用curl检查端口的可用性
+注意：ping无响应，也可能是ICMP协议被防火墙过滤，应当采用其他方式测试佐证。
 
-`curl <host>:<port>`
 
-### telnet
 
-`telnet <host> <port>`
+### curl、telnet检查端口
+
+```shell
+#curl addr:port
+curl localhost:22
+
+#telnet addr port 
+telnet localhost 22
+```
+
+
+
+### nmap扫描主机信息
+
+```shell
+#nmap [option] addr
+nmap localhost      #获取指定主机的基本信息，快速扫描并列出未关闭的端口
+nmap -O 192.168.1.1 #同上，同时获取其mac并猜测其操作系统
+```
+
+
 
 ## 路由追踪
 
@@ -38,12 +61,14 @@ ping被禁止时可以用curl检查端口的可用性
 
 traceroute专门用户追踪路由，追踪速度更快；tracepath可以检测MTU值。
 
-另*windows下有tracert*。
+另windows下有tracert。
 
 ```shell
-tracepath [-n] z.cn
+tracepath -n z.cn
 traceroute z.cn
 ```
+
+
 
 ### mtr
 

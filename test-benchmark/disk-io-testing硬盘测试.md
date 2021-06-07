@@ -64,68 +64,19 @@ conv和oflag/iflag参数的选择可按实际应用场景需要选择。
 
 ## fio
 
-随机I/O测试效果好。
-
-```shell
-fio --filename=/path/to/file --bs=4k --size=20G --numjobs=48 --runtime=600  --ioengine=libaio --iodepth=1 --direct=1 --rw=read --time_based --refill_buffers --norandommap --randrepeat=0 --group_reporting --name=fio-read
-```
-
-也可以创建参数文件，读取该文件即可，参数文件fio.conf示例：
-
-```ini
-[global]
-ioengine=libaio
-direct=1
-thread=1
-time_based
-numjobs=1
-group_reporting
-iodepth=128
-filename=/dev/vdb
-runtime=300
-size=50g
-[4k-randwrite]
-bs=4k
-rw=randwrite
-stonewall
-[8k-randwrite]
-bs=8k
-rw=randwrite
-stonewall
-```
-
-重要参数：
-
-- bs  块文件大小
-- bsrange  数据块的大小范围  例如`bsrange=512-2048`
-- ioengine  测试I/O的方法，常用取值：
-  - libaio - Linux 原生的异步 I/O（需要安装有libaio包）
-  - sync -  同步read / write 操作
-  - vsync - 使用 readv / writev，主要是会将相邻的 I/O 进行合并
-  - psync - 对应的 pread / pwrite
-  - pvsync / pvsync2 - 对应的 preadv / pwritev，以及 preadv2 / p writev2
-- io-depth  请求的io队列深度（即线程数量，对应其他测试工具的threads）
-- direct 取值1表示绕过buffer直接写入
-- zero_buffers  初始化系统buffer
-- rw或readdwrite  读写方式，取值：
-  - read只读 write只写 rw读写
-  - randread随机读 randwrite随机写 randrw随机读写
-  - trim、randtrim、trimwrite  块设备（仅Linux）
-- rwmixwrite  混合读写模式下写占的比例（百分比）
-- size  测试文件大小
-- numjobs  线程数量
-- runtime  测试时间
-- lockmem  测试使用的内存
-- group_reporting  汇总报告结果
-- nrfiles  每个进程生成的文件数量
-
-
-
-设置 write_bw_log，write_bw_log 和 write_iops_log，然后使用 `fio_generate_plots` 来绘图，另外也可以用 `fio2gnuplot` 来绘制
+参看[fio](fio.md)
 
 ## smallfile
 
 [Smallfile](https://github.com/distributed-system-analysis/smallfile)用于分布式文件系统的小文件IO测试
+
+
+
+## ior
+
+### mdtest
+
+
 
 ## iozone
 
@@ -181,8 +132,8 @@ pacman -Ql iozone 画图。。。
   设置处理器交换信息的单位量为#（bytes）。可以加速测试。
 - `-U mountpoint`
   在测试开始之前，iozone将unmount和remount挂载点，以保证测试中缓存不包含任何文件
-- `-I`
-  对所有文件操作使用DIRECT I/O。通知文件系统所有操作跳过缓存直接在磁盘上操作
+- `-I`    使用DIRECT I/O。通知文件系统所有操作跳过缓存直接在磁盘上操作
+- `-p`    清楚缓存
 
 
 
