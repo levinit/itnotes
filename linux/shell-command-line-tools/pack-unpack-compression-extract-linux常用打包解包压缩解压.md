@@ -135,19 +135,25 @@ xz -d test.xz  #解压
 - `-P`  指定解压密码
 - `-d`  解压到指定目录
 - `-l`  列出压缩包中文件（不解压）
+- `-O`  指定编码格式  [unzip-iconv](http://infozip.sourceforge.net/UnZip.html)特有的参数，其为unzip添加了转码补丁
 
-unzip-iconv，为unzip增加了转码补丁，可在解压缩时使用`-O`参数可指定编码格式。
+
 
 ```shell
 zip -r test.zip test/  #打包 -r递归
 unzip test.zip  #解包
 unzip test.zip -d /tmp   #解包到指定目录
-#指定编码格式(如gbk)避免乱码 需要安装unzip-iconv
-unzip -O gbk test.zip
+
+#指定密码以解压加密文件（如不指定密码，则需要在提示输入密码后输入密码）
 zip -P 123 files.zip files
 unzip -P 123 files.zip
-zip -s 100m files.zip --out partzip #分卷 
-cat partzip* > files.zip && unzip files.zip #合并分卷并解压
+
+#指定编码格式(如gbk)避免乱码 需要安装unzip-iconv
+unzip -O gbk test.zip
+
+#分卷
+zip -s 100m files.zip --out part.zip #按大小分割，输出文件带数字编号的后缀
+cat part.zip* > all.zip && unzip all.zip #合并分卷并解压
 ```
 
 ## .7z
@@ -270,5 +276,4 @@ cat file.tar.xz-part* > file.tar.xz && tar xJvf file.tar.xz
   ```shell
   7z -x <file.exe>
   ```
-
 

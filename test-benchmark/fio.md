@@ -352,6 +352,24 @@ fio -directory=. -bs=4k -size=2G -numjobs=1 -runtime=30  -ioengine=libaio -iodep
 
 
 
+# 输出信息含义
+
+- IOPS：io per second 每秒IO操作次数
+
+- BW：bandwidth 带宽
+
+- slat(nsec)：slat为submission latency IO提交延时；nsec即纳秒
+
+- clat(msec)：clat为completion latency，即IO完成延时；msec即毫秒
+
+  - clat percentiles (msec)下面的内容为本次测试IO延时的比重
+
+    例如：`30.00th=[ 10]`，表示10msec以下延时的IO操作占所有IO操作的30%。
+
+  
+
+
+
 # 绘图
 
 fio安装后提供有`fio_generate_plots`（shell脚本）和`fio2gnuplot`（python脚本）用以绘图。

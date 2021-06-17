@@ -66,71 +66,78 @@ echo "options kvm_intel nested=1" > /etc/modprobe.d/kvm.conf
   systemctl enable --now libvirtd  #使用前需要启用该服务
   ```
 
-- 网络连接相关
 
-  - NAT/DHCP模式（默认的网络连接方式）：`ebtables`和`dnsmasq`
+## 网络连接
 
-    ```shell
-    systemctl start ebtables dnsmasq  #启用相关服务
-    ```
+- NAT/DHCP模式（默认的网络连接方式）：`ebtables`和`dnsmasq`
 
-  - 网桥模式：
+  ```shell
+  systemctl start ebtables dnsmasq  #启用相关服务
+  ```
 
-    参看[Network bridge](https://wiki.archlinux.org/index.php/Network_bridge_(%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87))
+### 网桥模式
 
-    使用`bridge-utils`创建网桥
+参看[Network bridge](https://wiki.archlinux.org/index.php/Network_bridge_(%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87))
 
-    ```shell
-    bridge_name=br0
-    interface=eth0
-    
-    brctl addbr $bridge_name
-    brctl addif $bridge_name $interface
-    brctl stp $bridge_name on
-    #ip addr del dev $interfce 192.168.0.1/24
-    brctl show
-    ip l set $bridge_name up
-    #delete bridge network==
-    # ip link set dev bridge_name down
-    # brctl delbr bridge_name
-    # nmcli con modify $bridge_name autoconnect yes ipv4.method manual ipv4.address $ip ipv4.gateway $gw
-    ```
-    
-    使用`iproute`创建网桥（`iproute2`，另使用Infiniband应该安装有`mlnx-iproute2`）
-    
-      ```shell
-    bridge_name=br0
-    interface=enp59s0f3
-    
-    ip link add name $bridge_name type bridge
-    ip link set $bridge_name up
-    
-    #添加一个网络端口（比如 eth0）到网桥中，要求先将该端口设置为混杂模式并启动该端口：
-    #ip link set dev $interface promisc on
-    ip link set $interface up
-    
-    #把该端口添加到网桥中，再将其所有者设置为 bridge_name 就完成了配置：
-    ip link set $interface master $bridge_name
-    
-    #要显示现存的网桥及其关联的端口，可以用 bridge 工具（它也是 iproute2 的组成部分）。详阅 bridge(8)。
-    bridge link show #bridge l
-    
-    #给$bridge_name网卡设置ip
-    #去除$interface的IP相关配置，添加BRIDGE=br0 重启$interface网卡
-    #虚拟机中选择该br0网卡 可在虚拟机中设置与br0同网段的IP
-    
-    #删除网桥，应首先移除它所关联的所有端口，同时关闭端口的混杂模式并关闭端口以将其恢复至原始状态。
-    # ip link set eth0 promisc off
-    # ip link set eth0 down
-    # ip link set dev eth0 nomaster
-    
-    #修改名字
-    #ip l set name <new name> <bridge_name>
-      ```
-  
-  
-  
-  - ssh连接：`openbsd-netcat`
+可使用virtmanager或netwokrmanager图形界面创建网桥，配置时为网桥指定一个物理网卡。
+
+使用`bridge-utils`创建网桥
+
+```shell
+bridge_name=br0
+interface=eth0
+
+brctl addbr $bridge_name
+brctl addif $bridge_name $interface
+brctl stp $bridge_name on
+#ip addr del dev $interfce 192.168.0.1/24
+brctl show
+ip l set $bridge_name up
+#delete bridge network==
+# ip link set dev bridge_name down
+# brctl delbr bridge_name
+# nmcli con modify $bridge_name autoconnect yes ipv4.method manual ipv4.address $ip ipv4.gateway $gw
+```
+
+使用`iproute`创建网桥（`iproute2`，另使用Infiniband应该安装有`mlnx-iproute2`）
+
+```shell
+bridge_name=br0
+interface=enp59s0f3
+
+#创建网桥
+ip link add name $bridge_name type bridge
+#启动王巧
+ip ip link set dev $bridge_name up
+
+#添加一个网络端口（比如 eth0）到网桥中，要求先将该端口设置为混杂模式并启动该端口：
+ip link set dev $interface promisc on
+#ip link set $interface down
+ip link set $interface up
+
+#把该端口添加到网桥中，再将其所有者设置为 bridge_name 就完成了配置：
+ip link set $interface master $bridge_name
+
+#要显示现存的网桥及其关联的端口，可以用 bridge 工具（它也是 iproute2 的组成部分）。详阅 bridge(8)。
+bridge link show #brctl show
+
+#给$bridge_name网卡设置ip
+#ip addr add dev bridge_name 192.168.66.66/24
+#nmcli con modify $bridge_name autoconnect yes ipv4.method manual ipv4.address $ip ipv4.gateway $gw ipv4.dns xxx
+#$interface不再配置ip地址（即使配置也不生效），如果
+
+#删除网桥，应首先移除它所关联的所有端口，同时关闭端口的混杂模式并关闭端口以将其恢复至原始状态。
+# ip link set eth0 promisc off
+# ip link set eth0 down
+# ip link set dev eth0 nomaster
+
+#修改名字
+#ip l set name <new name> <bridge_name>
+```
+
+虚拟机中选择该桥接网卡即可。
+
+- ssh连接：`openbsd-netcat`
 
 ## qemu管理虚拟机
 
