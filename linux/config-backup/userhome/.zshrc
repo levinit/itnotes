@@ -96,7 +96,7 @@ elif [[ $os == Darwin ]]; then #net-tools (ifconfig)
   HOSTNAME=$HOST
 fi
 
-echo -e "+++$HOSTNAME : $(uname -rsm) +++
+echo -e "+++ $HOSTNAME : $(uname -rsm) +++
 \e[1;36m$(date)\e[0m
 \e[1;32m$gateway\e[0m <-- \e[1;31m$innerip\e[0m"
 # cal
@@ -158,10 +158,11 @@ if [[ $os == Linux ]]; then
 elif [[ $os == Darwin ]]; then
   # brew tap beeftornado/rmtree
   # brew tap buo/cask-upgrade
-  export HOMEBREW_BOTTLE_DOMAIN=https://mirrors.ustc.edu.cn/homebrew-bottles/bottles
+#  export HOMEBREW_BOTTLE_DOMAIN=https://mirrors.ustc.edu.cn/homebrew-bottles/bottles
+  export HOMEBREW_BOTTLE_DOMAIN="https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles"
   export HOMEBREW_NO_AUTO_UPDATE=true
 
-  alias up='brew update && brew outdated && brew upgrade && brew cu -ay --no-brew-update' # && brew doctor'
+  alias up='brew update && brew upgrade && brew cu -ay --no-brew-update' # && brew doctor'
   alias pkgclean='brew cleanup'
   alias finderplugin='brew install qlcolorcode qlstephen qlmarkdown quicklook-json qlimagesize qlvideo webpquicklook'  #suspicious-package suspicious-package quicklook-pat provisionql quicklookase
 fi
@@ -204,8 +205,10 @@ alias ping='ping -c 4'
 
 if [[ $os == Linux ]]; then
   export PROXYCHAINS_SOCKS5=1080
+  export PROXYCHAINS_CONF_FILE=/etc/proxychains.conf
 elif [[ $os == Darwin ]]; then
   export PROXYCHAINS_SOCKS5=1086
+  export PROXYCHAINS_CONF_FILE=/usr/local/etc/proxychains.conf
 fi
 alias px='proxychains4'
 
@@ -237,6 +240,7 @@ function fortune_gushici() {
   if [[ $os = Darwin ]]; then
     command -v fortune || brew install fortune
     cp -av fortunes/data/* /usr/local/Cellar/fortune/9708/share/games/fortunes
+    cp -av fortune-zh
   elif [[ $(command -v pacman) ]]; then
     sudo pacman -S fortunes --noconfirm
     sudo cp -av fortunes/data/* /usr/share/fortunes/
@@ -249,6 +253,7 @@ command -v fortune >/dev/null && fortune -e tang300 song100 2>/dev/null #先秦 
 
 #npm
 alias npmlistg='npm -g list --depth=0'
+alias npmupg='npm -g upgrade'
 alias npmtaobao='npm config set registry https://registry.npm.taobao.org'
 
 #python
@@ -279,6 +284,10 @@ if [[ $os == Darwin ]]; then
   alias sshfsvps='sshfs vps:/root /tmp/vps -o follow_symlinks && open /tmp/vps'
   alias sshfscvml='sshfs vps:/root /tmp/vps -o follow_symlinks && open /tmp/cvml'
 fi
+
+#---rpi
+alias dm='sudo systemctl start vncserver-x11-serviced.service  && sudo systemctl start lightdm'
+alias stopdm='sudo systemctl stop vncserver-x11-serviced.service  && sudo systemctl stop lightdm'
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 alias fzfbat="fzf --preview 'bat {}'"

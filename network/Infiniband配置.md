@@ -8,27 +8,150 @@
 
 
 
-# 安装
+# 安装配置
 
-卸载 ofed_uninstall 
+## 驱动安装
 
+使用开源的ofed或生产商提供的驱动。
 
+安装驱动后启用openibd服务，检查网卡情况：
 
-# 获取信息
-
-- ibv_devinfo 详细信息
-- ivv_device  卡列表  
-
-查看驱动版本 ofed_info 
-
-
-
-# 测试
-
-1. 类似地，运行 **ibv_rc_pingpong** 命令。
-2. 类似地，运行 **ib_read_bw** 和 **ib_write_bw** 命令。
+```shell
+systemctl enable --now openibd
+ibstat
+```
 
 
+
+## 子网管理器
+
+一个Infiniband网络中要有至少一个子网管理器subnet manager（sm）。可以在交换机中启动子网管理器或者在该子网的主机中启动子网管理器
+
+### 交换机中启用子网管理器
+
+登录带有管理功能的交换机交换机，执行`config`进入配置模式：
+
+```shell
+ib sm      #启动
+show ib sm #查看
+#ib sm routing-engines ftree  #设置路由算法
+```
+
+### 该网络中的主机上启用启动子网管理器
+
+可以在该子网的一个或多个主机中启用：
+
+```shel
+systemctl enable --now opensmd
+```
+
+多个sm可以保证整个子网ib网络的高可用。可以为每个开启opensmd的主机设置不同的优先级。
+
+opensm的`-p`参数可以指定优先级，优先级为一个0-15的数字，数字越大优先级越高；对于多个port的情况，可以使用`-g`指定GUID。参看`man opensm`。
+
+对于使用自启动服务（如systemd）启动opensmd，找到opensmd的服务管理文件，其执行的是一个shell脚本，脚本中有读取的opensm配置文件行，确定该opensm配置文件的路径，即可新建或编辑该opensm配置文件，在文件中使用`PRIORITY`定义优先级，如：
+
+```shell
+PRIORITY=15
+```
+
+
+
+## IPoIB配置
+
+infiniband提供了IPoIB（Internet Protocol over InfiniBand）功能，利用物理IB网络通过IP协议进行数据传输。IPoIB提供了基于RDMA之上的IP网络模拟层，允许应用无修改的运行在InfiniBand网络上。
+
+注意在为ib网卡配置ip地址时，网络类型选择Infiniband。
+
+但是，IPoIB没有充分利用HCA的功能，网络流量通过正常的IP堆栈，这意味着每条消息都需要系统调用，主机CPU必须处理将数据分解为数据包等，普通IP套接字的应用程序将在IB链路的全速上工作（尽管CPU可能无法以足够快的速度运行IP堆栈，无法使用高带宽的IB链路）。
+
+另：IB一般也支持切换link layer为Ethernet（需要修改配置），当作纯粹的以太网卡使用。
+
+
+
+## 检查验证
+
+- ibstat            ib状态信息
+
+- ibnodes        当前子网中的节点信息
+
+- ibv_devices  设备基本信息
+
+- ibv_devinfo  设备的详细信息
+
+- iblinkinfo      网络拓扑信息
+
+- ofed_info      查看驱动版本 
+
+- ibdiagnet      网络诊断（日志默认保存在/var/tmp/ibdiagnet2/）
+
+  ```shell
+  ibdiagnet -ls FDR10 -lw 4x -r
+  ```
+
+  - --ls <2.5|5|10|14|25|FDR10|EDR20>: Specifies the expected link speed.
+
+  - --lw <1x|4x|8x|12x> : Specifies the expected link width.
+
+  - -r|--routing : Provides a report of the fabric qualities.
+
+- mst               mellanox software tools
+
+- mlnx_tune  调优工具
+
+  ```text
+  mlnx_tune -r 
+  ```
+
+  
+
+
+
+## 切换网卡模式 infiniband/ethernet
+
+查看当前模式：
+
+```shell
+ibstat  #或ibv_devinfo
+```
+
+link_layer行显示当前模式，`Infiniband`或`Ethernet`（Ehternet模式下网卡将作为太网卡使用，放弃infiband的优势）。
+
+`mst status`获取mst device信息：
+
+```shell
+#如果mst status 提示module not loaded 先加载模块
+modprobe mst_pci mst_pciconf
+mst restart 
+mst status
+```
+
+输出示例：
+
+> MST devices:
+>
+> \------------
+>
+> /dev/mst/mt4119_pciconf0     - PCI configuration cycles access.
+>
+> ​                  domain​bus:dev.fn=0000:18:00.0 addr.reg=88 data.reg=92 cr_bar.gw_offset=-1
+>
+> ​                  Chip revision is: 00
+
+使用mlxconfig 修改模式：
+
+```shell
+#其中mt4119_pciconf0替换成mst status中看到的实际的device信息
+mlxconfig -d /dev/mst/mt4119_pciconf0 set LINK_TYPE_P1=2
+```
+
+`LINK_TYPE_P1=1`为infiniband
+
+为使配置生效，需要重启系统或者执行以下命令重启driver：
+
+```shell
+mlxfwreset --device /dev/mst/mt4119_pciconf0 reset
+```
 
 # infiniband虚拟化
 

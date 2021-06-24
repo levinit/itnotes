@@ -1,8 +1,9 @@
 #!/bin/bash
+unalias -a
+set -e
 
 if [[ $(id -u) -ne 0 ]]; then
-  echo "need root or $sudo."
-  exit
+  echo "need root or $sudo." && exit 126
 fi
 
 sudo='sudo'
@@ -31,7 +32,7 @@ function install_fail2ban() {
   elif [[ $(command -v yum) ]]; then
     yum install -y epel-release && yum makecache
     yum install -y fail2ban
-  elif [[ $(command -v apt ) ]]; then
+  elif [[ $(command -v apt) ]]; then
     apt install -y fail2ban
   else
     echo "not support package manager, please install fail2ban"
@@ -108,7 +109,7 @@ enabled = true
 
 function gen_scripts() {
   local jail_list=$(fail2ban-client status | grep -i 'Jail list' | cut -d ":" -f 2)
-  local scripts=(banip unbanip ignoreip delignoreip)
+  local scripts=(banip unbanip addignoreip delignoreip)
 
   cd /tmp
   for script in {banip,unbanip}; do
@@ -117,11 +118,11 @@ jail=$1
 ip="${@:2:$#}"' >$script
 
     echo "
-jails=\"\$jail_list\"
+jails=\"$jail_list\"
 if [[ ! \$(echo \$jails |grep $jail) ]]
 then
   echo you should specified jail name
-  echo jails: \$jail_list
+  echo jails: $jail_list
   exit 1
 fi" >>$script
   done
@@ -187,7 +188,7 @@ echo "=====commands for $jail jail=====
 banip sshd [ip1 ip2]        : ban 1 IP or more IPs, eg, banip 8.8.8.8 9.9.9.9
 unbanip sshd [ip1 ip2]      : unban 1 IP or more IPs
 unbanip sshd all            : unban all IPs
-ignoreip sshd [ip1 ip2]     : ignore 1 IP or more IPs
+addignoreip sshd [ip1 ip2]     : ignore 1 IP or more IPs
 delignoreip sshd [ip1 ip2]  : delete a ignored IP"
 
 ' >blacklist

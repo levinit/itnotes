@@ -23,3 +23,8 @@
 	insteadOf = https://github.com/Homebrew/linuxbrew-core
 [url "https://mirrors.ustc.edu.cn/brew.git"]
 	insteadOf = https://github.com/Homebrew/brew
+[filter "lfs"]
+	process = git-lfs filter-process
+	required = true
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f

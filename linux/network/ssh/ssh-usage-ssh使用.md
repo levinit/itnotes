@@ -906,14 +906,11 @@ ssh命令中使用参数`-v`可输出详细的调试信息
   ssh -t user@server "bash --noprofile"
   #或
   ssh -t user@server "bash --norc"
-  
+  ssh -t user@server /bin/sh
   ```
-
-ssh -t user@server /bin/sh
-
-  `--noprofile`不载入任何全局或个人初始配置文件，包括`/etc/profile` 、`~/.bash_profile`、`~/.bash_login`和`~/.profile`等。
-
-  `--norc`不载入个人初始配置文件`~/.bashrc`。
+  
+  -  `--noprofile`不载入任何全局或个人初始配置文件，包括`/etc/profile` 、`~/.bash_profile`、`~/.bash_login`和`~/.profile`等。
+  -   `--norc`不载入个人初始配置文件`~/.bashrc`。
 
   
 

@@ -68,33 +68,38 @@ systemctl enable atd  #开机atd自启动
 
 ## cron服务和配置
 
-cron有多个软件实现，如cronie、fcron、dcron等等。确保实现cron的服务已经作为守护进程运行（如ronie或crond）。
+cron有多个软件实现，如cronie、fcron、dcron等等。
 
-`/etc/crontab`是系统的crontab文件，通常只被 root 用户或守护进程用于配置系统级别的任务。
-
-
-
-用户的crontab列表存储在`/var/spool/cron`下，文件与用户名一致。默认情况，普通用户是不能直接用编辑器添加或编辑该文件的（当然root用户可以编辑，或者对该文件进行权限重设，但不建议）。
-
-
+确保实现cron的服务已经作为守护进程运行（如ronie或crond）。
 
 `/etc/cron.deny`和`/etc/cron.allow`（该文件默认不存在需自行创建）用以指定可使用cron的用户黑名单和白名单。
 
+`/etc/crontab`是系统的crontab文件，通常只被 root 用户或守护进程用于配置系统级别的任务。用户的crontab列表存储在`/var/spool/cron`或`/var/spool/cron/crontabs`下，文件与用户名一致。
 
 
-## cron使用语法
 
-用户应使用`crontab -e`编辑周期任务列表，cron列表**每一行一个任务**。root用户和具有sudo权限的用户可以使用`crontab -u username -e`编辑其他用的任务列表 （username是其用户名）。
+crontab基本命令：
+
+```shell
+crontab -l   #查看当前用户cron任务列表文件
+crontab -e   #编辑当前用户cron任务列表文件
+crontab -r   #移除用户的cron任务
+crontab -u <username> -e  #编辑指定用户的cron （root和具有sudo权限的用户）
+```
+
+可以直接编辑用户的cron文件，但是一般推荐使用`crontab -e`编辑cron文件，这样在保存时，cron会自动进行语法校验。
+
+
 
 提示：默认的cron文件编辑器一般是vi，可使用以下命令修改：
 
 ```shell
-export EDITOR="/usr/bin/vim" `  临时修改默认编辑器为vim
+export EDITOR="/usr/bin/vim"  #修改默认编辑器为vim
 ```
 
 
 
-如果需要使用命令直接添加任务而不是使用`crontab -e`进行编辑添加，可以在一个文件中先写好任务列表，再使用crontab读取该文件一添加到用户任务列表中：
+读取指定文件（按照[cron文件语法](#cron文件语法)编写）并将其内容添加到当前用户cron文件中：
 
 ```shell
   cronlist=$(mktemp)
@@ -104,28 +109,45 @@ export EDITOR="/usr/bin/vim" `  临时修改默认编辑器为vim
 
 
 
+## cron文件语法
+
+cron文件中**每一行一个任务**，
+
 单个任务的书写格式：
 
 > `时间 命令`
 
 注意命令运行的环境变量及路径（最好使用绝对路径）
 
-时间有两种表示法
+可使用`#`注释行。
 
-- `分 时 日 月 周`
 
-  - 分 值从 0 到 59
-  - 时 值从 0 到 23
-  - 日 值从 1 到 31
-  - 月 值从 1 到 12
-  - 周 值从 0 到 7    其中0和7均代表周日
 
-  该表示法中每个时间还可以使用以下特殊符号
+时间有两类表示法
 
-  - `*`  任意值
-  - `-`  连接符用在两个值之间表示一个时间段
-  - `,`  分隔符用在两个（多个）值之间表示两个（多个）时间点
-  - `/`  分隔符用在两个值之间表示间隔频率
+- `分 时 日 月 周`字段
+
+  - 确定的数值
+    - 分 值从 0 到 59
+    - 时 值从 0 到 23
+    - 日 值从 1 到 31
+    - 月 值从 1 到 12
+    - 周 值从 0 到 7    （其中0和7均代表周日）
+
+  - 特殊符号
+    - `*`  任意值
+
+    - `-`  连接符用在两个值之间表示一个时间段
+
+      如在“时”这个字段使用`1-3`表示1点、2点、3点
+
+    - `,`  分隔符用在两个（多个）值之间表示两个（多个）时间点
+
+      如在“日”这个字段使用`1,2`表示1号和2号
+
+    - `/`  分隔符用在两个值之间表示间隔频率
+
+      如在“分”这个字段使用`*/5`表示每5分钟
 
 - 是以`@`开头的特殊字符串
 
@@ -141,13 +163,10 @@ export EDITOR="/usr/bin/vim" `  临时修改默认编辑器为vim
 ```shell
 * * * * * /usr/ls  #每分钟执行一次ls
 0 0 1 * * /usr/bin/reboot  #每月1日0时0分重启系统
+
 #每周三周六1点到3点和11点到13点每5分钟执行一次/home/test/update.sh
 *0,*5 1-3,11-13 * * 3,6 /home/test/update.sh
+
+#每次启动后执行
 @reboot  /usr/bin/echo $(/usr/bin/date) > /tmp/newboot
 ```
-
-crontab其他参数或命令：
-
-- -l  查看任务列表
-- -r  移除任务列表
-- -u  指定用户
