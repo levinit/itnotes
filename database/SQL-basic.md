@@ -41,9 +41,34 @@ SQL语法规则
 
 - `SELECT` - 从数据库表中获取数据
 
+  ```sql
+  SELECT <column_name[,column_name]> FROM table_name;
+  SELECT * FROM table_name;
+  SELECT DISTINCT <column_name[,column_name]> FROM table_name;
+  ```
+
+  `*`通配符
+
+  一个列可能会包含多个重复值，有时您也许希望仅仅列出不同（distinct）的值。
+
+  DISTINCT` 关键词用于返回唯一不同的值。
+
+  
+
 - `UPDATE` - 更新数据库表中的数据
 
+  ```sql
+  ```
+
+  
+
 - `DELETE` - 从数据库表中删除数据
+
+  ```sql
+  DELETE FROM <table_name> WHERE <some_column>=<some_value>;
+  ```
+
+  
 
 - `INSERT INTO` - 向数据库表中插入数据
 

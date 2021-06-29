@@ -11,13 +11,28 @@ mysql被收购后衍生的分支，由社区维护。
    mariadb-install-db --user=mysql --basedir=/usr --datadir=/var/lib/mysql
    ```
 
-3. 启动mariadb服务
+3. 启动mariadb服务，以linux中systemd为例：
 
    ```shell
    systemctl enable --now mariadb
    ```
 
-4. 可选，执行安全配置助手`mysql_secure_installation`进行配置，以提升安全性。其会询问用户作出一些安全性相关的设置建议，主要包括：
+4. 
+   
+5. 初始化，可选
+
+   ```shell
+   mysql_install_db
+   ```
+
+6. 安全配置，可选
+
+   ```shell
+   mysql_secure_installation
+   ```
+
+   其会询问用户作出一些安全性相关的设置建议，主要包括：
+
    - 设置root密码
    - 远程登录开关
    - 删除匿名帐号
@@ -28,8 +43,9 @@ mysql被收购后衍生的分支，由社区维护。
    ```sql
    use mysql;
    delete from user where user='root' and host!='localhost';
-   --SET PASSWORD FOR 'root'@'localhost' = PASSWORD('$db_root_pwd');
-   --SET PASSWORD FOR 'root'@'%' = PASSWORD('$db_root_pwd');
+   --if you want to set a password for root:
+   --SET PASSWORD FOR 'root'@'localhost' = PASSWORD('new_pwd');
+   --SET PASSWORD FOR 'root'@'%' = PASSWORD('new_pwd');
    --:del test db
    drop database if exists test;
    --:del anymous users
@@ -153,7 +169,7 @@ default-character-set = utf8  #客户端默认编码
   3. 执行`mysql`命令连接
 
      ```shell
-     mysq  #或为 mysql -u root
+     mysql  #或为 mysql -u root
      ```
 
   4. 执行SQL语句修改，这里示例将root密码设置为`root`：

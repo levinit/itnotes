@@ -319,16 +319,32 @@
 
 ### 视频编辑
 
-- mencoder    命令行的视频编码处理工具
-- handbrake    视频格式转换
-- openshot    功能强大的视频编辑工具
-- lightworks   专业的视频剪辑工具
-- shotcut    视频剪辑工具
+- 剪辑
+
+  - [openshot](https://www.openshot.org)
+  - [shotcut](https://shotcut.org)
+  - [lightworks](https://www.lwks.com)  （高级功能收费）
+
+- 转码
+
+  - [handbrake](https://handbrake.fr)    视频格式转换
+  - mencoder    命令行
+
 - 字幕
   - aegisub
   - gnome-subtitles
   
   
+
+## 建模
+
+- [blender](https://www.blender.org)
+- [openSCAD](https://openscad.org)
+- [FreeCAD](https://www.freecadweb.org)
+- [art of illusion](http://www.artofillusion.org)
+- [Mesh Lab](https://www.meshlab.net)
+
+
 
 # 记录写作/学习办公
 
@@ -345,10 +361,9 @@
 ## 学习办公
 
 - office套件
-  - libreoffice
+  - [libreoffice](https://www.libreoffice.org)
   - [wps-office](https://linux.wps.cn)
 - pspp     统计软件（可看作开源版的spss）
-- gitbook-editor   [gitbook](https://gitbook.com)书籍制作工具
 - calibre    电子书制作编辑格式转换
 - stellarium    天文软件
 - [anki](https://apps.ankiweb.net/)  跨平台、多语言的词汇卡片学习工具
@@ -371,8 +386,6 @@
 - typora
 - remarkable
 - haroopad
-
-
 
 ## 思维图/流程图/设计稿
 
@@ -559,6 +572,7 @@
   - [zsh-powerline](https://github.com/riobard/zsh-powerline)
 - script  终端操作记录
 - asciinema  记录终端操作（支持上传到asciinema.org并与他人共享）
+- scrpcy   安卓投屏控制
 
 
 

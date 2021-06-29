@@ -43,7 +43,7 @@ unset LD_PRELOAD  #去掉LD_PRELOAD
 查看当前glibc版本
 
 ```shell
-strings /lib64/libc.so.6 | grep GLIBC
+strings /lib64/libc.so.6 | grep -E "^GLIBC_" |sort -u
 ```
 
 
