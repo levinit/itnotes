@@ -101,90 +101,102 @@ zsh(110843)─┬─pstree(112856)
 
 ## 任务后台运行的方法
 
-- `nohup`
+### nohup
 
-  > nohup英文全称 no hang up（不挂起），用于在系统后台不挂断地运行命令，退出终端不会影响程序的运行
+> nohup英文全称 no hang up（不挂起），用于在系统后台不挂断地运行命令，退出终端不会影响程序的运行
 
-  默认会将标准输出写入名为`nohup.out`的文件，也可以自行指定输出信息的写入文件。
+默认会将标准输出写入名为`nohup.out`的文件，也可以自行指定输出信息的写入文件。
 
+```shell
+nohup ping -c 99 z.cn &>ping.log &
+```
+
+父进程退出时，这个子进程将**忽略HUP信号**，托管给1号进程成为1号进程子进程。
+
+
+
+### 在`()`中执行
+
+将一个或多个命名包含在`()`中就能让这些命令在**子 shell 中运行**，将命令连同`&`也放入`()`内之后，该进程就**不再是当前终端进程的子进程**，而是1号进程的子进程。
+
+```shell
+(sleep 233 &)
+```
+
+
+
+### setsid
+
+`setsid <command> &`
+
+setsid创建一个新的会话运行程序，将进程作为1号进程的子进程。
+
+```shell
+setid ping -c 10 z.cn &> ping.log &
+```
+
+
+
+### disown
+
+`disown`为shell内置命令
+
+- 如果提交命令时已经用`&`将命令放入后台运行，直接使用`disown`即可。
+
+  1. `jobs`   命令查看该后台任务的作业号(jobID)
+  2. `disown -h %<jobID>`
+
+- 如果提交命令时未经用“&”将命令放入后台运行，可以先挂起任务，而后`bg`放入后台，最后再使用`disown`
+
+  1. <kbd>Ctrl</kbd> <kbd>z</kbd>挂起任务
+  2. `jobs`命令查看挂起的作业号(jobID)
+  3. `bg`放入后台执行
+  4. `disown -h %<jobID>`
+  
   ```shell
-  nohup ping -c 99 z.cn &>ping.log &
+  ➜  ~ sleep 999
+  ^Z
+  [1]  + 118959 suspended  sleep 999
+  ➜  ~ jobs
+  [1]  + suspended  sleep 999
+  ➜  ~ bg %1
+  [1]    118959 continued  sleep 999
+  ➜  ~ disown %1
+  ➜  ~ pstree -p $$
+  zsh(118784)─┬─pstree(119126)
+              └─sleep(118959)
   ```
   
-  父进程退出时，这个子进程将**忽略HUP信号**，托管给1号进程成为1号进程子进程。
+  disown后其仍为当前shell子进程，但是shell退出时其不会被中止，而将成为1号进程子进程。
   
-  
-  
-- 子shell `(<command>  &)`
-
-  将一个或多个命名包含在`()`中就能让这些命令在**子 shell 中运行**，将命令连同`&`也放入`()`内之后，该进程就**不再是当前终端进程的子进程**，而是1号进程的子进程。
-
   ```shell
-  (sleep 233 &)
-  ```
-
-  
-
-- `setsid <command> &`
-
-  setsid创建一个新的会话运行程序，将进程作为1号进程的子进程。
-
-  ```shell
-  setid ping -c 10 z.cn &> ping.log &
+  ➜  ~ ps -ef|grep sleep
+  root      118959       1  0 21:04 ?        00:00:00 sleep 999
   ```
   
   
+
+disown选项：
+
+- `-a`	如果不提供 JOBSPEC 参数，则删除所有任务。
+
+- `-h`	标识每个 JOBSPEC 任务，从而当 shell 接收到 SIGHUP信号时不发送 SIGHUP 给指定任务。
+
+- `-r`	仅删除运行中的任务。
+
   
-- `disown`
 
-  如果想要命令后台运行，但是未加以上任何后台处理方式就已经提交了命令，可以使用作业管理和`disown`解决该问题。
+### at 、cron、systemd unit等
 
-  - 如果提交命令时已经用`&`将命令放入后台运行，直接使用`disown`即可。
+用作定时任务。
 
-    1. `jobs`   命令查看该后台任务的作业号(jobID)
-    2. `disown -h %<jobID>`
+不过可使用`at now`取巧，创建at任务后立即执行。
 
-  - 如果提交命令时未经用“&”将命令放入后台运行，可以先挂起任务，而后`bg`放入后台，最后再使用`disown`
 
-    1. <kbd>Ctrl</kbd> <kbd>z</kbd>挂起任务
-    2. `jobs`命令查看挂起的作业号(jobID)
-    3. `bg`放入后台执行
-    4. `disown -h %<jobID>`
-    
-    ```shell
-    ➜  ~ sleep 999
-    ^Z
-    [1]  + 118959 suspended  sleep 999
-    ➜  ~ jobs
-    [1]  + suspended  sleep 999
-    ➜  ~ bg %1
-    [1]    118959 continued  sleep 999
-    ➜  ~ disown %1
-    ➜  ~ pstree -p $$
-    zsh(118784)─┬─pstree(119126)
-                └─sleep(118959)
-    ```
-    
-    disown后其仍为当前shell子进程，但是shell退出时其不会被中止，而将成为1号进程子进程。
-    
-    ```shell
-    ➜  ~ ps -ef|grep sleep
-    root      118959       1  0 21:04 ?        00:00:00 sleep 999
-    ```
-    
-    
 
-  disown选项：
+### `tmux`、`screen`
 
-  - `-a`	如果不提供 JOBSPEC 参数，则删除所有任务。
-  - `-h`	标识每个 JOBSPEC 任务，从而当 shell 接收到 SIGHUP信号时不发送 SIGHUP 给指定任务。
-  - `-r`	仅删除运行中的任务。
-
-- `tmux`、`screen`等工具
-
-  用于大量运行后台任务的场景，功能强大。
-
-- 此外，对于要时刻在后台运行的进程，尤其是希望其在系统启动后总是自行后台运行，可使用systemd或crontab。
+用于大量运行后台任务的场景，功能强大。
 
 
 

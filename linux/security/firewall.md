@@ -45,20 +45,41 @@ firewalld配置方法主要有三种：firewall-config（图形化工具）、fi
 
 firewall-cmd对zone的操作默认只是临时生效，重启服务后失效，添加`--permanent`参数确保永久生效。
 
+## 查看信息
+
 ```shell
 firewall-cmd --list-all   #列出所有规则（激活的zone的信息）
 firewall-cmd --get-active-zones   #获取激活的zone的信息
 firewall-cmd --get-default-zone    #获取默认zone
 firewall-cmd --get-zone-of-interface=eth0 #获取某个网口的zone信息
+```
+
+ 
+
+## 网卡区域zone规则配置
+
+```shell
 #修改网卡的zone
 firewall-cmd --permanent --zone=trusted --change-interface=eno1
 #从zone移除网卡
 firewall-cmd --zone=public --permanent --remove-interface=eth0
+```
 
+
+
+## 端口/服务规则 配置
+
+```shell
 #添加端口或服务（的默认端口）   可使用1022-1025模式指定一个区域的端口
 firewall-cmd --zone=public --add-port=80/tcp --permanent
 firewall-cmd --zone=public --add-service=https   #开放https服务 默认443端口
+```
 
+
+
+## 端口转发
+
+```shell
 #端口转发
 firewall-cmd --zone=public --add-forward-port=port=22:proto=tcp:toport=10022 --permanent
 firewall-cmd --zone=public --add-forward-port=port=22:proto=tcp:toport=10022:toaddr=192.168.10.10 --permanent
@@ -66,7 +87,7 @@ firewall-cmd --zone=public --add-forward-port=port=22:proto=tcp:toport=10022:toa
 firewall-cmd --permanent --direct --passthrough ipv4 -t nat -I POSTROUTING -o eno1 -j MASQUERADE -s 172.16.1.0/24
 ```
 
- 
+
 
 
 

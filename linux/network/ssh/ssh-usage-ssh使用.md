@@ -214,7 +214,7 @@ vim scp://user@host[:port]//path/to/file
 
 但在某些对安全性有较高要求的情况下，我们**不希望跳板机可以通过密钥认证登录到目标主机**（可能没有配置跳板机到目标主机的密钥认证，甚至为了安全关闭了目标主机的密码登录），而是**将客户端的公钥直接存放到目标服务器**。
 
-> 客户端：私钥<======>公钥：目标服务器
+> 客户端：私钥<--->公钥：目标服务器
 
 为了实现使用客户端使用密钥登录的目标服务，可以使用转发密钥认证的方式实现。
 
@@ -385,20 +385,49 @@ ssh端口转发相关：
 
 - 客户端
 
-  - 有X环境
+  需要有X环境。
 
-    提示：windows需要安装x实现如Xming等，macos可安装xquartz。
+  原理是服务器作为 X Client 发送渲染指令到本地的 X Server，本地 X Server 调用本地的 OpenGL 库渲染图像。
 
-    ```shell
-    #打开远程主机的firefox （或者登录到远程主机上再执行命令）
-    ssh -X user@host firefox  #或配置ForwardX11 yes 则可不写出-X
-    #或
-    ssh -Y user@host firefox  #或者ForwardX11Trusted yes 则可不写出Y
-    ```
+  提示：windows需要安装x实现如Xming等，macos可安装xquartz。
 
-- `-X`  远程机器将被视为不受信任的客户端，本地客户端向远程机器发送命令并接收图形输出，如果某些命令违反了某些安全设置，将收到错误提示。 可在客户端ssh配置中添加。
+  ```shell
+  #打开远程主机的firefox （或者登录到远程主机上再执行命令）
+  ssh -X user@host <app-name>  #或配置ForwardX11 yes 则可不写出-X
+  #或
+  ssh -Y user@host <app-name>  #或者ForwardX11Trusted yes 则可不写出Y
+  ```
 
-- `-Y`  远程机器将被视为受信任的客户端。 （其他图形(X11)客户端可以从远程机器中嗅探数据（制作屏幕截图、做键盘记录和其他讨厌的东西，甚至可以更改这些数据。）
+  - `-X`  远程机器将被视为不受信任的客户端，本地客户端向远程机器发送命令并接收图形输出，如果某些命令违反了某些安全设置，将收到错误提示。 可在客户端ssh配置中添加。
+  - `-Y`  远程机器将被视为受信任的客户端。 （其他图形(X11)客户端可以从远程机器中嗅探数据（制作屏幕截图、做键盘记录和其他讨厌的东西，甚至可以更改这些数据。）
+
+  提示 no Display xxx：
+
+  ```shell
+  export DISPLAY=localhost:0
+  ```
+
+  启用OpenGL加速：
+
+  ```shell
+  export LIBGL_ALWAYS_INDIRECT=1
+  ```
+
+  
+
+  ### X转发+VirutalGL
+
+  ssh转发使用本地GPU渲染，仅有限支持 OpenGL，当运行图形功能较为复杂的软件时效率较低。 
+
+  Virual GL 则能作为一个代理使用服务器的 OpenGL 在服务器端进行渲染，然后将渲染结果转发到本地 X Server。
+
+  安装[Virtual GL](https://www.virtualgl.org) 后运行 vglserver_config 配置 Virtual GL 代理，配合X转发使用：
+
+  ```shell
+  ssh -Y user@host vglrun <app-name>
+  ```
+
+  
 
 ## 动态端口转发（socks代理）
 
