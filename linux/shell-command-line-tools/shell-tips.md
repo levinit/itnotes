@@ -460,6 +460,15 @@ echo > /path/to/file  #换成实际的文件路径
 
 # 未归类
 
+- 消息提示
+
+  ```shell
+  notify-send "xxx"
+  ```
+  桌面环境中将弹出提示消息。
+
+  
+
 - 打开默认应用 `xdg-open <file or url>`
 
   ```shell

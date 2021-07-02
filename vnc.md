@@ -26,6 +26,8 @@ VNC作为一种通用协议，现有多种实现工具：
 
     派生自TightVNC，特点是对图形传输方面的优化。可配合使用[VirtualGL](https://www.virtualgl.org)调用服务端显卡渲染。
 
+    
+
   - RemoteVNC
 
     派生自TightVNC，增加了自动穿越NAT和防火墙。
@@ -89,13 +91,58 @@ vnc启动的多个虚拟会话，会话从端口`:1`开始（vnc默认的1对应
   
   - `vncpassword`修改密码
   
-- 相关增强功能
-
-  - 虚拟会话不能运行opengl，可使用Turbovnc+[virtualGL](https://www.virtualgl.org)实现。
+- 相关增强功能s
 
   - 在xstartup中启动`autocutsel` 以实现服务端和客户端的剪切板互通。
 
-    
+  
+
+### turbovnc+virtualGL使用服务端3D图形加速器
+
+ [VNC](https://zh.wikiqube.net/wiki/Virtual_Network_Computing) 和其他用于Unix和Linux的瘦客户端环境都不支持运行 [的OpenGL](https://zh.wikiqube.net/wiki/OpenGL) 应用程序或强制渲染OpenGL应用程序。
+
+> 传统上，通过硬件加速来远程显示3D应用程序需要使用“间接渲染”。间接渲染使用 [葛兰素史克](https://zh.wikiqube.net/wiki/GLX) 扩展到 [X Window系统](https://zh.wikiqube.net/wiki/X_Window_System) （“ X11”或“ X”）将OpenGL命令封装在 [X11协议流](https://zh.wikiqube.net/wiki/X_Window_System_protocols_and_architecture) 并将它们从应用程序发送到X显示器。
+
+间接渲染的所有OpenGL命令都由vnc客户端计算机执行，因此对于3D程序，需要客户端必须具有快速的3D图形加速器；某些OpenGL扩展在间接渲染环境中不起作用，一些扩展要求具有直接访问3D图形硬件的能力。
+
+VirualGL 则能作为一个代理使用服务器的 OpenGL 在服务器端进行渲染，使用远程服务器的图形硬件进行渲染，并以交互方式将渲染的输出显示到客户端。
+
+以配置nvidia headless服务器的turbovnc+virtualGL为例：
+
+1. 配置好服务器的nvidia驱动，参看[virtualGL headless-nv](https://virtualgl.org/Documentation/HeadlessNV)
+
+   ```shell
+   resolution=1920x1200
+   busid=$(busid=$(nvidia-xconfig --query-gpu-info | grep BusID|grep -Eo "[0-9]+[0-9:]+$"|head -n 1))
+   nvidia-xconfig -a --allow-empty-initial-configuration --use-display-device=None \
+   --virtual=1920x1200 --busid $busid
+   
+   sed -i -E '/Section "Screen"/a Option "HardDPMS" "false"' /etc/X11/xorg.conf
+   ```
+
+   重启X服务器：
+
+   ```shell
+   systemctl isolate multi-user  #init 3
+   systemctl isolate graphical   #init 5
+   
+   #也可重启dm实现该目的，如：
+   #systemctl restart gdm
+   ```
+
+2. 安装virtualGL 、turbovnc及其依赖turbojpeg
+
+   ```shell
+   yum install -y 
+   ```
+
+3. 使用TurboVNC启动vnc
+
+   ```shell
+   /opt/TurboVNC/bin/vncserver -vgl
+   ```
+
+
 
 ## 直接转发物理画面
 
@@ -315,11 +362,11 @@ vncserver -kill $DISPLAY
 
    关于wayland与vnc及其他远程控制协议问题参看[wayland FAQ](https://wayland.freedesktop.org/faq.html)
 
+-  X服务未正常启动
+
 - xstarup脚本问题（例如没有正确执行的应用/桌面/窗口管理器等等）
 
 - 虚拟机中vnc黑屏，尝试调整虚拟软件的设置中图形相项
-
-- 驱动问题
 
 - 缺少xorg相关包（xorg-X11-xinit，xorg-x11-xauth等等）
 

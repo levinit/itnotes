@@ -5,77 +5,69 @@
 set -e #u
 unalias -a
 
-#--remote host as a proxy server 远程主机作为代理服务器
-remoteHost=''       #remote host addr
-remotePort=22       #remote host sshd port 远程主机的sshd端口
-remoteUser=sshproxy #user on remote host 远程主机上的用户
-proxyPort=5509      #port of remote host, should >=1024 for normal user 普通用户只能使用1024以上端口
+#--remote host, as a proxy server
+remote_host=''
+remote_sshd_port=22
+remote_ssh_user=sshproxy #user on remote host
+proxyPort=10122          #an available port of remote host, should >=1024 for normal user
 
-#--local host (this host) 本地主机（执行本脚本的主机）
-localHost=localhost         #this host, IP or host name
-localPort=22                #local host port 本地主机端口
-localUser=$USER             #local host user name 本地主机用户名
-private_key="~/.ssh/id_rsa" #private key for $localUser 本地用户的私钥
-#tip : 先上传公钥到proxy主机 ssh-copy-id <user>@<proxy-host> -p <port>
+#--local host (target sshd server)
+target_host=localhost
+target_sshd_port=22
+target_ssh_user=$USER       #a user of target host
+private_key="~/.ssh/id_rsa" #private_key of $target_ssh_user
 
-#
-restart_cron_time="5 5 * * * "  #cron time for restart sshproxy
-cron_interval_min=10 #cron task interval
-check_timeout=30 #max secs for checking ssh session status
+#params for cron task
+restart_cron_time="5 5 * * * " #cron time for restart sshproxy
+cron_interval_min=10           #cron task interval (every n mins)
+check_timeout=30               #max secs for checking ssh session status
 
-#
-#ssh options ssh选项（主要用以保持连接）
-options='-o TCPKeepAlive=yes -o ServerAliveInterval=60 -o ServerAliveCountMax=10 -o ControlMaster=auto -o ControlPath=~/.ssh/%r@%h:%p -o ControlPersist=yes -o StrictHostKeyChecking=no'
+#---sshproxy inf file (put in the remote host)
+ssh_proxy_info_file="$HOSTNAME" #name of sshproxy info file, eg. home-nas
 
+info_file_dir_on_remote_host=proxy-hosts #proxy info file path, default is ~/proxy-hosts
 
-#---this host info saved at remote hosts 本机的相关信息 将记录到远程主机上
-#When you have many hosts using this script for forwarding, it is better to design a unique name for this file on each host, which can describe the local information and distinguish it from other hosts. 当你有许多主机使用该脚本进行转发，最好为每一个主机上该文件设计一个独特的名字，能够描述本机信息，以及和其他主机区分
-
-#important! ssh proxy info file, if it was empty, fallback value is $HOSTNAME-$remotePort  重要 记录本次ssh转发信息的文件名字，如果为空，将使用备用值$HOSTNAME-$remotePort
-ssh_proxy_info_file="$HOSTNAME" #eg. home-nas
-
-#ssh proxy info file path on the remote host, default is ~/proxy-hosts 远程主机上存放ssh转发信息文件的目录路径，默认是~/proxy-hosts
-info_file_dir_on_remoteHost=proxy-hosts
-
-#comments text will add to $/tmp/ssh_proxy_info_file, allow empty, default is $(uname -a) 本机注释信息将添加到$/tmp/ssh_proxy_info_file中，可以为空，默认为$HOSTNAME: $(uname -a)
-localhost_comment="$HOSTNAME" #eg. some discription
-
-#
-script_path=$(readlink -f "$0")
-scirpt_name=$(echo $0 | awk -F '/' '{print $NF}')
-script_dir_path=$(dirname $script_path)
+target_host_comment="server $HOSTNAME" #comments text, will add to sshproxy inf file
 
 #--log file
 log=./proxy.log   #proxy log
 log_maxsize=10000 #Bytes
 
+#---do not edit below, if you don't know what you're doing
+script_path=$(readlink -f "$0")
+scirpt_name=$(basename $0)
+script_dir_path=$(dirname $script_path)
+
+#ssh options
+options='-o TCPKeepAlive=yes -o ServerAliveInterval=60 -o ServerAliveCountMax=10 -o ControlMaster=auto -o ControlPath=~/.ssh/%r@%h:%p -o ControlPersist=yes -o StrictHostKeyChecking=no'
+#---do not edit above, if you don't know what you're doing
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~
 #===check params
 function check_ssh_params() {
     #check local port
-    [[ -z $localPort ]] && echo "[ERR]: localPort can not be empty!" >>$log && exit 1
+    [[ -z $target_sshd_port ]] && echo "[ERR]: target_sshd_port can not be empty!" >>$log && exit 1
 
     #check remote sshd port 检查远程主机sshd端口
-    [[ -z $remotePort ]] && echo "[ERR]: remotePort can not be empty!" >>$log && exit 1
+    [[ -z $remote_sshd_port ]] && echo "[ERR]: remote_sshd_port can not be empty!" >>$log && exit 1
 
     #check remote host 验证远程sshd主机
-    [[ -z $remoteHost ]] && echo "[ERR]: remoteHost can not be empty!" >>$log && exit 1
+    [[ -z $remote_host ]] && echo "[ERR]: remote_host can not be empty!" >>$log && exit 1
 
     #check remote host 验证远程sshd主机
-    [[ -z $remoteUser ]] && echo "[ERR]: remoteUser can not be empty!" >>$log && exit 1
+    [[ -z $remote_ssh_user ]] && echo "[ERR]: remote_ssh_user can not be empty!" >>$log && exit 1
 
     #check ssh private key file 检查密钥文件
     [[ -f $private_key ]] && echo "[ERR]: Can not find ssh private key file : $private_key !" >>$log && exit 1
 
     #check ssh proxy info file
     if [[ -z "$/tmp/ssh_proxy_info_file" ]]; then
-        /tmp/ssh_proxy_info_file=${HOSTNAME}-$remotePort
+        /tmp/ssh_proxy_info_file=${HOSTNAME}-$remote_sshd_port
         echo "[WARN]: param /tmp/ssh_proxy_info_file is empty! Fallback: ==> $/tmp/ssh_proxy_info_file " >>$log
     fi
 
-    if [[ -z "$localhost_comment" ]]; then
-        localhost_comment="$HOSTNAME-$(uname -a)"
+    if [[ -z "$target_host_comment" ]]; then
+        target_host_comment="$HOSTNAME-$(uname -a)"
     fi
 }
 
@@ -83,7 +75,6 @@ function check_ssh_params() {
 function check_log_file() {
     local log_file_parent_dir=$(dirname $log)
     [[ -d $log_file_parent_dir ]] || mkdir -p $log_file_parent_dir
-    [[ -f $log ]] || touch $log
 
     #log file size control 日志文件大小控制 10000Bytes
     if [[ $(stat -c %s $log) -gt $log_maxsize ]]; then
@@ -97,18 +88,23 @@ function check_log_file() {
 #=====Remote Port Forward======远程主机转发
 function ssh_remote_forwarding() {
     #======checking 转发前检查
-    if [[ $(timeout $check_timeout ssh -p $remotePort $remoteUser@$remoteHost "ss -tlpn4 |grep :$proxyPort") ]]; then
+    if [[ $(timeout $check_timeout ssh -i $private_key -p $remote_sshd_port $remote_ssh_user@$remote_host "hostname") ]]; then
+        echo "" >>$log
+    else
+        echo "[ERR] Can not connect $remote_host:$remote_sshd_port." >>$log
+        exit 1
+    fi
+
+    if [[ $(timeout $check_timeout ssh -i $private_key -p $remote_sshd_port $remote_ssh_user@$remote_host "ss -tlpn4 |grep :$proxyPort") ]]; then
         echo "ssh forwarding status is OK." >>$log
         exit 0 #本地转发进程存在，远程ssh端口测试连接正常，退出
     fi
 
-    echo "Can not connect sshd port $remotePort on $remoteHost, because network problem or $remotePort on $remoteHost is not a sshd port." >>$log
-    kill -9 $forwarding_pid
-    echo "local ssh forwarding process has been killed ,it will restart ssh proxy again." >>$log
+    [[ -n $forwarding_pid ]] && kill -s SIGTERM $forwarding_pid
 
     echo "---start ssh proxy---" >>$log
     local errlog=$(mktemp)
-    ssh -gfCNTR $proxyPort:$localHost:$localPort $remoteUser@$remoteHost -i $private_key -p $remotePort $options 1>>$log 2>$errlog
+    ssh -gfCNTR $proxyPort:$target_host:$target_sshd_port $remote_ssh_user@$remote_host -i $private_key -p $remote_sshd_port $options 1>>$log 2>$errlog
 
     ##ssh参数说明
     #-g 允许远程主机连接转发端口
@@ -116,86 +112,83 @@ function ssh_remote_forwarding() {
     #-C 压缩数据
     #-N 不要执行远程命令
     #-R 远程转发
-    local proxyPID=$(ps -ef | grep $proxyPort:$localHost:$localPort | grep -v grep | awk '{print $2}')
-
-    #if there are some ERR infos in the errlog file ,save the err， kill the process and exit
-    #如果错误日志中有内容（转发出错） 记录错误信息，杀死该进程并退出
-    [[ -s $errlog ]] && cat $errlog >>$log && pkill -9 $proxyPID && exit 1
+    #if some err occur
+    if [[ $? -ne 0 ]]; then
+        local proxyPID=$(ps -eo pid,command | grep $proxyPort:$target_host:$target_sshd_port | grep -v grep | awk '{print $1}')
+        cat $errlog >>$log
+        [[ $proxyPID ]] && kill -s SIGTERM $proxyPID
+        exit 1
+    fi
 
     #saved proxy info and copy to the remote host
-    ssh -p $remotePort $remoteUser@$remoteHost "mkdir -p $info_file_dir_on_remoteHost"
+    ssh -p $remote_sshd_port $remote_ssh_user@$remote_host "mkdir -p $info_file_dir_on_remote_host"
 
     echo -e "=== Generate @ $(date) ===
 +++++ target server info +++++
-about:$localhost_comment
+about:$target_host_comment
 os:$(uname -a)
 hostname:$HOSTNAME
-ssh-user:$localUser
-ssh-port:$localPort
+ssh-user:$target_ssh_user
+ssh-port:$target_sshd_port
 ---------------------
-client === $remoteHost:$proxyPort <--->$hostname:$localPort
+client === $remote_host:$proxyPort <--->$hostname:$target_sshd_port
 ---------------------
-ssh -p $proxyPort <user-at-target-host>@$remoteHost
+ssh -p $proxyPort <user-at-target-host>@$remote_host
 " >/tmp/$ssh_proxy_info_file
 
-    scp -P $remotePort /tmp/$ssh_proxy_info_file $remoteUser@$remoteHost:~/$info_file_dir_on_remoteHost/ >/dev/null
+    scp -P $remote_sshd_port /tmp/$ssh_proxy_info_file $remote_ssh_user@$remote_host:~/$info_file_dir_on_remote_host/ >/dev/null
 }
 
-#installation 安装 
+#installation 安装
 function install() {
-    #ssh key auth localhost --> remote host  ssh密钥认证 本机-->远程主机
+    #ssh key auth target_host --> remote host  ssh密钥认证 本机-->远程主机
     echo "Check ssh key auth!"
-    echo "input remote host password for $remoteUser 输入远程主机上$remoteUser的密码："
-    ssh-copy-id -p $remotePort $remoteUser@$remoteHost
+    if [[ $(timeout $check_timeout ssh -p -i $pr $remote_sshd_port $remote_ssh_user@$remote_host "hostname") ]]; then
+        echo "authenticated!"
+    else
+        echo "!!!authenticated failed, please run below command :"
+        echo "ssh-copy-id -p $remote_sshd_port $remote_ssh_user@$remote_host"
+        echo
+        echo "then re-run $0 again."
+        exit 1
+    fi
 
-    #add a cron task 添加一个cron任务
     echo "+++++++++++++"
-    echo "Add sshproxy as a crond task? 添加sshproxy为crond任务？[y/n]"
-    echo "[y]:"
-    read as_a_cron_task
 
-    case $as_a_cron_task in
-    y | YES | yes)
-        if [[ -f /var/spool/cron/$USER ]]; then
-            sed -i "/$script_path/d" /var/spool/cron/$USER
-            crontab -l >/tmp/sshproxy_cron
-        fi
-        echo "@reboot bash $script_path start
+    crontab -l >/tmp/sshproxy_cron
+    sed -i -E -e "/$script_path/d" /tmp/sshproxy_cron
+
+    echo "@reboot bash $script_path start
 $restart_cron_time bash $script_path restart
 */$cron_interval_min * * * * bash $script_path start" >>/tmp/sshproxy_cron
 
-        crontab /tmp/sshproxy_cron
+    sed -i -E "/^$/d" /tmp/sshproxy_cron
+    crontab /tmp/sshproxy_cron
 
-        crontab -l
-        ;;
-    *)
-        echo
-        ;;
-    esac
+    echo "cron task list:"
+    crontab -l
 }
 #+++++++++
 #1.
-pid=$(ps -ef | grep $proxyPort:$localHost:$localPort | grep -v grep | awk '{print $2}')
+pid=$(ps -eo pid,command | grep $proxyPort:$target_host:$target_sshd_port | grep -v grep | awk '{print $1}')
 
 action=${1:start} #star|restart|stop|install
 case $action in
 stop)
-    [[ -n $pid ]] && kill -9 $pid
-    echo "stop sshproxy" >$log
+    echo "stop sshproxy" >>$log
+    [[ -n $pid ]] && kill -s SIGTERM $pid
     exit 0
     ;;
 restart)
     echo "restart sshproxy" >>$log
-    [[ -n $pid ]] && kill -9 $pid
+    [[ -n $pid ]] && kill -s SIGTERM $pid
     ;;
 start)
     if [[ -n $pid ]]; then
         echo "sshproxy is running. PID=$pid" >>$log
-        # ps -$pid
         exit 0
-    else
-        echo "restart sshproxy" >>$log
     fi
+    echo "start sshproxy..." >>$log
     ;;
 install)
     install

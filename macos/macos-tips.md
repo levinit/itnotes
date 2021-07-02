@@ -40,3 +40,10 @@ pbpaste > newfile.txt
 
 
 
+## 消息提示osascript
+
+```shell
+osascript -e 'display notification "text1" with title "title1"'
+```
+
+弹出消息的标题是title1，内容是text1。

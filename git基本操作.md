@@ -324,9 +324,12 @@ git rev-parse --short HEAD #最近一次提交快照的前面部分（7位）has
 
   
 
-- 删除分支：`git branch -d <branch-name>` 强行删除**未被合并过**的分支：`git branch -D <branch-name>`
+- 删除分支
 
-  这只是删除了本地的分支，如果要删除远程仓库的分支，参看下文。
+  - `git branch -d <branch-name>` 强行删除**未被合并过**的分支：`git branch -D <branch-name>`
+  - `git push origin -d <branch-name>`  删除远程分支
+  
+  
 
 ## 推送和获取分支
 
@@ -490,11 +493,10 @@ git 的配置文件在`~/.gitconfig`，仓库的配置文件是仓库内的`.git
   ```
 
 * 中文文件名显示（避免中文显示成八进制数字）
-  
 ```shell
   git config --global core.quotepath false
-  ```
-  
+```
+
 * 显示历史记录时每个提交的信息显示一行
 
   ```shell
@@ -535,7 +537,7 @@ git 的配置文件在`~/.gitconfig`，仓库的配置文件是仓库内的`.git
   git config --global alias.ci commit
   git config --global alias.br branch
   git config --global alias.unstage 'reset HEAD'
-git config --global alias.graph 'log --graph --oneline --decorate'
+  git config --global alias.graph 'log --graph --oneline --decorate'
   ```
   
   # git 服务简易搭建
