@@ -35,7 +35,7 @@ log_maxsize=10000 #Bytes
 
 #---do not edit below, if you don't know what you're doing
 script_path=$(readlink -f "$0")
-scirpt_name=$(basename $0)
+script_name=$(basename $0)
 script_dir_path=$(dirname $script_path)
 
 #ssh options
@@ -143,7 +143,7 @@ ssh -p $proxyPort <user-at-target-host>@$remote_host
 function install() {
     #ssh key auth target_host --> remote host  ssh密钥认证 本机-->远程主机
     echo "Check ssh key auth!"
-    if [[ $(timeout $check_timeout ssh -p -i $pr $remote_sshd_port $remote_ssh_user@$remote_host "hostname") ]]; then
+    if [[ $(timeout $check_timeout ssh -p $remote_sshd_port -i $private_key $remote_ssh_user@$remote_host "hostname") ]]; then
         echo "authenticated!"
     else
         echo "!!!authenticated failed, please run below command :"
@@ -156,7 +156,7 @@ function install() {
     echo "+++++++++++++"
 
     crontab -l >/tmp/sshproxy_cron
-    sed -i -E -e "/$script_path/d" /tmp/sshproxy_cron
+    sed -i -E "/$script_name/d" /tmp/sshproxy_cron
 
     echo "@reboot bash $script_path start
 $restart_cron_time bash $script_path restart
