@@ -28,9 +28,37 @@ systemctl enable --now packagekit
 mv /etc/apt/apt.conf.d/20packagekit{,.disabled}
 ```
 
-# 命令或文件等软件包来源
 
-查看某个命令或库文件等来自哪个软件包
+
+# 查询软件包的依赖
+
+查询某个软件包依赖于哪些软件包
+
+- pacman
+
+  ```shell
+  pactree <pkg name> #pactree 来自于pacman-contrib包
+  pacman -Qi <pkg name>
+  ```
+
+- yum/dnf（rpm）
+
+  ```shell
+  yum deplist <pkg name>
+  ```
+
+- apt（deb）
+
+  ```shell
+  apt-cache depends <pkg name>
+  dpkg -I <pkg name>
+  ```
+
+
+
+# 查询软件包来源
+
+查看某个文件等来自哪个软件包
 
 - pacman
 
@@ -46,6 +74,7 @@ mv /etc/apt/apt.conf.d/20packagekit{,.disabled}
 
   ```shell
   yum provides <command or file-name>
+  yum provides vncserver  #查询vncserver来自哪个包
   ```
 
   dnf将yum命令替换即可（下同）
@@ -57,7 +86,7 @@ mv /etc/apt/apt.conf.d/20packagekit{,.disabled}
   ```shell
   apt install -y apt-file
   apt-file update #更新数据库
-  apt-file search <command or apt-file
+  apt-file search <command or apt-file>
   
   apt-cache depends vim  #查看某个包所有依赖
   ```
@@ -72,7 +101,7 @@ mv /etc/apt/apt.conf.d/20packagekit{,.disabled}
 
 - yum/dnf
 
-  `--downloadonly` 
+  `--downloadonly`只下载，`--downloaddir`下载到指定目录（默认下载到当前目录）
 
   ```shell
   yum install -y --downloadonly --downloaddir=<dir-path> <pkgs>
@@ -80,7 +109,7 @@ mv /etc/apt/apt.conf.d/20packagekit{,.disabled}
   yum reinstall -y --downloadonly --downloaddir=<dir-path> <pkgs>
   ```
 
-  如不指定`--downloaddir`默认下载到当前目录
+  
 
 - apt
 

@@ -8,24 +8,39 @@ mysql被收购后衍生的分支，由社区维护。
 
    ```shell
    #指定运行用户和数据存放位置
-   mariadb-install-db --user=mysql --basedir=/usr --datadir=/var/lib/mysql
+   mysql_install_db --user=mysql # --datadir=/var/lib/mysql  --basedir=/var/lib/mysql --datadir=/var/lib/mysql/data
    ```
 
-3. 启动mariadb服务，以linux中systemd为例：
+   `mysql_install_db`将把数据库存放目录的权限所有者改为mysql用户当前用户。
+
+   mariadb安装后，系统会创建mysql用户用作运行mariadb的默认用户，`--user=mysql`会将数据库存放目录的权限所有者改为mysql用户；如果要使用mysql运行，但当前用户不是`mysql`且没有使用`--user=mysql`，需要修改数据库文件权限：
+
+   ```shell
+   chown -R mysql.mysql /var/lib/mysql
+   ```
+
+   
+
+   使用systemctl启动mariadb会自动初始化数据库目录，具体查看其systemd unit文件。
+
+3. 启动mariadb服务
 
    ```shell
    systemctl enable --now mariadb
    ```
 
-4. 
-   
-5. 初始化，可选
+   如果不使用systemctl，使用mysqld_safe（一个脚本，systemd units也是执行该脚本）启动：
 
    ```shell
-   mysql_install_db
+   mysqld_safe  # --datadir='/var/lib/mysql'
+   mysqld_safe #--defaults-file=xx.cnf
    ```
 
-6. 安全配置，可选
+   可使用`--defaults-file`指定读取的配置文件（默认读取`/etc/my.conf`）。
+
+   
+
+4. 安全配置，可选
 
    ```shell
    mysql_secure_installation
@@ -33,15 +48,16 @@ mysql被收购后衍生的分支，由社区维护。
 
    其会询问用户作出一些安全性相关的设置建议，主要包括：
 
-   - 设置root密码
-   - 远程登录开关
-   - 删除匿名帐号
+   - 是否设置root密码
+   - 是否关闭远程root登录
+   - 是否删除匿名帐号（实际匿名用户是没有任何权限的）
    - 是否删除测试数据库test
 
    或者使用sql：
 
    ```sql
    use mysql;
+   --:del root remote access
    delete from user where user='root' and host!='localhost';
    --if you want to set a password for root:
    --SET PASSWORD FOR 'root'@'localhost' = PASSWORD('new_pwd');

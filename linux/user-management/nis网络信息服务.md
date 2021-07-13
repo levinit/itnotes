@@ -62,12 +62,20 @@ Debian/Ubuntu安装nis后会提示输入nisdomain。
 
   
 
-  持久化设置nisdomain：
+持久化设置nisdomain：
+
+可选，可以在配置好nis server后，再将nis server也配置为一个client，domainname自然会持久化存储到配置中。
 
   - debian系列，可以向`/etc/defaultdomain`文件中写入名称。
 
-  - redhat系列，可使用authconfig-tui交互设置，或者使用authconfig 命令；或者编辑`/etc/sysconfig/network`，添加网域名称和端口，示例：
+  - redhat系列，可使用authconfig-tui交互设置，或者使用authconfig （或authconfig-tui、authconfig-gtk等）命令：
 
+    ```shell
+    authconfig --nisdomain=hpc --update #nis ypserv没有启动时，该命令会卡住
+    ```
+    
+    或者编辑`/etc/sysconfig/network`，添加网域名称和端口，示例：
+    
     ```shell
     NETWORKING=yes
     HOSTNAME=master
@@ -79,7 +87,7 @@ Debian/Ubuntu安装nis后会提示输入nisdomain。
 
 ### 修改配置文件（可选）
 
-根据需要修改配置`/etc/ypserv.conf`，例如配置允许/禁止访问NIS服务器的网域，默认是允许所有。
+根据需要修改配置`/etc/ypserv.conf`，例如配置允许/禁止访问NIS服务器的网域以及它们可以获取的数据内容，默认是允许所有。（另`/var/yp/securenets`也可设置nis client白名单）
 
  限制指定主机的配置示例：
 
@@ -101,28 +109,33 @@ Debian/Ubuntu安装nis后会提示输入nisdomain。
 
 该操作会生成nis数据库文件于`/var/yp/`目录下与nisdomain同名的目录中。
 
-```shell
-#yes | /usr/lib/yp/ypinit -m   #将master替换成实际的主机名
-yes | /usr/lib64/yp/ypinit -m  #将master替换成实际的主机名
-```
-
-或者按照以下步骤操作：
+照以下步骤操作：
 
 1. 执行` /usr/lib64/yp/ypinit -m`（或`/usr/lib/yp/ypinit -m`）
+
+   
 
 2. 出现`next host to add:`其自动填入当前nis服务器主机名，如需添加其他nis服务器，添加其主机名到下一个`next host to add:`后即可。按下`ctrl`-`d`即可进入下一步配置。
 
    
 
-   小技巧，在一机多网的条件下（例如每个节点均有两个网络），可以将server节点不同网络的地址均设置为server host（当然，也要在客户端节点添加多个nis server）。当一个网络故障时，另一个网络仍然可为客户端节点提供服务。
+   小技巧：**在一机多网的条件下（例如每个节点均有两个网络），可以将server节点不同网络的地址均设置为server host**（当然，也要在客户端节点添加多个nis server才有意义）。当一个网络故障时，另一个网络仍然可为客户端节点提供服务。
 
    
 
 3. `is this correct?`询问时，检查信息，如果无误，按下`y`生成用户信息资料库。
 
-  
+ 
 
-  提示：**在新增/删除账户，或修改账户信息后，需要手动执行以下命令更新nis数据库：**
+或者只有一个server是可以执行发送y给ypinit -m命令直接确认，跳过询问
+
+```shell
+echo y | /usr/lib64/yp/ypinit -m  #将master替换成实际的主机名
+```
+
+
+
+提示：**在新增/删除账户，或修改账户信息后，需要手动执行以下命令更新nis数据库：**
 
   ```shell
   make -C /var/yp
@@ -131,6 +144,8 @@ yes | /usr/lib64/yp/ypinit -m  #将master替换成实际的主机名
   其使用make读取`/var/yp/Makefile`生成nis数据库。
 
   如果使用ypch、yppasswdd更新用户shell和密码则无需手动make更新数据库。
+
+
 
 
 
@@ -181,10 +196,12 @@ yes | /usr/lib64/yp/ypinit -m  #将master替换成实际的主机名
 
   1. 将从服务器[配置为客户端](#客户端)
 
-  2. 按照[主服务器配置](#主服务器配置)步骤执行，但是在[建立帐号资料库](#建立帐号资料库)一步时，将命令中的`-m`改为`-s master`，master为nis主服务器的地址：
+     对于主服务器来说，从服务器也是主服务器的一个客户端。
 
+  2. 按照[主服务器配置](#主服务器配置)步骤执行，但是在[建立帐号资料库](#建立帐号资料库)一步时，将命令中的`-m`改为`-s master`，master为nis主服务器的地址：
+  
      ```shell
-     yes | /usr/lib64/yp/ypinit -s master  #master改为实际的nis server
+     echo y | /usr/lib64/yp/ypinit -s master  #master改为实际的nis server
      ```
   
      该操作将自动从主服务器的`/var/yp/`下与 nis domain同名的目录复制到从服务器的`/var/yp`下。
@@ -216,17 +233,19 @@ yes | /usr/lib64/yp/ypinit -m  #将master替换成实际的主机名
 
 - 限制nis client
 
-  如果`/var/yp/secerenets`文件为空或不存在（默认安装后如此），NIS侦听所有网络。
-
-  该文件用以指定本nis server响应请求的nis客户端来源，配置示例：
+  `/var/yp/securenets`文件用以指定本nis (slave) server响应请求的nis客户端来源（客户端白名单），配置示例：
 
   ```shell
-  #针对一个网段的主机
-  #第一部分为掩码 第二部分为子网
+  #针对一个网段的主机 第一部分为掩码 第二部分为子网
   255.255.255.0 192.168.0.0
   #针对一个主机
   host 172.16.1.111
+  host 127.0.0.1
   ```
+
+  该文件不存在（安装后默认如此）或内容为空，表示无限制。
+
+  注意，修改该文件后，必须重启ypserv服务以使其生效。
 
   
 
@@ -258,7 +277,7 @@ yes | /usr/lib64/yp/ypinit -m  #将master替换成实际的主机名
 主服务器上查看ypserv情况
 
 ```shell
-rpcinfo -p localhost | grep -E '(portmapper|yp)' #1
+rpcinfo -p localhost | grep -E '(portmapper|ypserv|fypxfrd)'
 rpcinfo -u localhost ypserv  #2
 ```
 
@@ -272,7 +291,8 @@ rpcinfo -u localhost ypserv  #2
 从服务器可以执行以下命令检查从主服务器同步的账户信息情况。
 
 ```shell
- ypcat -h master passwd.byname
+rpcinfo -p localhost | grep -E '(portmapper|ypserv|fypxfrd)'
+ypcat -h master passwd.byname
 ```
 
 
@@ -281,9 +301,9 @@ rpcinfo -u localhost ypserv  #2
 
 ## 安装和启用服务
 
-CentOS安装`ypbind` `yp-tools`（可选），启用`ypbind`和`rpcbind`（一般将自行启用）服务并设置开机自启动。
+Redhat安装`ypbind` `yp-tools`（可选），启用`ypbind`和`rpcbind`（一般将自行启用）服务并设置开机自启动。
 
-Debian安装`nis`和`yp-tools`，启用`nis`。
+Debian安装`nis`和`yp-tools`，启用`nis`。（debian将ypserv、yppasswdd、ypbind等均合并到nis服务）
 
 
 
@@ -291,21 +311,30 @@ Debian安装`nis`和`yp-tools`，启用`nis`。
 
 使用工具配置：
 
-- redhat/centos上，可使用`setup`或` authconfig-tui`（需要`python`）或` authconfig-gtk`（需要安装gtk相关的图形界面工具）完成下列各项的配置，或者使用authconfig命令配置：
+- Redhat/centos上，使用authconfig命令配置：
 
   ```shell
-  authconfig --enablenis --nisdomain=<domain name> --nisserver=<nis server> --update
+  #多个server使用逗号分隔
+  authconfig --enablenis --nisdomain=<domain-name> --nisserver=<server1,server2> --update
   #authconfig --enablenis --nisdomain=<domain name> --nisserver=server,slave --update
   ```
 
-  使用以上配置工具，如nis server不止一个，则主机地址之间以逗号分隔。
+  或可使用`setup`或` authconfig-tui`（需要`python`）或` authconfig-gtk`（需要安装gtk相关的图形界面工具）完成下列各项的配置，如nis server不止一个，填写server时以逗号分隔多个server。
 
   
 
-- debian系统可使用`dpkgreconfig nis`设置。
+- debian系统可使用`dpkg-reconfigure nis`设置。
 
-  debian的`/etc/defualt/nis`文件可配置nis相关参数。
+  debian的`/etc/defualt/nis`文件将其配置为client（默认）。
 
+  ```shell
+  sed -i -E -e "/NISSERVER=true/ s/true/false/" -e "/NISCLIENT=false/ s/false/true/" /etc/default/nis
+  ```
+  
+  参看下文第2步修改`/etc/yp.conf`。
+  
+  重启nis服务。
+  
   
 
 或者按照以下步骤进行以下配置：
@@ -318,10 +347,12 @@ Debian安装`nis`和`yp-tools`，启用`nis`。
 
    ```shell
    domain domain-name server master  #domainname换成实际的域名 master换成实际的地址
-   #ypserver slave                   #其余备用sever写法
+   #ypserver server2                 #其余备用sever写法
    ```
    
-3. 编辑`/etc/nsswitch.conf `，在`passwd`、`shadow`和`group`添加`nis`（或`nisplus`），类似：
+3. 编辑`/etc/nsswitch.conf `，在`passwd`、`shadow`和`group`最后添加`nis`（或`nisplus`），类似：
+
+   一些发行版安装nis组件后已自动添加，无需设置。
 
    ```shell
    passwd:  files nis

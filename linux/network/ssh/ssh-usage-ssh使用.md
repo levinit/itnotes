@@ -87,12 +87,12 @@ ssh host
 在`~/.ssh/config`（如无该文件则创建之）中配置：
 
 ```
-Host host1 #host1为所命名的别名
-hostname xxx.xxx.xxx.xxx #登录地址
-user user1  #用户名
-#port 1998  #如果修改过默认端口则指定之
-#IdentityFile  ~/path/to/id_rsa.pub #如果要指定公钥
-#IdentitiesOnly yes #只使用指定的公钥进行认证
+Host host1 #host1为所命名的别名 Host或host大小写均可
+   hostname xxx.xxx.xxx.xxx #登录地址
+   user user1  #用户名
+   #port 1998  #如果修改过默认端口则指定之
+   #IdentityFile  ~/path/to/id_rsa.pub #如果要指定公钥
+   #IdentitiesOnly yes #只使用指定的公钥进行认证
 ```
 
 登录时直接使用`ssh host1`即可。
