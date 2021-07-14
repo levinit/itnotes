@@ -132,6 +132,8 @@ ssh-user:$target_ssh_user
 ssh-port:$target_sshd_port
 ---------------------
 client === $remote_host:$proxyPort <--->$hostname:$target_sshd_port
+
+ssh -J $remote_host:$target_sshd_port localhost -p $proxyPort -l <user-on-target-host>
 ---------------------
 ssh -p $proxyPort <user-at-target-host>@$remote_host
 " >/tmp/$ssh_proxy_info_file
