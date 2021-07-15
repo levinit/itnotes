@@ -156,10 +156,13 @@ if [[ $os == Linux ]]; then
     alias pkgclean='sudo apt autoremove && sudo apt autoclean'
   fi
 elif [[ $os == Darwin ]]; then
-  # brew tap beeftornado/rmtree
-  # brew tap buo/cask-upgrade
-#  export HOMEBREW_BOTTLE_DOMAIN=https://mirrors.ustc.edu.cn/homebrew-bottles/bottles
-  export HOMEBREW_BOTTLE_DOMAIN="https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles"
+  #  brew tap beeftornado/rmtree
+  #  brew tap buo/cask-upgrade
+  #  brew tap homebrew/homebrew-cask
+  ## export HOMEBREW_BOTTLE_DOMAIN=https://mirrors.ustc.edu.cn/homebrew-bottles/bottles
+  # export HOMEBREW_BOTTLE_DOMAIN="https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles"
+  export HOMEBREW_BOTTLE_DOMAIN=https://mirrors.sjtug.sjtu.edu.cn/homebrew-bottles/bottles
+
   export HOMEBREW_NO_AUTO_UPDATE=true
 
   alias up='brew update && brew upgrade && brew cu -ay --no-brew-update' # && brew doctor'
@@ -228,7 +231,7 @@ alias virtstart='sudo modprobe virtio && sudo systemctl start libvirtd ebtables 
 
 #---vim plugin---
 #pacman -S vim-plugin --no-comfirm
-alias vimpluginstall="curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim"
+#alias vimpluginstall="curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim"
 
 #asciinema record terminal
 alias rec='asciinema rec -i 5 terminal-`date +%Y%m%d-%H%M%S`' #record
@@ -267,10 +270,19 @@ export GOPROXY=https://goproxy.cn
 export GOPATH=$HOME/Public/dev/go
 
 #conda
-[ -r "/usr/local/Caskroom/miniconda/base/etc/profile.d/conda.sh" ] && . "/usr/local/Caskroom/miniconda/base/etc/profile.d/conda.sh"
+#[ -r "/usr/local/Caskroom/miniconda/base/etc/profile.d/conda.sh" ] && . "/usr/local/Caskroom/miniconda/base/etc/profile.d/conda.sh"
 #prevent auto active conda env, execute:
 #conda config --set auto_activate_base false
 alias condaclean='conda clean -ady'
+
+#environment module
+#if [ -d /usr/share/modules/init ]
+#then
+#  source /usr/share/modules/init/zsh
+#elif [ -d /usr/local/opt/modules/init ]
+#then
+#  source /usr/local/opt/modules/init/zsh
+#fi
 
 #ansible
 ANSIBLE_CONFIG=~/.ansible.cfg
@@ -278,16 +290,13 @@ ANSIBLE_CONFIG=~/.ansible.cfg
 #---macos PATH
 if [[ $os == Darwin ]]; then
   PATH="/usr/local/sbin:$PATH"
-  [ -d /usr/local/opt/gnu-sed/libexec/gnubin ] && PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"
+  [[ -d /usr/local/opt/gnu-sed/libexec/gnubin ]] && PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"
   export PATH
   #sshfs
   alias sshfsvps='sshfs vps:/root /tmp/vps -o follow_symlinks && open /tmp/vps'
   alias sshfscvml='sshfs vps:/root /tmp/vps -o follow_symlinks && open /tmp/cvml'
 fi
 
-#---rpi
-alias dm='sudo systemctl start vncserver-x11-serviced.service  && sudo systemctl start lightdm'
-alias stopdm='sudo systemctl stop vncserver-x11-serviced.service  && sudo systemctl stop lightdm'
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 alias fzfbat="fzf --preview 'bat {}'"

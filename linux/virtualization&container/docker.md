@@ -148,6 +148,8 @@ docker push [选项] 镜像名[:标签] 用户名/镜像名
 
 ### dockerfile构建
 
+参看[dockerfile reference](https://docs.docker.com/engine/reference/builder/)
+
 1. dockerfile文件
 
    > Dockerfile 是一个文本文件，其内包含了一条条的指令(Instruction)，每一条指令构建一层,因此每一条指令的内容,就是描述该层应当如何构建。
@@ -165,21 +167,70 @@ docker push [选项] 镜像名[:标签] 用户名/镜像名
 
    Dockerfile 中每一个指令都会建立一层，因此有必要尽可能减少命令条数，例如使用`&&`将几条`RUN`指令合成一条。
 
-   常用指令：
+   - 常用指令：
+     - `FROM 镜像名`  基于的镜像 
 
-   - `MAINTAINER 作者` 镜像作者
-   - `COPY 来源 目的`  复制
-   - `ADD 来源 目地`  类似COPY，如果要复制的文件是归档文件（tar、zip、xz等），其会被自动解压
-   - `ENV 环境变量`  设置环境变量供后面的指令使用
-   - `EXPOSE 端口`  指定容器中的进程会监听某个端口
-   - `VOLUME `  将文件或目录声明为 volume
-   - WORKIDR  为后面的RUN, CMD, ENTRYPOINT, ADD或COPY指令当前工作目录
-   - `RUN 指令`  在容器中运行指定的命令
-   - `CMD 指令`  容器启动时运行指定的命令
-   - `ENTRYPOINT 指令`  容器启动时运行的命令，不同于CMD，ENTRYPOINT**一定会被执行**，即使运行 docker run 时指定了其他命令。
-   - `USER 用户名`  指定后面指令的运行用户
-   - `HEALTHCHECK`  健康检查
-   - `ONBUILD`
+     - `MAINTAINER 作者` 镜像作者
+
+     - `COPY 来源 目的`  复制
+
+     - `ADD 来源 目地`  类似COPY，如果要复制的文件是归档文件（tar、zip、xz等），其会被自动解压
+
+     - `ENV 环境变量`  设置环境变量供后面的指令使用
+
+     - `EXPOSE 端口`  指定容器中的进程会监听某个端口
+
+     - `VOLUME 路径 `  将文件或目录声明为 volume
+
+     - `WORKIDR 路径`  为后面的RUN, CMD, ENTRYPOINT, ADD或COPY指令当前工作目录
+
+     - `RUN 指令`  在构建时容指定的命令
+
+     - `CMD 指令`  容器启动时运行指定的命令
+
+     - `ENTRYPOINT 指令`  容器启动时运行的命令
+
+       不同于CMD，ENTRYPOINT**一定会被执行**，即使运行 docker run 时指定了其他命令。
+
+     - `USER 用户名`  指定后面指令的运行用户
+
+     - `HEALTHCHECK`  健康检查
+
+     - `ONBUILD`
+
+   
+
+   - 技巧
+
+     - `RUN`、`CMD`和`ENTRYPOINT`均有三种命令运行方式，但只建议将命令以IFS分隔的各个部分在`[]`中以`,`分隔的方式编写。
+
+     - 减小镜像体积
+
+     - 压缩镜像层
+
+       Dockerfile中的每条指令都会创建一个镜像层（最多127层），继而会增加整体镜像的尺寸，为了减小景象大小，应该将某些指令合并编写。例如：
+
+       ```dockerfile
+       RUN apt install -y vim
+       RUN apt install mariadb
+       RUN rm -rf /var/cache/apt/*
+       ```
+
+       可以合并为：
+
+       ```dockerfile
+       RUN apt install -y vim mariadb && rm -rf /var/cache/apt/*
+       ```
+
+     - [google distroless](https://github.com/GoogleContainerTools/distroless)提供了一些容器镜像，可根据需要选用。
+
+       > “distroless”镜像只包含应用程序及其运行时依赖项，不包含程序包管理器、shell 以及在标准 Linux 发行版中可以找到的任何其他程序。
+
+     - 选用较小体积的基础镜像
+
+       例如，[alphine](https://hub.docker.com/_/alpine)，一个基于 musl libc 和 busybox 的面向安全的轻量级 Linux 发行版；使用[scratch](https://hub.docker.com/_/scratch)空白镜像基础上构建。
+
+       
 
 2. 构建
 
@@ -190,6 +241,10 @@ docker push [选项] 镜像名[:标签] 用户名/镜像名
    ```
 
    在镜像名后面加上`:`，在`:`后面添加标签，**如果没有标签名，则默认为lastest**。
+   
+   - `-f`  指定读取的dockerfile，如不指定，默认读取当前目录下的Dockerfile文件。
+   
+   
 
 # 容器操作
 
