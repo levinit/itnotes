@@ -1,0 +1,27 @@
+[Desktop Entry]
+Version=1.0
+Name=Chromium
+GenericName=Web Browser
+Comment[zh_CN]=访问互联网
+Comment[zh_HK]=連線到網際網路
+Comment[zh_TW]=連線到網際網路
+Exec=/usr/bin/chromium %U
+StartupNotify=true
+Terminal=false
+Icon=chromium
+Type=Application
+Categories=Network;WebBrowser;
+MimeType=text/html;text/xml;application/xhtml_xml;image/webp;x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/ftp;
+Actions=new-window;new-private-window;
+
+[Desktop Action new-window]
+Name=New Window
+Name[zh_CN]=新建窗口
+Name[zh_TW]=開新視窗
+Exec=/usr/bin/chromium
+
+[Desktop Action new-private-window]
+Name=New Incognito Window
+Name[zh_CN]=新建隐身窗口
+Name[zh_TW]=新增無痕式視窗
+Exec=/usr/bin/chromium --disk-cache-dir="/dev/shm/chromium/"

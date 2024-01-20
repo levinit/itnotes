@@ -1,0 +1,113 @@
+[xrdp](https://www.xrdp.org)
+
+> xrdp provides a graphical login to remote machines using RDP (Microsoft  Remote Desktop Protocol). xrdp accepts connections from variety of RDP  clients: FreeRDP, rdesktop, NeutrinoRDP and Microsoft Remote Desktop  Client (for Windows, macOS, iOS and Android).
+
+**xrdp**是一个守护进程，支持 Microsoft 的RDP协议，使用 Xvnc 或 xorgxrdp 作为其后端。
+
+参考[archlinux-wiki:xrdp](https://wiki.archlinuxcn.org/wiki/Xrdp)
+
+# 安装
+
+安装xrdp，启动xrdp守护进程。
+
+xrdp默认使用TCP 3389端口。
+
+
+
+另外还必须安装以下之一作为后端：
+
+## Xvnc后端
+
+xrdp将启动一个Xvnc会话，需要安装一种VNC的server端实现，例如tigervnc，turbovnc。
+
+
+
+## [xorgxrdp](https://www.xrdp.org/)后端
+
+xrdp将启动一个X11会话。
+
+是xrdp项目的一部分，*一般在Linux发行版中包名即为xorgxrdp*。
+
+
+
+启用声音支持，安装：pulseAudio和[pulseaudio-module-xrdp](https://github.com/neutrinolabs/pulseaudio-module-xrdp)
+
+一些Linux发行版中可能需要额外安装xinit程序，其包名类似`xorg-xinit`，因为该包可能不是桌面或窗口管理器的必要依赖，并未随前者一并安装。
+
+> The **xinit** program allows a user to manually start an [Xorg](https://wiki.archlinux.org/title/Xorg) display server. 
+
+
+
+# 配置
+
+以从Linux的包管理器安装xrdp为例，其配置文件目录一般为`/etc/xrdp`，
+
+- 主要配置文件
+
+  - `xrdp.ini`
+
+    xrdp sever的配置文件。
+
+    提示：一些发行版安装xrdp后默认使用Xvnc后端，配置文件中`[Xorg]`配置内容被注释，使用xorgxrdp后端需要将这些行的注释符去掉。
+
+    
+
+  - `sesman.ini`
+
+    xrdp-sesman（xrdp session manager）的配置文件，定义xrdp会话的相关参数。
+
+
+
+- 允许任何人启动X服务器（使用xorgxrdp可能需要配置）
+
+  在 `/etc/X11/Xwrapper.config` 添加：
+
+  ```shell
+  allowed_users=anybody
+  needs_root_rights=no
+  ```
+
+  
+
+- xinit配置
+
+  成功启动显示服务器后，*xrdp* 将默认执行`sesman.ini`中的`[globals]`小节定义的`DefaultWindowManager`对应的脚本，一般为 `startwm.sh`（具体路径查看包安装详情）。
+
+  
+
+  该脚本使用xinit启动Xorg 显示服务，该脚本一般会读取一些全局xinit脚本（例如` /etc/X11/xinit/Xsession`，` /etc/X11/xinit/xinitrc`）和用户家目录的xinit脚本`~/.xinitrc`。
+
+  
+
+  由于不同Linux发行版可能有不同的xinit启动脚本实现，具体需要阅读`startwm.sh`脚本内容。
+
+  
+
+  另可参考[archlinux-wiki: xinit](https://wiki.archlinux.org/title/xinit)自行编写启动脚本启动Xorg服务，简单的内容示例：
+
+  ```shell
+  #!/bin/sh
+  session=${1:-xfce}
+  case $session in
+      gnome             ) session=gnome-sesion;;  #gnome-session-classic
+      i3|i3wm           ) session=i3;;
+      kde               ) session=startplasma-x11;;
+      xfce|xfce4        ) session=startxfce4;;
+      *                 ) session=$1;;
+  esac
+  unset SESSION_MANAGER
+  unset DBUS_SESSION_BUS_ADDRESS
+  exec dbus-launch $session
+  ```
+
+
+
+# 连接
+
+使用RDP客户端连接即可，如：
+
+- windows：mstsc即系统内置的远程桌面连接程序
+- MacOS：[windows remote desktop](https://learn.microsoft.com/en-us/windows-server/remote/remote-desktop-services/clients/remote-desktop-mac)
+- Linux：Remmina  vinagre
+
+提示：RDP默认端口为3389，默认端口一般无需额外指定。
