@@ -77,6 +77,26 @@ certbot --nginx -d abc.def -d www.abc.def #abc.def为示例域名
 
 
 
+非80/443端口申请证书，需要先执行以下命令获取DNS TXT 记录信息，将获取的信息填到DNS
+
+```shell
+certbot -d example.com --manual --preferred-challenges dns certonly 
+```
+
+其输出类似内容：
+
+> Please deploy a DNS TXT record under the name:
+>
+> _acme-challenge.example.com.
+>
+> with the following value:
+>
+> uEWcWEXY1bnCxw0aBr0X9iRpccpZWR7Xtoq3Pu6E8vg
+
+根据输出内容在DNS解析中添加一条TXT记录。
+
+等待几分钟，使用`dig _acme-challenge.example.com txt`进行检查。
+
 # 页面密码验证
 
 可以用htpasswd（apache的工具）来生成密码，使用以下命令生成一个密码文件：

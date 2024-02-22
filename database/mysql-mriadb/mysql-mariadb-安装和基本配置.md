@@ -190,7 +190,7 @@ default-character-set = utf8
 # 登录数据库
 
 ```shell
-mysql -h <host> -u <user> -p <password>
+mysql [-h <host>] -u <user> -p <password> [-D <database_name>]
 ```
 
 注意：不指定-h时，默认通过localhost连接数据库，localhost连接所使用的是unix socket，因此只有对socket文件有权限的用户才能使用localhost登录。

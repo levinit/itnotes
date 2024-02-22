@@ -111,7 +111,7 @@ elif [[ -n $(command -v ifconfig) ]]; then #net-tools (ifconfig)
     network_info=$(ifconfig $interface | grep -w inet | awk -v interface=$interface '/inet6?/{print interface": "$2}')"\n$network_info"
   done
   gateway=$(netstat -rn | grep "default" | awk '{print $2}' | head -n 1)
-  echo -e "gateway:\e[3;35m"  $(echo $gateway)"\e[0m\n\e[31m$(echo "$network_info" | sed -E -e "/^$/d" -e "s/\t/\s/g")\e[0m"
+  echo -e "gateway:\e[3;35m" $(echo $gateway)"\e[0m\n\e[31m$(echo "$network_info" | sed -E -e "/^$/d" -e "s/\t/\s/g")\e[0m"
 fi
 
 #fortune
@@ -178,12 +178,13 @@ function backupconfigs() {
 
   echo "--- Backup common configs in home ---"
   for conf in ${confs_in_home_common[*]}; do
-    [[ -e ~/$conf ]] && cp -av ~/$conf $comm_home_backup_dir/
+    [[ -e ~/$conf ]] && cp -av ~/$conf $comm_home_backup_dir/$conf
   done
 
   echo "--- Backup private configs in home ---"
+  mkdir -p $private_home_backup_dir/.ssh
   for conf in ${confs_in_home_private[*]}; do
-    [[ -e ~/$conf ]] && cp -av ~/$conf $private_home_backup_dir
+    [[ -e ~/$conf ]] && cp -av ~/$conf $private_home_backup_dir/$conf
   done
 
   echo "--- Backup configs in ~/.config ---"
@@ -285,19 +286,6 @@ if [[ $os == Linux ]]; then
     alias orphan='[[ -n $(command -v deborphan) ]] && clean_oprhan_debs || echo "deborphan not installed"'
     alias pkgclean='apt autoremove && apt autoclean && orphan'
     alias up='apt update && apt dist-upgrade && upgrade_tools'
-
-  elif [[ $(command -v yum) ]]; then
-    if [[ $user != root ]]; then
-      alias yum='sudo yum'
-      alias firewall-cmd='sudo firewall-cmd'
-    fi
-    alias i="yum install"
-    alias r="yum remove"
-    alias s="yum search"
-    alias orphan='package-cleanup --orphans'
-    alias oldkernel='package-cleanup --oldkernels --count=1'
-    alias up='yum update && upgrade_tools'
-    alias pkgclean='yum clean all && orphan'
   fi
 elif [[ $os == Darwin ]]; then
   function brew_taps() {
@@ -400,7 +388,11 @@ if [[ $os == Darwin ]]; then
 fi
 
 #---network---
-alias myip='curl cip.cc' #ident.me v6.ident.me
+alias ipv6='curl -s 6.ipw.cn'
+alias ipv4='curl -s 4.ipw.cn'
+alias ip_4_6_prefer='curl test.ipw.cn'
+alias myip='curl cip.cc && echo && echo IPv6: $(ipv6 || echo noIPv6)' #ident.me v6.ident.me
+alias myip_json='curl ipinfo.io'
 alias ping='ping -c 4'
 
 #---proxy
@@ -505,12 +497,20 @@ export RUSTUP_HOME="$dev_env_path/rust/rustup"
 export CARGO_HOME="$dev_env_path/rust/cargo"
 export RUSTBINPATH="$CARGO_HOME/bin"
 
+#-flutter
+export FLUTTER_HOME=$dev_env_path/flutter
+export PATH=$FLUTTER_HOME/bin:$PATH
+export PUB_HOSTED_URL="https://pub.flutter-io.cn"
+export FLUTTER_STORAGE_BASE_URL="https://storage.flutter-io.cn"
+# export PUB_HOSTED_URL=https://mirror.sjtu.edu.cn/flutter-infra
+# export FLUTTER_STORAGE_BASE_URL=https://mirror.sjtu.edu.cn
+
 #---PATH
 if [[ $os == Darwin ]]; then
   export PATH="/usr/local/sbin:/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"
 fi
 
-#-fzf
+#---fzf
 if [[ -r /usr/share/fzf/completion.zsh ]]; then
   source /usr/share/fzf/completion.zsh
   source /usr/share/fzf/key-bindings.zsh

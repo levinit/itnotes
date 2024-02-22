@@ -24,13 +24,9 @@ xrdp将启动一个Xvnc会话，需要安装一种VNC的server端实现，例如
 
 ## [xorgxrdp](https://www.xrdp.org/)后端
 
-xrdp将启动一个X11会话。
-
 是xrdp项目的一部分，*一般在Linux发行版中包名即为xorgxrdp*。
 
-
-
-启用声音支持，安装：pulseAudio和[pulseaudio-module-xrdp](https://github.com/neutrinolabs/pulseaudio-module-xrdp)
+xrdp将启动一个X11会话，相比vnc后端，其支撑声音传输，如果要启用声音支持，安装pulseAudio和[pulseaudio-module-xrdp](https://github.com/neutrinolabs/pulseaudio-module-xrdp)。
 
 一些Linux发行版中可能需要额外安装xinit程序，其包名类似`xorg-xinit`，因为该包可能不是桌面或窗口管理器的必要依赖，并未随前者一并安装。
 
@@ -55,12 +51,35 @@ xrdp将启动一个X11会话。
   - `sesman.ini`
 
     xrdp-sesman（xrdp session manager）的配置文件，定义xrdp会话的相关参数。
+    
+    可在根据需要修改指定的VNC/Xorg后端程序路径及它们的运行参数：
+    
+    ```shell
+    param=Xorg
+    ; Leave the rest parameters as-is unless you understand what will happen.
+    param=-config
+    param=xrdp/xorg.conf
+    param=-noreset
+    param=-nolisten
+    param=tcp
+    param=-logfile
+    param=.xorgxrdp.%s.log
+    
+    [Xvnc]
+    param=/opt/TurboVNC/bin/Xvnc
+    param=-bs
+    param=-nolisten
+    param=tcp
+    param=-localhost
+    param=-dpi
+    param=96
+    ```
+    
+    
 
+- 允许任何人启动X服务器
 
-
-- 允许任何人启动X服务器（使用xorgxrdp可能需要配置）
-
-  在 `/etc/X11/Xwrapper.config` 添加：
+  在一些发行版中如果普通用户使用xorg模式连接后无法启动桌面环境，在 `/etc/X11/Xwrapper.config` 添加：
 
   ```shell
   allowed_users=anybody

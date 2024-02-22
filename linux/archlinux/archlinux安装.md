@@ -67,6 +67,10 @@
 
 # 基础安装
 
+**可使用[archinstall](https://wiki.archlinuxcn.org/wiki/Archinstall)辅助安装工具**完成本章节的安装工作，安装完成后**连续按两次`ctrl`+`d` ，输入`reboot`重启并拔出u盘**
+
+---
+
 以下安装过程中遇到需要选择（y/n）的地方，如不清楚如何选择，可直接回车或按下<kbd>y</kbd>即可。
 
 ## 系统分区
@@ -142,36 +146,26 @@ ls /sys/firmware/efi/  #如果该文件存在则表示使用UEFI启动
 
 以下是不同的分区规划方案的常规建议：
 
+*建议使用swapfile，此处不划分swap分区*
+
 - MBR
 
   - **/**  系统根分区 （可以只有该分区）
-
   - /boot  可选 启动分区  200M+
-
   - home  可选  **但建议单独划分**
-
-  - swap  根据情况规划大小，一般用户4-8G足够，无具体建议，但不建议单独划分，建议使用swap文件
-
 - UEFI+LVM
 
   - ESP
   - 其他使用LVM
-
 - UEFI+标准分区
 
   - **ESP**  256M-512M （足以存放多个系统引导文件）
   - **/  系统根分区**     一般桌面用户建议至少25G+。
-
   - /boot  可选   如果要单独创建该分区，容量建议200M+。
-
   - /home  用户目录 可选 **但建议单独划分**
-
-  - swap  根据情况规划大小，一般用户4-8G足够，无具体建议，但不建议单独划分，建议使用swap文件
-
 - UEFI+btrfs
 
   - ESP
-  - swap 可选，根据情况规划大小，一般用户4-8G足够，无具体建议
   - 其余使用btrfs
 
 
@@ -189,7 +183,7 @@ ls /sys/firmware/efi/  #如果该文件存在则表示使用UEFI启动
     支持UEFI的设备上，先前已经存在一个操作系统（例如windows10）且**打算保留原操作系统，不要对EFI系统分区进行任何操作。**
 
     ```shell
-    fdisk -l |grep -i efi  #查看是否存在efi
+    fdisk -l | grep -i efi  #查看是否存在efi
     ```
 
     如果不保留原来的EFI系统分区中的引导文件，直接对其格式化即可：
@@ -256,7 +250,7 @@ ls /sys/firmware/efi/  #如果该文件存在则表示使用UEFI启动
 
 - 使用标准方式创建其他分区
 
-  使用cfdisk或其他工具创建`/`根分区（*假设为/dev/nvme0n1p2*）和home（*假设为/dev/nvme0n1p3*）用户家目录分区，创建文件系统：
+  使用cfdisk或其他工具创建`/`根分区（*假设为/dev/nvme0n1p2*）和home（*假设为/dev/nvme0n1p2*）用户家目录分区，创建文件系统：
 
   ```shell
   #1. 挂载根分区
@@ -264,9 +258,9 @@ ls /sys/firmware/efi/  #如果该文件存在则表示使用UEFI启动
   mount /dev/nvme0n1p2 /mnt    #挂载根分区
   
   #2. 挂载home分区
-  mkfs.ext4 /dev/nvme0n1p3
+  mkfs.ext4 /dev/nvme0n1p2
   mkdir /mnt/home    #建立home挂载点
-  mount /dev/nvme0n1p3 /mnt/home    #挂载home逻辑卷到/home
+  mount /dev/nvme0n1p2 /mnt/home    #挂载home逻辑卷到/home
   
   #3.挂载esp
   mkdir -p /mnt/boot/efi  #建立efi系统分区的挂载点
@@ -279,32 +273,26 @@ ls /sys/firmware/efi/  #如果该文件存在则表示使用UEFI启动
 
 - 参照ESP+LVM分区管理处理ESP
 
-- swap分区
+- 创建btrfs文件系统
 
   ```shell
-  mkswap dev/nvme0n1p2
-  ```
-
-- 其余空间创建btrfs
-
-  ```shell
-  #mkfs.btrfs [-m <meta-data-profile>] [-L <lable-name>] /dev/nvme0n1p3
-  mkfs.btrfs /dev/nvme0n1p3
+  #mkfs.btrfs [-m <meta-data-profile>] [-L <lable-name>] /dev/nvme0n1p2
+  mkfs.btrfs /dev/nvme0n1p2
   ```
 
   根据需要创建btrfs子卷，子卷规划示例：
 
-  | subvolume | 在系统的挂载点 | 附注                             |
-  | --------- | -------------- | -------------------------------- |
-  | @         | /              | 根分区                           |
-  | @home     | /home          |                                  |
-  | @log      | /var/log       | 日志                             |
-  | @cache    | /var/cache     | 缓存目录，包缓存默认也在该目录下 |
+  | subvolume | 在系统的挂载点 | 附注           |
+  | --------- | -------------- | -------------- |
+  | @         | /              | 根分区，必须   |
+  | @home     | /home          | 家目录，可选   |
+  | @log      | /var/log       | 日志目录，可选 |
+  | @cache    | /var/cache     | 缓存目录，可选 |
 
   1. 将btrfs分区挂载到/mnt
 
      ```shell
-     mount /dev/nvme0n1p3 /mnt
+     mount /dev/nvme0n1p2 /mnt
      ```
 
   2. 使用`btrfs subvolume create /mnt/<name>`创建子卷
@@ -333,7 +321,7 @@ ls /sys/firmware/efi/  #如果该文件存在则表示使用UEFI启动
   
        ```shell
        #1. 根分区 @root子卷
-       mount -o noatime,nodiratime,ssd,compress=zstd,subvol=@ /dev/nvme0n1p3 /mnt
+       mount -o noatime,nodiratime,ssd,compress=zstd,subvol=@ /dev/nvme0n1p2 /mnt
        
        #2. EFI
        mkdir -p /mnt/boot/efi  #EFI分区挂载点
@@ -347,11 +335,11 @@ ls /sys/firmware/efi/  #如果该文件存在则表示使用UEFI启动
        mkdir -p /mnt/var/{log,cache}
        
        #4.2 挂载subvolume
-       mount -o noatime,nodiratime,ssd,compress=zstd,subvol=@home /dev/nvme0n1p3 /mnt/home
+       mount -o noatime,nodiratime,ssd,compress=zstd,subvol=@home /dev/nvme0n1p2 /mnt/home
        
-       mount -o noatime,nodiratime,ssd,compress=zstd,subvol=@logs /dev/nvme0n1p3 /mnt/var/log
+       mount -o noatime,nodiratime,ssd,compress=zstd,subvol=@log /dev/nvme0n1p2 /mnt/var/log
        
-       mount -o noatime,nodiratime,ssd,compress=zstd,subvol=@cache /dev/nvme0n1p3 /mnt/var/cache
+       mount -o noatime,nodiratime,ssd,compress=zstd,subvol=@cache /dev/nvme0n1p2 /mnt/var/cache
        
        #...依次挂载完毕
        
@@ -412,36 +400,46 @@ Server = https://mirrors.ustc.edu.cn/archlinux/$repo/os/$arch
 Server = https://mirrors.163.com/archlinux/$repo/os/$arch
 ```
 
-## 安装基础系统
+## 安装基础包
 
 ```shell
 ##base-devel 包可选
-pacstrap -K /mnt base linux linux-firmware
+pacstrap -K /mnt base linux-lts linux-firmware
 ```
 
+## swapfile
 
-## 建立fstab文件
+可选。
+
+swapfile也可以安装完毕后再配置，创建完毕后在`/etc/fstab`中添加类似`/swap none swap defaults,nofail 0 0 `即可。
 
 ```shell
-#swap file (可选 也可以安装完毕后再配置)
 fallocate -l 4G /mnt/swap
 mkswap /mnt/swap
 chmod 600 /mnt/swap
 swapon /mnt/swap
-#echo '/home/swap none swap defaults,nofail 0 0'  >> /mnt/etc/fstab
+```
 
+如果要在btrfs上使用swapfile：
+
+```shell
+btrfs subvolume create /mnt/swap
+btrfs filesystem mkswapfile --size 4g --uuid clear /mnt/swap/swapfile
+swapon /swap/swapfile
+```
+
+## 建立fstab文件
+
+```shell
 genfstab -U /mnt > /mnt/etc/fstab
 cat /mnt/etc/fstab    # 查看生成的 /mnt/etc/fstab
 ```
-
 
 ## 进入系统
 
 ```shell
 arch-chroot /mnt
 ```
-
-
 
 ## 激活lvm2钩子
 

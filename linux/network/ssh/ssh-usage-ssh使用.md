@@ -137,7 +137,6 @@ ssh-agent代理转发需要开启[转发认证](#转发认证)
 
 
 
-
 ## 别名登录
 
 为需要经常登录的服务器设置别名，简化登录步骤。
@@ -154,6 +153,8 @@ Host host1 #host1为所命名的别名 Host或host大小写均可
 ```
 
 登录时直接使用`ssh host1`即可。
+
+
 
 ## 跳板登录
 
@@ -172,60 +173,88 @@ ssh user@target-host #从跳板机登录到最终目标主机
 
 使用以下方式可以直接从客户端主机登录到跳板机：
 
-- 使用`-t`分配伪终端，相当于合并多次ssh命令：
+### 伪终端
 
-  ```shell
-  ssh -t user@jump-host ssh -t user@target-host
-  ```
+使用`-t`分配伪终端，相当于合并多次ssh命令：
 
-- 使用代理跳跃登录（`-J`参数或`ProxyJump`配置）
+```shell
+ssh -t user@jump-host ssh -t user@target-host
+```
 
-  原理是在跳板机上建立TCP转发，让客户端ssh数据直接转发到目标服务器上等ssh端口。
 
-  ```shell
-  #注意，跳板机的端口需要直接在地址后面添加 以冒号分隔
-  ssh -J user@jum[:port] user@target -p <port>
-  
-  #如有多个跳板机使用逗号隔开 #客户端->jump1服务器->jump2服务器->target服务器
-  ssh -J user@jump1,user@jump2:2333 user@target -p 22
-  
-  #通过server1跳跃到server2 使用X转发打开server上的firefox
-  ssh -J user@server1 user@server2 -X firefox
-  ```
 
-  `-J`是`ProxyJump`的快捷使用方式。使用`ProxyJump`实现Jump直接跳跃登录功能：
+### ProxyJump
 
-  ```shell
-  #user@target 目标主机地址和在目标主机上的用户
-  #user@jump   跳板机和在跳板机上的用户
-  ssh user@target -o ProxyCommand='ssh user@jump -W %h:%p'
-  ```
+其原理是在跳板机上建立TCP转发，让客户端ssh数据直接转发到目标服务器上等ssh端口。
 
-  或者在`~/.ssh/config`中进行配置如下内容，然后使用`ssh target`直接登录到target：
-  
-  ```shell
-  Host jump               #跳板机配置
-      HostName 10.10.1.2  #跳板机地址
-    	Port 22             #跳板机ssh端口 22可省略该行
-      User user_at_proxy  #跳板机上的用户
-  
-  Host target             #目标主机配置
-      HostName 10.10.10.1 #目标主机地址（即直接从跳板机上ssh到目标主机的地址）
-      Port 2222           #跳板机ssh端口 22可省略该行
-      User user_at_target #目标主机上的用户
-      ForwardAgent yes    #开启代理转发 可选
-      #代理命令  -q安静模式（忽略各种提示和警告信息）
-      #%h和%p变量表示改行中jump对应的配置中的hostname和port
-      ProxyCommand ssh jump -q -W %h:%p
-  ```
-  
-  使用proxyComand模式，可以实现scp向目标主机传输文件。以上面的配置为例：
-  
-  ```shell
-  scp local.file target:~/remote.file #将本地文件scp到targe主机上
-  ```
-  
-  
+该方式会自动进行密钥认证的转发。
+
+
+
+可使用以下任意方式：
+
+- `-J`选项
+
+- `-o`选项并指定`ProxyJump`参数配置，可配置更多的选项参数。
+
+  *`-J`是该方式的**快捷方法**(shortcut)*
+
+
+
+使用`-J`选项：
+
+```shell
+#注意，跳板机的端口需要直接在地址后面添加 以冒号分隔
+ssh -J user@jum[:port] user@target -p <port>
+
+#如有多个跳板机使用逗号隔开 #客户端->jump1服务器->jump2服务器->target服务器
+ssh -J user@jump1,user@jump2:2333 user@target -p 22
+
+#通过server1跳跃到server2 使用X转发打开server上的firefox
+ssh -J user@server1 user@server2 -X firefox
+```
+
+
+
+使用`ProxyJump`：
+
+```shell
+#user@target 目标主机地址和在目标主机上的用户
+#user@jump   跳板机和在跳板机上的用户
+ssh user@target -o ProxyCommand='ssh user@jump -W %h:%p'
+```
+
+
+
+可在`~/.ssh/config`中固化配置，使用更简便的[别名登录](#别名登录)，示例：
+
+```shell
+Host jump               #跳板机配置
+    HostName 10.10.1.2  #跳板机地址
+  	Port 22             #跳板机ssh端口 22可省略该行
+    User user_at_proxy  #跳板机上的用户
+
+Host target             #目标主机配置
+    HostName 10.10.10.1 #目标主机地址（即直接从跳板机上ssh到目标主机的地址）
+    Port 2222           #跳板机ssh端口 22可省略该行
+    User user_at_target #目标主机上的用户
+    ForwardAgent yes    #开启代理转发 可选
+    #代理命令  -q安静模式（忽略各种提示和警告信息）
+    #%h和%p变量表示改行中jump对应的配置中的hostname和port
+    ProxyCommand ssh jump -q -W %h:%p
+```
+
+然后即可使用`ssh target`进行登录。
+
+
+
+使用proxyComand模式，可以实现scp向目标主机传输文件。以上面的配置为例：
+
+```shell
+scp local.file target:~/remote.file #将本地文件scp到targe主机上
+```
+
+
 
 ## 远程命令
 
@@ -1191,3 +1220,14 @@ strace -fF bash
 - ssh: Exited: String too long
 
   很可能当前ssh客户端或ssh服务端使用的是[dropbear](https://matt.ucc.asn.au/dropbear/dropbear.html) ssh，参看[dropbear ssh基本使用](dropbear-ssh-usage.md)
+
+
+
+---
+
+~/.ssh/authorized_keys中还可以配置ssh的选项，其中`command`选项还能指定ssh登录时要执行命令，示例：
+
+```shell
+no-port-forwarding,no-agent-forwarding,no-X11-forwarding,command="echo 'Please login as the user \"admin\" rather than the user \"root\".';echo;sleep 10;exit 142"
+```
+

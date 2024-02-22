@@ -33,8 +33,8 @@
 
 - 按需对**防火墙配置**策略（或关闭防火墙）。
 
-  - rpcbind：  111    （NFS v3）
-  - nfsd：        2049  （NFS v3/v4）
+  - rpcbind：  111 /tcp/udp   （NFS v3）
+  - nfsd：        2049/tcp  （NFS v3/v4）
 
   NFS v4以前的版本可能需要更多端口。
 
