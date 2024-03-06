@@ -464,6 +464,30 @@ ssh端口转发相关：
 
 
 
+以下转发公用的ssh选项：
+
+- `-f`  后台运行ssh命令
+
+  在转发场景下适用，不会登录到目标ssh服务器，可以在启动端口转发后继续在本地终端使用其他命令
+
+  
+
+- `-N`  不执行远程命令
+
+  在转发场景下适用，因为转发只需要建立连接但不打开一个 shell 或执行任何命令
+
+  
+
+- `-g`  允许其他主机转发端口
+
+  适用于本地端口转发(`-L`)和远程端口转发(`-R`)
+
+  默认情况下， `-L` 或 `-R` 选项建立的转发的端口只允许本机访问，即使端口监听在 `0.0.0.0`（即所有网络接口）；如果使用了 `-g` 选项，则允许其他主机访问转发端口。
+
+  注意，`-g` 选项可能会带来安全风险，因为它允许任何远程主机连接到转发的端口。
+
+
+
 ## X转发
 
 转发远程主机上应用程序的X11图形界面到本机。X转发的要求：
@@ -528,7 +552,7 @@ ssh端口转发相关：
 
 ## 动态端口转发（socks代理）
 
-动态转发本机指定端口的数据到远程主机。
+`-D`选项：动态转发本机指定端口的数据到远程主机，一般组合`-fCND`使用
 
 在本机分配一个 socket 侦听端口，一旦这个端口上有了连接，该连接就经过ssh隧道转发到远程主机，通过远程主机与目标连接。
 
@@ -539,7 +563,7 @@ ssh端口转发相关：
 应用场景举例：代理主机科学上网。
 
 ```shell
-ssh -D  [bind_address:]<local-port> <proxy-user>@<proxy-host> [-p proxy-port]
+ssh -fCND  [bind_address:]<local-port> <proxy-user>@<proxy-host> [-p proxy-port]
 ```
 
 - bind_address：指定绑定的地址，如该值为空即绑定到`127.0.0.1`，可使用`0.0.0.0`或`*`绑定到任意主机（下同，不在赘述）。
@@ -550,7 +574,7 @@ ssh -D  [bind_address:]<local-port> <proxy-user>@<proxy-host> [-p proxy-port]
 示例，本机通过远程主机hostP代理访问不存在的网站`google.com`：
 
 ```shell
-ssh -fCNTD *:2333 user@hostP
+ssh -fCND *:2333 user@hostP
 ```
 
 *参看[参数说明](#常用参数)了解各个参数意思。*
@@ -563,11 +587,13 @@ ssh -fCNTD *:2333 user@hostP
 
 ## 本地端口转发
 
-将本地主机的某个端口转发到远端指定机器的指定端口。
+`-L`选项：本地端口转发（Local Port Forwarding）在本地机器上打开一个端口，并将此端口的流量转发到通过 SSH 连接的远程机器上的指定端口。一般组合`-fCNL`使用：
 
 ```shell
-ssh -L [bind_address:]<local-port>:<target-host>:<target-port> [user>@]<local-host>
+ssh -fCNL [bind_address:]<local-port>:<target-host>:<target-port> [user>@]<local-host>
 ```
+
+
 
 将本地主机的指定端口和远端主机的目标端口绑定，本地主机上分配了一个 socket 侦听端口， 一旦本地主机端口上有了连接，该连接就经过ssh隧道转发到程主机的端口上。
 
@@ -580,7 +606,7 @@ ssh -L [bind_address:]<local-port>:<target-host>:<target-port> [user>@]<local-ho
 *本章节涉及转发的本地主机/远端主机只是一种区分式表述，本地主机是执行转发命令的主机。不过实际上将本机的一个端口转发到本机同一IP多其他端口也是可以的。例如在主机a上执行：*
 
 ```shell
-ssh -FCNL 127.0.0.8080:127.0.0.1:80 user@localhost
+ssh -fCNL 127.0.0.8080:127.0.0.1:80 user@localhost
 ```
 
 
@@ -591,7 +617,7 @@ ssh -FCNL 127.0.0.8080:127.0.0.1:80 user@localhost
 
 ```shell
 #转发该主机的8080端口到kernel.org的80端口   访问该主机的8080端口的流量即被转向www.kernel.org
-ssh -fNCL *:8080:www.kernel.org:80 user@localhost
+ssh -fCNL *:8080:www.kernel.org:80 user@localhost
 ```
 
 假如本地主机的IP是`192.168.0.1`，访问`192.168.0.1:8080`即访问`www.kernel.org`。
@@ -600,11 +626,13 @@ ssh -fNCL *:8080:www.kernel.org:80 user@localhost
 
 ## 远程端口转发（反向隧道连接）
 
-将远程主机的某个端口转发到本地端指定机器的指定端口。
+`-R`选项：远程端口转发（Remote Port Forwarding）在远程机器上打开一个端口，并将此端口的流量转发到本地机器的指定端口。一般组合`-fCNR`使用：
 
 ```shell
-ssh -R [bind_address:remote-port:<local-host>:<local-port> [<remote-user>@]<remote-host>
+ssh -fCNR [bind_address:remote-port:<local-host>:<local-port> [<remote-user>@]<remote-host>
 ```
+
+
 
 将远程主机的指定端口和本地主机的端口绑定，本地主机主动向远程主机发起连接，建立反向隧道。远程主机上分配了一个 socket 侦听端口，一旦这个端口上有了连接，该连接就经过ssh隧道转发到本地主机的这个目标端口。
 
@@ -619,7 +647,7 @@ ssh -R [bind_address:remote-port:<local-host>:<local-port> [<remote-user>@]<remo
 示例，转发远程主机的9500端口到本地主机的5900：
 
 ```shell
-ssh -gfNCR :2222:localhost:22 user@remote
+ssh -gfCNR :2222:localhost:22 user@remote  #注意-g允许其他主机访问转发端口
 ```
 
 假如位于NAT后的本地主机运行了xvnc（监听于5900端口），远程主机remote为公网主机，经过以上转发后，使用vnc客户端访问`remote:9500`即可连接上本地主机的vnc服务。
