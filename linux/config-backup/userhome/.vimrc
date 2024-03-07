@@ -163,50 +163,50 @@ endif
 "load other vim script file
 "source /path/to/file
 
-call plug#begin('~/.vim/plugged')
+#call plug#begin('~/.vim/plugged')
 
 "~~~插件列表 plugin list~~~
 
 "开屏界面
-Plug 'mhinz/vim-startify'
+#Plug 'mhinz/vim-startify'
 
 "主题
 "Plug 'w0ng/vim-hybrid'
 "Plug 'tomasr/molokai'
 
 "底部状态栏
-Plug 'vim-airline/vim-airline'
-Plug 'vim-airline/vim-airline-themes'
+"Plug 'vim-airline/vim-airline'
+"Plug 'vim-airline/vim-airline-themes'
 
 "缩进线
-Plug 'yggdroot/indentLine'
+"Plug 'yggdroot/indentLine'
 
 "成对编辑
 "ds(delete arrounding) cs(change arrounding) ys(you add a surrounding)
-Plug 'tpope/vim-surround'
+"Plug 'tpope/vim-surround'
 
 "目录树
-Plug 'scrooloose/nerdtree'
+"Plug 'scrooloose/nerdtree'
 
 "模糊搜索
 set rtp+=~/.fzf/bin/fzf
 set rtp+=/usr/local/opt/fzf
-Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
-Plug 'junegunn/fzf.vim'
+"Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
+"Plug 'junegunn/fzf.vim'
 "or Plug '/usr/local/opt/fz'
-Plug 'sharkdp/fd', { 'dir': '~/.fd', 'do': './install --all' }
+"Plug 'sharkdp/fd', { 'dir': '~/.fd', 'do': './install --all' }
 
 "快速移动
-Plug 'easymotion/vim-easymotion'
+"Plug 'easymotion/vim-easymotion'
 
 "git工具
-Plug 'tpope/vim-fugitive'
+"Plug 'tpope/vim-fugitive'
 
 "语法检查
-Plug 'w0rp/ale'
+"Plug 'w0rp/ale'
 
 "代码格式化
-Plug 'sbdchd/neoformat'
+"Plug 'sbdchd/neoformat'
 
 "自动补全 deoplete
 set encoding=utf-8

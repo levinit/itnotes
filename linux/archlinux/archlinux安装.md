@@ -497,27 +497,54 @@ mkinitcpio -P
 
 linux自带的`linux-frimware`已经支持大多数驱动，如果某些设置不能使用，参看[archwiki:网络驱动](https://wiki.archlinux.org/index.php/Wireless_network_configuration_(%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87)#.E5.AE.89.E8.A3.85_driver.2Ffirmware)。
 
-如果要安装Gnome、KDE等桌面环境，可以略过该步骤，桌面环境将集成图形界面网络管理工具。
+如果要安装Gnome、KDE等桌面环境，可以略过该步骤，桌面环境将集成图形界面网络管理工具，如NetworkManger管理网络。
 
-- 有线网络
+参看archlinux-wiki的[网络配置](https://wiki.archlinux.org/index.php/Network_configuration_(%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87))了解更多。
+
+
+
+- [NetworkManager](https://wiki.archlinuxcn.org/wiki/NetworkManager)
 
   ```shell
-  pacman -S dhcpcd
+  pacman -S networkmanager
+  systemctl enable --now NetworkManager
+  ```
+
+- [dhcpcd](https://wiki.archlinuxcn.org/wiki/Dhcpcd)
+
+  ```shell
+  pacman -S dhcpcd wpa_supplicant #wpa_supplicant无线支持可选
   systemctl enable dhcpcd  #开机自启动有线网络 当然也可以手动执行 dhcpcd 连接
   ```
 
-- 无线网络
+- [systemd-network](https://wiki.archlinux.org/title/systemd-networkd)
+
+  1. 创建或编辑`/etc/systemd/network`下的文件配置，例如为eno1网口配置dhcp，内容示例：
+
+     ```shell
+     [Match]
+     Name=eno1
+     
+     [Network]
+     DHCP=yes
+     DHCP=ipv6
+     IPv6AcceptRA=true
+     ```
+
+     启动服务：
+
+     ```shell
+     systemctl enable --now systemd-network
+     ```
+
+- [netctl](https://wiki.archlinuxcn.org/wiki/Netctl)
 
   ```shell
-  #无线网络需要安装这些工具使用wifi-menu联网
-  pacman -S iw wpa_supplicant dialog netctl
-  ip a  #查看到当前连接无线的网卡名字
+  pacman -S netctl iw wpa_supplicant dialog  #iw wpa_supplicant无线支持可选
+  ip a      #查看到当前连接无线的网卡名字
+  wifi-menu #连接无线网络
   systemctl enable netctl-auto@网卡名字  #开机自动使用该网卡连接曾经接入的无线网络
   ```
-
-  参看archlinux-wiki的[netctl](https://wiki.archlinux.org/index.php/Network_configuration_(%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87))和[网络配置](https://wiki.archlinux.org/index.php/Network_configuration_(%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87))了解更多。
-
-
 
 ## 系统引导
 

@@ -87,7 +87,7 @@ zstyle ':completion:*:scp:*' tag-order '! users'
 #+++++welcom msg
 echo -e "+++ $HOST : $(uname -rsm) +++\n\e[1;36m@$(date)\e[0m"
 
-if [[ -n $(command -v ip) ]]; then #iproute
+if [[ $os == Linux && -n $(command -v ip) ]]; then #iproute
   default_gw=$(ip r | grep default | head -n 1 | grep -Po "(?<=via ).+(?= dev)")
 
   ip -4 -br a | grep -v lo | grep -v 169.254 | while read ip_info; do
@@ -165,7 +165,7 @@ function ohmyzsh_upgrade() {
 #files in ~/
 confs_in_home_common=(.tmux.conf .condarc .zlogout .zshrc .gitignore_global .vimrc)
 confs_in_home_private=(.gitconfig .ssh/id_rsa* .ssh/config)
-home_config_dirs=(.nvim) #~/config
+dirs_in_home_config=() #nvim
 
 comm_home_backup_dir=~/Documents/it/itnotes/linux/config-backup/userhome
 private_home_backup_dir=~/Documents/os-config/home.config
@@ -188,7 +188,7 @@ function backupconfigs() {
   done
 
   echo "--- Backup configs in ~/.config ---"
-  for config_dir in ${home_config_dirs[*]}; do
+  for config_dir in ${dirs_in_home_config[*]}; do
     [[ -e ~/.config/$config_dir ]] && cp -av ~/.config/$config_dir $comm_home_backup_dir/.config/
   done
 
@@ -210,7 +210,7 @@ function restoreconfigs() {
     [[ -f $private_home_backup_dir/$conf ]] && cp -av $private_home_backup_dir/$conf ~/$conf
   done
 
-  for config_dir in ${home_config_dirs[*]}; do
+  for config_dir in ${dirs_in_home_config[*]}; do
     [[ -d comm_home_backup_dir/.config/$config_dir ]] && cp -av $comm_home_backup_dir/.config/$config_dir ~/.config/
   done
 
@@ -231,7 +231,7 @@ export EDITOR=vim
 alias vimplugup="[[ -f ~/.vim/autoload/plug.vim ]] && vim -c 'PlugUpgrade' -c 'PlugInstall' -c 'PlugUpdate' -c 'q' -c 'q'"
 alias vimpluginstall="curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim && \rm -rfv ~/.vim/autoload/plugin.vim.old && vimplugup"
 
-alias neovimpluginstall="sh -c 'curl -fLo "${XDG_DATA_HOME:-~/.local/share}"/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim' && \rm -rfv ~/.local/share/nvim/site/autoload/plug.vim.old"
+alias nvimpluginstall='mv ~/.config/nvim{,.bak} ; mv ~/.local/share/nvim{,.bak} ; mv ~/.local/state/nvim{,.bak} ; mv ~/.cache/nvim{,.bak} ; git clone https://github.com/LazyVim/starter ~/.config/nvim ; rm -rf ~/.config/nvim/.git'
 
 #neovim
 if [[ -n $(command -v nvim) ]]; then
@@ -241,7 +241,6 @@ if [[ -n $(command -v nvim) ]]; then
   alias rview='exec nvim -RZ '  # "$@"
   alias rvim='exec nvim -Z '    # "$@"
   alias view='exec nvim -R '    # "$@"
-  alias nvim_init='mkdir -p ~/.local/share/nvim && mkdir -p ~/.config/nvim && \cp -av ~/.vimrc ~/.config/nvim/ && \ln -sf ~/.config/nvim/init.vim ~/.vimrc'
 fi
 
 #---temporary locale---
