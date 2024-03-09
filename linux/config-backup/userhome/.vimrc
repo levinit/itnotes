@@ -1,5 +1,10 @@
-"leader 
-"set mapleader=\  "default leader is \
+
+"load other vim script file exapmle: source /path/to/file
+
+"=======VIM base settings=======
+"leader用于自定义快捷键，默认值为\
+"set mapleader=\
+
 "tab宽度
 set tabstop=2
 "格式化时制表符占用空格数
@@ -24,14 +29,14 @@ filetype indent on
 "    shift键表示vim把鼠标的活动交给X，单shift针对整个window, 而加ctrl针对整个buffer
 set mouse=a
 
-"让y p等可直接操作+ * 寄存器（系统剪切板）而无需使用"+y +p等命令 
+"让y p等可直接操作+ * 寄存器（系统剪切板）而无需使用"+y +p等命令
 "需要支持+clipboard 查看vim --version|grep +clipboard
 "方法：
-" virsual模式选中内容后按下y复制(开启了mouse也可使用鼠标选中），在其他可输入地方使用普通放置粘贴即可。
+" visual模式选中内容后按下y复制(开启了mouse也可使用鼠标选中），在其他可输入地方使用普通放置粘贴即可。
 set clipboard^=unnamed,unnamedplus
 "unamed +寄存器，对应系统剪贴板，*寄存器代表当前选择区
 
-"rember the last line
+"重新打开文件时光标定位到上次关闭时的位置（cursor position to last position when reopen file）
 if has("autocmd")
     au BufReadPost *
     \ if line("'\"") > 0 && line("'\"") <= line("$") |
@@ -40,12 +45,10 @@ if has("autocmd")
 endif
 
 "拼写
-"set spell 
+"set spell
 "语法高亮 syntax highlight
-syntax on
 syntax enable
-"代码折叠 code folding
-set foldenable
+
 "折叠方式 folding style
 "根据语法syntax|手动manual|根据表达式epxr|根据未更改内容diff|根据标志marker|根据缩进indent
 set foldmethod=syntax
@@ -82,7 +85,6 @@ set showmatch
 set number
 map <C-l> <Esc> :set invnumber<CR>
 
-
 "历史条目数量
 set history=999
 "没有保存或文件只读时弹出确认
@@ -106,9 +108,7 @@ set magic
 set laststatus=1
 "状态栏信息
 "set statusline=[FORMAT=%{&ff}]\ [TYPE=%Y]\ [ASCII=\%03.3b]\ [HEX=\%02.2B]\ [POS=%04l,%04v][%p%%]
-"显示输入的命令
-set showcmd
-set showmode
+
 "显示标尺 在右下角显示光标位置
 set ruler
 "光标移动到buffer的顶部和底部时保持n行距离
@@ -121,9 +121,6 @@ set hlsearch
 "搜索时忽略大小写 但在有一个或以上大写字母时仍保持对大小写敏感
 set ignorecase smartcase
 set gdefault
-
-"去除vi的一致性
-set nocompatible
 
 "新建文件的编码格式
 set fileencoding=utf-8
@@ -142,7 +139,6 @@ set t_Co=256
 "ctrl x ctrl f
 
 "omni补全
-"
 set omnifunc=syntaxcomplete#Complete
 if has("autocmd") && exists("+omnifunc")
 autocmd Filetype *
@@ -155,69 +151,64 @@ endif
 "show plugin path :set runtimepath?
 "set runtimepath+=~/.local/share/nvim/site or set rpt+=/path/to/
 "pacman -S vim-plug
-"vim
+"or
 "curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 "neovim
 "sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
 
-"load other vim script file
-"source /path/to/file
+if !filereadable($HOME . "/.vim/autoload/plug.vim")
+  exit
+endif
 
-#call plug#begin('~/.vim/plugged')
+call plug#begin('~/.vim/plugged')
 
 "~~~插件列表 plugin list~~~
 
 "开屏界面
-#Plug 'mhinz/vim-startify'
+Plug 'mhinz/vim-startify'
 
 "主题
-"Plug 'w0ng/vim-hybrid'
-"Plug 'tomasr/molokai'
+Plug 'ku1ik/vim-monokai'
+Plug 'arcticicestudio/nord-vim'
+Plug 'NLKNguyen/papercolor-theme'
 
 "底部状态栏
-"Plug 'vim-airline/vim-airline'
+Plug 'vim-airline/vim-airline'
 "Plug 'vim-airline/vim-airline-themes'
 
 "缩进线
-"Plug 'yggdroot/indentLine'
+Plug 'yggdroot/indentLine'
 
 "成对编辑
 "ds(delete arrounding) cs(change arrounding) ys(you add a surrounding)
-"Plug 'tpope/vim-surround'
+Plug 'tpope/vim-surround'
 
 "目录树
-"Plug 'scrooloose/nerdtree'
+Plug 'scrooloose/nerdtree'
 
 "模糊搜索
 set rtp+=~/.fzf/bin/fzf
 set rtp+=/usr/local/opt/fzf
-"Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
-"Plug 'junegunn/fzf.vim'
+Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
+Plug 'junegunn/fzf.vim'
 "or Plug '/usr/local/opt/fz'
 "Plug 'sharkdp/fd', { 'dir': '~/.fd', 'do': './install --all' }
 
 "快速移动
-"Plug 'easymotion/vim-easymotion'
+Plug 'easymotion/vim-easymotion'
 
 "git工具
-"Plug 'tpope/vim-fugitive'
+Plug 'tpope/vim-fugitive'
 
 "语法检查
-"Plug 'w0rp/ale'
+Plug 'w0rp/ale'
 
 "代码格式化
-"Plug 'sbdchd/neoformat'
+Plug 'sbdchd/neoformat'
 
 "自动补全 deoplete
-set encoding=utf-8
 set pyxversion=3
-"# 安装vim的Python-client库pynvim
-"pacman -S python-pynvim  或 pip install --user pynvim
-"# 安装插件 python的neovim库:  pip install --user neovim
-
-if has( "/usr/local/bin/python3" )
-  let g:python3_host_prog = "/usr/local/bin/python3"
-endif
+"vim: pacman -S python-pynvim  或 pip install pynvim
 if has('nvim')
   Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
 else
@@ -235,10 +226,11 @@ call plug#end()
 "===插件设置===
 "--启用配色主题
 "built-in colorscheme : <install dir>/share/vim/vim<ver>/colors
-"colorscheme hybrid
-"--molokai
-"let g:molokai_original = 1
-"let g:rehash256 = 1
+colorscheme monokai "nord
+
+"---paperColor light scheme
+"set background=light
+"colorscheme PaperColor
 
 "--airline
 let g:airline#extensions#tabline#enabled = 1
@@ -265,7 +257,7 @@ map <Leader>L <Plug>(easymotion-bd-jk)
 nmap <Leader>L <Plug>(easymotion-overwin-line)
 
 " Move to word
-map  <Leader>w <Plug>(easymotion-bd-w)
+nmap  <Leader>w <Plug>(easymotion-bd-w)
 nmap <Leader>w <Plug>(easymotion-overwin-w)
 
 "--nerdtree
@@ -279,7 +271,9 @@ let NERDTreeQuitOnOpen=1
 let NERDTreeShowBookmarks=1
 
 "--fzf
-map <S-f> :Files<CR> 
+nmap <C-p> :Files<CR>
+nmap <C-e> :Buffers<CR>
+let g:fzf_action = { 'ctrl-e': 'edit' }
 
 "--ale"
 let g:ale_set_highlights = 0
