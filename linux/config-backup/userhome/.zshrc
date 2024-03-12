@@ -19,7 +19,7 @@ elif [[ -d /usr/share/oh-my-zsh ]]; then
   [[ -d /usr/share/zsh/plugins ]] && export ZSH_CUSTOM=/usr/share/zsh
 fi
 
-[[ -d ~/.oh-my-zsh-cache ]] || mkdir -p ~/.oh-my-zsh-cache
+mkdir -p ~/.oh-my-zsh-cache
 
 #--- zsh & oh-my-zsh settings
 # theme
@@ -112,14 +112,13 @@ function backup_pkgs() {
 alias vimplugup="[[ -f ~/.vim/autoload/plug.vim ]] && vim -c 'PlugUpgrade' -c 'PlugInstall' -c 'PlugUpdate' -c 'q' -c 'q'"
 alias vimpluginstall="curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim && \rm -rfv ~/.vim/autoload/plugin.vim.old && vimplugup"
 
-alias nvimpluginstall='mv ~/.config/nvim{,.bak} ; mv ~/.local/share/nvim{,.bak} ; mv ~/.local/state/nvim{,.bak} ; mv ~/.cache/nvim{,.bak} ; git clone https://github.com/LazyVim/starter ~/.config/nvim ; rm -rf ~/.config/nvim/.git'
-
 export EDITOR=vim
 command -v vim &>/dev/null && alias vi=vim
 
 #---neovim
-alias nvchard='git clone https://github.com/NvChad/NvChad ~/.config/nvim --depth 1 && nvim'
+alias nvimpluginstall='mv ~/.config/nvim{,.bak} ; mv ~/.local/share/nvim{,.bak} ; mv ~/.local/state/nvim{,.bak} ; mv ~/.cache/nvim{,.bak} ; git clone https://github.com/NvChad/NvChad ~/.config/nvim --depth 1 && nvim'
 if [[ -n $(command -v nvim) ]]; then
+  export EDITOR=nvim
   alias vi=nvim
   alias vim=nvim
   alias vimdiff='exec nvim -d ' # "$@
@@ -127,6 +126,7 @@ if [[ -n $(command -v nvim) ]]; then
   alias rview='exec nvim -RZ '  # "$@"
   alias rvim='exec nvim -Z '    # "$@"
   alias view='exec nvim -R '    # "$@"
+  alias nvimupdate='nvim -c "NvChadUpdate" -c "normal U"'
 fi
 
 #===== package manager =====

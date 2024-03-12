@@ -8,6 +8,16 @@ defaults write com.apple.finder AppleShowAllFiles -boolean true #false
 
 
 
+## terminal打开慢
+
+开机后首次打开terminal慢，删除log：
+
+```shell
+sudo rm -rf /private/var/log/asl/*.asl
+```
+
+
+
 # 命令行工具
 
 ## diskutil

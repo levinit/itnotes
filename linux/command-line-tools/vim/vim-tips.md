@@ -644,5 +644,12 @@ shell中使用`vim -c`执行命令。
 
 # 命令模式技巧
 
+- `%`代指当前文件
+
+- `:w !sudo tee %`  使用sudo将当前编辑内容作为stdin写入当前文件
+
+  其等同于shell命令的`echo ${文件_Buff} | sudo tee ${文件名} `
+
 - 插入当前文件名`:r! echo %`
+
 - 插入当前文件绝对路径`:r! echo %:p`

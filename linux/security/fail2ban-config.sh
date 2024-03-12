@@ -43,7 +43,7 @@ ignoreregex =" >/etc/fail2ban/filter.d/vnc-auth.conf
 }
 
 function gen_jail_file() {
-  [[ -f $jail_file ]] && mv -fv $jail_file $jail_file.bak
+  [[ -f $jail_file ]] && cp -fv $jail_file $jail_file.bak
 
   echo "[DEFAULT]
 bantime = $bandtime

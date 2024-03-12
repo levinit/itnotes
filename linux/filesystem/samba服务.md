@@ -74,115 +74,108 @@ net user 用户名 密码 /active  #更新密码
 
 主配置文件`/etc/samba/smb.conf`，示例：
 
-```shell
-#===globale config===
+```ini
+;===globale config===
 [global]
-# multi config(smb.conf.host1 smb.conf.host2)
+; multi config(smb.conf.host1 smb.conf.host2)
 ;config file = /etc/samba/smb.conf.%m
 
-#---server config
+;---server config
 netbios name = SAMBA-SERVER
 server string = Samba Server %v
 workgroup = MYGROUP
 ;wins server = 192.168.1.251
-;smb ports = 4455  #default is 445
+;smb ports = 4455  ;default is 445
 
-#---compatible with macos
+;---compatible with macos
 fruit:nfs_aces = no
 fruit:zero_file_id = yes
 fruit:metadata = stream
 fruit:encoding = native
 vfs objects = catia fruit streams_xattr
 
-#---security config
-#security = user #default is user, domain,server,share,user
-#passdb backend = tdbsam #or ldapsam
+;---security config
+;security = user ;default is user, domain,server,share,user
+;passdb backend = tdbsam ;or ldapsam
 idmap config * : backend = tdb
 map to guest = bad user
-#guest account = nobody  # default guest name is "nobody"
-#guest account = guest
+;guest account = nobody  ; default guest name is "nobody"
+;guest account = guest
 
-#---log file
-#log file = /var/log/samba/log.%m
+;---log file
+;log file = /var/log/samba/log.%m
 max log size = 50
-#loglevel = 0 #0 means close
+;loglevel = 0 ;0 means close
 
-#---listen specified interfaces
+;---listen specified interfaces
 ;bind interfaces only = yes
 ;interfaces = eth0 eth1
 ;interfaces = 192.168.12.2/24 192.168.13.2/24 
 
-#---allow / deny clients
+;---allow / deny clients
 ;hosts allow = 192.168.1. 127. 172.17.2.EXCEPT172.17.2.50 192.168.10.*
 ;hosts deny = c01,c02 @students 192.168.1.10 172.17.2.0/16
 
-;max connections = 0 #default is 0 (no limited)
+;max connections = 0 ;default is 0 (no limited)
 
-#---upper and lower case
+;---upper and lower case
 case sensitive = yes
-#preserve case = yes        #default is yes
-#short preserve case = yes  #default is yes
-#default case = lower       #default is lower
+;preserve case = yes        ;default is yes
+;short preserve case = yes  ;default is yes
+;default case = lower       ;default is lower
 
-#---link file support in *nix
+;---link file support in *nix
 allow insecure wide links = yes
 wide links = yes
-;follow symlinks = yes  #default is yes
+;follow symlinks = yes  ;default is yes
 
-#---file permission
+;---file permission
 inherit acls = Yes 
 inherit owner = Yes
 inherit permissions = Yes
 
-#idmap
+;idmap
 ;idmap backend = ldap:ldap://ldap-server.quenya.org:636
 
-#---tunning
+;---tunning
 use sendfile = yes
 max xmit = 65535
 aio read size = 16384
 aio write size = 16384
 create mask = 0664
-max open files = 102400 #default 65535
-#dead time = 30  #default 15 mins
-#enable core files = no
-#map archive = no
+max open files = 102400 ;default 65535
+;dead time = 30  ;default 15 mins
+;enable core files = no
+;map archive = no
 
-#===printers===
+;===printers===
 [printers]
 comment = All Printers
-#printing = cups   #default is cups
+;printing = cups   ;default is cups
 printcap name = cups
 load printers = no
 cups options = raw
 path = /var/tmp/samba/printer
-#browseable = no
-public = yes
-writable = no
+;browseable = no
+guest ok = yes  ;default is no, whether to allow anonymous access
+;public = yes    ;default is no, same as guest ok
 create mask = 0600
 printable = yes
 
-#===system user home dir===
+;===system user home dir===
 [homes]
-comment = Home Directories
-valid users = %S
-browseable = No   #default is yes, whether to be discovered by the network
-#inherit acls = Yes
+comment = %U Home in %L
+valid users = %S ;or likes this: path = /home/%S
+browseable = No  ;default is yes, whether to be discovered
+readonly = no    ;default is yes
+;writable = yes   ;opposite of readonly
 
-#---another way to share user's home
-#[homes]
-#comment = %U Home in %L
-#path = /home/%U
-#browseable = no
-#writable = yes
-
-#common share dir
+;common share dir
 [public]
 comment = Public for everyone
 path = /home/public
-guest ok = yes  #default is no, whether to allow anonymous access
-public = yes    #default is no, whether to allow everyone list files
-read only = yes #default is no
+read only = yes ;default is no
+guest ok = yes  ;default is no, whether to allow anonymous access
 
 [project]
 path = /share/proj
@@ -196,12 +189,15 @@ force directory mode = 2755
 write list = @wheel @admin
 ;create mask = 0664
 ;directory mask = 0775
-#files and directories that are neither visible nor accessible.
+;files and directories that are neither visible nor accessible.
 ;veto files = /*.exe/*.com/*.dll/*.bat/*.vbs/*.tmp/*.mp3/*.avi/*.mp4/*.wmv/*.wma/
 ```
 *配置项中，布尔值可以使用true/yes 和 false/no，任意字母大小写均可。*
 
-使用`testparm`命令检测配置文件语法是否正确，如果正确，该命令会dump出所有生效的行，其中配置的值和默认值一致的行会被消除，一些配置行还会被优化（例如writeable = yes行会被替换为等效的 read only = no ； 又例如public = yes 会被替换为 guest ok = yes）。
+使用`testparm`命令检测配置文件语法是否正确，如果正确，该命令会dump出所有生效的行，其中配置的值和默认值一致的行会被消除，一些配置行还会被优化，例如：
+
+- `writeable = yes`行会被替换为等效的 `read only = no` （默认不可写）
+- `public = yes` 会被替换为 `guest ok = yes`
 
 注意：配置文件中，可使用`#`、`!`或`;`**注释整行**，除中括号`[]`配置行所在行外，不可在该行配置内容后使用`#`、`!`或`;`加注释内容，否则启动服务会报错。
 
@@ -213,22 +209,22 @@ samba配置中各项名字意义较为明了，也可参看[配置文件](https:
 
 配置中常用变量：
 
-- %S：当前服务名（取代目前的设定项目值，即`[ ]`中的内容）
-- %P：当前服务的根目录
-- %m：客户机的 NetBIOS 主机名
-- %M：客户机的 Internet  主机名（hostname）
-- %L：服务器 NetBIOS 主机名
-- %N：NIS服务器名
-- %p：NIS服务的Home目录
-- %I：客户机的 IP
-- %H：当前服务的用户的家目录
-- %u： 当前服务的用户名
-- %U：当前会话（登入的使用者）的用户名
-- %g：当用户的主工作组
-- %G：当前会话（登入的使用者）的主工作组
-- %h：当前服务器的主机名
-- %T：当前的日期与时间
-- %v：samba版本号
+- `%S`：当前服务名（取代目前的设定项目值，即`[ ]`中的内容）
+- `%P`：当前服务的根目录
+- `%m`：客户机的 NetBIOS 主机名
+- `%M`：客户机的 Internet  主机名（hostname）
+- `%L`：服务器 NetBIOS 主机名
+- `%N`：NIS服务器名
+- `%p`：NIS服务的Home目录
+- `%I`：客户机的 IP
+- `%H`：当前服务的用户的家目录
+- `%u`： 当前服务的用户名
+- `%U`：当前会话（登入的使用者）的用户名
+- `%g`：当用户的主工作组
+- `%G`：当前会话（登入的使用者）的主工作组
+- `%h`：当前服务器的主机名
+- `%T`：当前的日期与时间
+- `%v`：samba版本号
 
 
 
