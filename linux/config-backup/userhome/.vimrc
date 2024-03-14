@@ -60,8 +60,9 @@ set nofoldenable
 "浅色显示当前列 cursorcolumn cuc
 "autocmd InsertLeave * set cursorcolumn
 set cursorcolumn
-"高亮当前行 cursorline cul
+"高亮当前行 cursorline 缩写 cul
 autocmd InsertEnter * set cursorline
+"当前行添加下划线
 set cursorline
 "设置高亮行的配色 cterm-原生vim ctermfg和cterbg终端vim guifg和guibg是gui的vim  取值为NONE表示自动
 "颜色可搭配light或dark，颜色：red（红），white（白），black（黑），green（绿），yellow（黄），blue（蓝），purple（紫），gray（灰），brown（棕），tan(褐色)，cyan(青色)
@@ -157,7 +158,7 @@ endif
 "sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
 
 if !filereadable($HOME . "/.vim/autoload/plug.vim")
-  exit
+  finish "vim-plug not found, stop loading"
 endif
 
 call plug#begin('~/.vim/plugged')

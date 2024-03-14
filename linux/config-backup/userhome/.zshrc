@@ -475,7 +475,7 @@ function display_network_info() {
       local ip=$(echo $ip_info | grep -Eow "[0-9.]+/[0-9]{1,2}")
       [[ -z $ip ]] && continue
       local gw=$(ip r | grep $interface | head -n 1 | grep -Po "(?<=via ).+(?= dev)")
-      [[ -z $gw ]] && gw="NONE"
+      [[ -z $gw ]] && gw="..."
       network_info="$interface: $gw  <--  $ip\n""$network_info"
     done
     echo -e "default gateway: \e[1;35m$default_gw\e[0m"

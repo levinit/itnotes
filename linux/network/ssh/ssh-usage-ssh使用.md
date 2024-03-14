@@ -363,8 +363,8 @@ Port 443
 ```shell
 ControlMaster auto
 ControlPath /tmp/%r@%h:%p #连接信息存储路径
-ControlPersist yes #连接保持
-ControlPersist 1h #连接保持时间
+ControlPersist yes #总是在后台连接保持
+#ControlPersist 1h #连接保持指定时间，超时则退出
 ```
 
 
