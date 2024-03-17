@@ -156,7 +156,8 @@ elif [[ $(command -v pacman) ]]; then
   alias s="pacman -Ss"
   alias orphan='pacman -Rscn $(pacman -Qtdq)'
   alias pkgclean='orphan && paccache -rk 2 2>/dev/null'
-  alias up='pacman -Syyu && yay && pkgclean && ohmyzsh_upgrade'
+  alias pkg_query_update='pacman -Sy && pacman -Qu'
+  alias up='pacman -Syu && yay && pkgclean && ohmyzsh_upgrade'
   #makepkg aur
   alias aurinfo='updpkgsums && makepkg --printsrcinfo > .SRCINFO ; git status && echo ----git add -u---'
 elif [[ $(command -v apt) ]]; then
@@ -172,6 +173,7 @@ elif [[ $(command -v apt) ]]; then
   alias s="apt search"
   alias orphan='[[ -n $(command -v deborphan) ]] && clean_oprhan_debs || echo "deborphan not installed"'
   alias pkgclean='apt autoremove && apt autoclean && orphan'
+  alias pkg_query_update='apt update && apt list --upgradable'
   alias up='apt update && apt dist-upgrade && ohmyzsh_upgrade'
 fi
 
@@ -511,8 +513,21 @@ elif [[ -n $(command -v cal) ]]; then
   cal -m
 fi
 
-#===== post load scripts =====
-alias bash='export onlybash=true;bash ' #only for auto login from bash to prevent load this file looply
+#---pkg update check
+if [[ -f ~/.cache/pkg_last_update ]]; then
+  pkg_last_update=$(cat ~/.cache/pkg_last_update)
+  if [[ $(date +%s) -gt $((pkg_last_update + 3 * 24 * 3600)) ]]; then
+    pkg_query_update
+    echo $(date +%s) >~/.cache/pkg_last_update
+  fi
+else
+  echo $(date +%s) >~/.cache/pkg_last_update
+fi
+
+#only for auto login from bash to prevent load this file looply
+alias bash='export onlybash=true;bash '
 #item2
-test -e /Users/levin/.iterm2_shell_integration.zsh && source /Users/levin/.iterm2_shell_integration.zsh || true
+test -e ~/.iterm2_shell_integration.zsh && source ~/.iterm2_shell_integration.zsh || true
+
+#===== post load scripts =====
 test -r ~/.shell.env.postload.sh && source ~/.shell.env.postload.sh || true
