@@ -82,7 +82,7 @@ select-word-style bash
 setopt no_nomatch #no error when no match
 zstyle ':completion:*:scp:*' tag-order '! users'
 
-source $ZSH/oh-my-zsh.sh
+[[ -f $ZSH/oh-my-zsh.sh ]] && source $ZSH/oh-my-zsh.sh
 
 #===== functions for config files =====
 function create_config_file_symbols() {
@@ -141,10 +141,10 @@ if [[ $os == Darwin ]]; then
   export HOMEBREW_BOTTLE_DOMAIN="https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles"
   export HOMEBREW_CORE_GIT_REMOTE="https://mirrors.ustc.edu.cn/homebrew-core.git"
   export HOMEBREW_NO_AUTO_UPDATE=true
-
   alias i="brew install"
   alias r="brew uninstall"
   alias s="brew search"
+  alias pkg_query_update='brew outdated'
   alias pkgclean='brew cleanup'
   alias finderplugin='brew install qlcolorcode qlstephen qlmarkdown quicklook-json qlimagesize qlvideo webpquicklook' #suspicious-package suspicious-package quicklook-pat provisionql quicklookase
 
@@ -153,11 +153,12 @@ elif [[ $(command -v pacman) ]]; then
   [[ $user != root ]] && alias pacman='sudo pacman'
   alias i="pacman -S"
   alias r="pacman -Rscn"
-  alias s="pacman -Ss"
+  command -v paru &>/dev/null && alias s="paru --bottomup" || alias s="pacman -Ss"
   alias orphan='pacman -Rscn $(pacman -Qtdq)'
   alias pkgclean='orphan && paccache -rk 2 2>/dev/null'
   alias pkg_query_update='pacman -Sy && pacman -Qu'
-  alias up='pacman -Syu && yay && pkgclean && ohmyzsh_upgrade'
+  alias up='command -v paru && paru -Syu || pacman -Syu ; pkgclean ; ohmyzsh_upgrade'
+  alias paru='paru --bottomup'
   #makepkg aur
   alias aurinfo='updpkgsums && makepkg --printsrcinfo > .SRCINFO ; git status && echo ----git add -u---'
 elif [[ $(command -v apt) ]]; then
@@ -331,7 +332,7 @@ function fortune_gushici() {
   elif [[ $(command -v pacman) ]]; then
     command -v fortune || pacman -S fortune-mod --noconfirm
     # sudo \cp -av /tmp/fortune/data/{tang*,song*} /usr/share/fortune/
-    yay -S fortune-mod-zh
+    echo | paru -S fortune-mod-zh-hant --skipreview
   fi
 }
 
@@ -502,7 +503,7 @@ if [[ -n $(command -v fortune) ]]; then
   if [[ $os == Darwin ]]; then
     fortune song100 tang300 2>/dev/null
   else
-    fortune chinese tang300 song100 2>/dev/null
+    fortune chinese-hant song100-hant tang300-hant 2>/dev/null
   fi
 fi
 echo
@@ -517,7 +518,7 @@ fi
 if [[ -f ~/.cache/pkg_last_update ]]; then
   pkg_last_update=$(cat ~/.cache/pkg_last_update)
   if [[ $(date +%s) -gt $((pkg_last_update + 3 * 24 * 3600)) ]]; then
-    pkg_query_update
+    pkg_query_update &
     echo $(date +%s) >~/.cache/pkg_last_update
   fi
 else

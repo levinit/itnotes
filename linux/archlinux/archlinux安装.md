@@ -891,7 +891,11 @@ alsamixer    #安装上一个包后可使用该命令控制声音设备
 
 ### AUR
 
-AUR(Arch User Repository）是为用户而建、由用户主导的Arch软件仓库。aur软件可以通过[aur助手工具](https://wiki.archlinux.org/index.php/AUR_helpers)器搜索、下载和安装，或者从[aur.archlinux.org](https：//aur.archlinux.org)中搜索下载，用户自己通过makepkg生成包，再由pacman安装。
+AUR(Arch User Repository）是为用户而建、由用户主导的Arch软件仓库。
+
+aur软件可以通过[aur助手工具](https://wiki.archlinux.org/index.php/AUR_helpers)器搜索、下载和安装，或者从[aur.archlinux.org](https：//aur.archlinux.org)中搜索下载，用户自己通过makepkg生成包，再由pacman安装。
+
+*可从archlinuxcn源中安装aur助手（例如paru、yay）。*
 
 ## 设备连接
 

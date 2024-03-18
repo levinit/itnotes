@@ -321,13 +321,19 @@ docker run -itd --name webserver --hostname webserver -v /home/data:/srv/web:ro 
 
 `docker create`或`docker run`：create是创建一个容器，run是创建一个容器（并启动）执行指定命令，二者大部分参数一致。
 
-注意：无论是create还是run创建容器，容器都必须要指定至少一个程序运行，否则启动容器后就会退出（因为没有主程序运行就会退出），常用的是使用`-t`运行一个终端。
+
+
+容器的生命周期是由其入口点（ENTRYPOINT）或命令（CMD）决定的。当入口点或命令执行结束（主线程结束）时容器后就会退出。
+
+如果没有明显要执行的入口点命令，可使用`-itd` 选项组合使容器后台运行，运行一个交互式shell并保持 STDIN 打开，后续可登入容器的shell交互式环境。
+
+
 
 常用参数：
 
-- `-i` 交互式操作
-- `-t` 分配一个伪终端（pseudo-TTY）
-- `-d` 以守护进程运行 （run的参数）
+- `-i` 或 `--interactive`：保持 STDIN 开放，通常用于交互式会话，例如 shell 提示符。
+- `-t` 或 `--tty`：为容器分配一个伪终端，创建一个可以交互的环境。
+- `-d` 或 `--detach`：在后台运行容器。
 
 
 - `--name 容器名` 参数给容器命名
@@ -336,18 +342,15 @@ docker run -itd --name webserver --hostname webserver -v /home/data:/srv/web:ro 
 
 - `--ip 地址` 指定IP地址
 
-- `-p 宿主机端口:容器端口`  将容器某个端口映射到宿主机某个端口
-
-  不指定协议时，映射端口仅支持tcp，可使用以下方式指定其他协议，如：
-
-  ```shell
-  -p 22:22/udp  
-  ```
+- 端口映射
 
 
-  - `-P 容器端口` 将容器端口随机映射到宿主机某个端口
+  - `-P 容器端口`                      随机将宿主机某个端口与容器端口映射
 
-    容器端口可忽略，如果忽略该值，则将容器暴露的所有端口都随机映射到宿主机上。
+  - `-p 宿主机端口:容器端口`  指定宿主机端口和容器端口的映射
+
+    不指定协议时，映射端口仅支持tcp，可使用以下方式指定其他协议，如：`-p 22:22/udp`
+
 
 - `-h 主机名`或`--hostname 主机名 ` 设置主机名
 
@@ -429,6 +432,7 @@ docker run -itd --name webserver --hostname webserver -v /home/data:/srv/web:ro 
 
   - `no`  默认值，不自动重启容器。
   - `on-failure`  容器发生error而退出(容器退出状态不为0)重启容器。
+    - `on-failure:3`  失败尝试3次
   - `unless-stopped`  容器已经stop或Docker stoped/restarted的时候才重启容器。
   - `always`  容器已经stop掉或Docker stoped/restarted的时候才重启容器，手动stop除外。
 
