@@ -14,7 +14,8 @@ export NVM_DIR="$dev_env_path/nvm"
 alias nvm_install_node_lts='nvm install --lts'
 
 if [[ -s /usr/local/opt/nvm/nvm.sh ]]; then
-  source /usr/local/opt/nvm/nvm.sh
+  alias manpath=false
+  source $(brew --prefix nvm)/nvm.sh
   source /usr/local/opt/nvm/etc/bash_completion.d/nvm
 elif [[ -s /usr/share/nvm/init-nvm.sh ]]; then
   source /usr/share/nvm/init-nvm.sh
