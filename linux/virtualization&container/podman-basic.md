@@ -96,6 +96,14 @@ location = "ghcr.io"
 
 
 
+# 容器创建
+
+参考docker的build。
+
+注意：Podman 默认使用 `crun` 作为其 OCI 运行时，Docker file中如果使用`RUN`指令则需要 `runc`。可以通过编辑 `/etc/containers/containers.conf` 文件来更改运行时。
+
+
+
 # 容器编排
 
 - `podman generate`从容器生成编排文件

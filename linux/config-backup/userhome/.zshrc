@@ -41,6 +41,7 @@ export RUSTUP_UPDATE_ROOT=https://mirrors.ustc.edu.cn/rust-static/rustup
 export RUSTUP_HOME="$dev_env_path/rust/rustup"
 export CARGO_HOME="$dev_env_path/rust/cargo"
 export RUSTBINPATH="$CARGO_HOME/bin"
+export CARGO_TARGET_DIR="$dev_env_path/rust/build"
 alias rustup_dev_config='rustup install stable && rustup default stable && rustup component add rust-analyzer rust-src rustfmt clippy && rustup show'
 
 #---python
