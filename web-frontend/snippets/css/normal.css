@@ -1,0 +1,66 @@
+html {
+  /* text-size-adjust: none;
+  text-size-adjust: auto; */
+
+  /* <percentage> 值 */
+  /* text-size-adjust: 80%; */
+
+  /* 全局属性值 */
+  /* text-size-adjust: inherit;
+  text-size-adjust: initial;
+  text-size-adjust: unset; */
+
+  font-size: 100px;
+}
+
+body{
+  font-size: 1rem;
+}
+
+/* reset style */
+button,
+input[type="checkbox"],
+input[type="radio"],
+input[type="button"],
+input[type="reset"],
+input[type="button"],
+input[type="submit"],
+input[type="file"],
+select {
+  cursor: pointer;
+}
+
+/*去除链接下划线*/
+a {
+  text-decoration: none;
+}
+
+/*去除点选按钮时的虚线边框*/
+button::-moz-focus-inner,
+input[type="reset"]::-moz-focus-inner,
+input[type="button"]::-moz-focus-inner,
+input[type="submit"]::-moz-focus-inner,
+input[type="file"] > input[type="button"]::-moz-focus-inner {
+  border: none;
+}
+
+/* 通用样式 */
+
+
+/* 英文 数字等断行 */
+div,
+li {
+  word-break: break-all;
+}
+
+.pointer {
+  cursor: pointer;
+}
+
+ul,li{
+  padding-inline: 0;
+}
+
+li{
+  list-style-type: none;
+}

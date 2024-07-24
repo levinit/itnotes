@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<channel name="xfce4-notifyd" version="1.0">
+  <property name="log-max-size-enabled" type="bool" value="true"/>
+  <property name="applications" type="empty">
+    <property name="known_applications" type="array">
+      <value type="string" value="clash-nyanpasu"/>
+      <value type="string" value="eudic"/>
+      <value type="string" value="org.freedesktop.network-manager-applet"/>
+      <value type="string" value="xfce4-power-manager"/>
+      <value type="string" value="xfce4-settings-helper"/>
+      <value type="string" value="飞书"/>
+    </property>
+  </property>
+  <property name="date-time-custom-format" type="string" value="%a %H:%M:%S"/>
+</channel>
