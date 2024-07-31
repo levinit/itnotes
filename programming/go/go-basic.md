@@ -1667,42 +1667,6 @@ fmt.Println(checkFrpProcess(9999999))
 
 
 
-- `encoding/csv` 、 `encoding/json` 等读写特定格式的文本文件
-
-  ```go
-  //---读写CSV文件
-  file, err := os.Open("file.csv")
-  if err != nil {
-  	log.Fatal(err)
-  }
-  defer file.Close()
-  
-  reader := csv.NewReader(file)
-  records, err := reader.ReadAll() // 读取 CSV 文件
-  if err != nil {
-  	log.Fatal(err)
-  }
-  for _, record := range records {
-  	fmt.Println(record)
-  }
-  file, err := os.Open("file.json")
-  if err != nil {
-  	log.Fatal(err)
-  }
-  defer file.Close()
-  
-  //---读写JSON文件
-  var data interface{}
-  decoder := json.NewDecoder(file)
-  err = decoder.Decode(&data) // 读取 JSON 文件
-  if err != nil {
-  	log.Fatal(err)
-  }
-  fmt.Println(data)
-  ```
-
-  
-
 ### 内嵌文件读写
 
 `//go:embed`功能，可在编译时将资源文件内容直接打包到二进制文件，读写嵌入文件：
@@ -1719,6 +1683,44 @@ content, _ := fs.ReadFile(files, "files/hello.txt")
 subFS, _ := fs.Sub(configDir, "files")
 data, err := subFS.Open(string("hello.txt"))
 //其他处理代码
+```
+
+
+
+### csv/json等特定格式读写
+
+go内置了一些对特定格式文件读写的包，以csv和json为例：
+
+```go
+//---读写CSV文件
+file, err := os.Open("file.csv")
+if err != nil {
+	log.Fatal(err)
+}
+defer file.Close()
+
+reader := csv.NewReader(file)
+records, err := reader.ReadAll() // 读取 CSV 文件
+if err != nil {
+	log.Fatal(err)
+}
+for _, record := range records {
+	fmt.Println(record)
+}
+file, err := os.Open("file.json")
+if err != nil {
+	log.Fatal(err)
+}
+defer file.Close()
+
+//---读写JSON文件
+var data interface{}
+decoder := json.NewDecoder(file)
+err = decoder.Decode(&data) // 读取 JSON 文件
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Println(data)
 ```
 
 
