@@ -1,25 +1,25 @@
 unalias -a
 os=$(uname)
 user=$(whoami)
+
 #===== ENV configs =====
 dev_dir="$HOME/Public/dev"
 dev_env_path=$HOME/Public/dev/env
 dev_configs_path=$dev_dir/configs
 dev_proj_path=$dev_dir/proj
-alias dev="cd $dev_dir"
-alias proj="cd $dev_proj_path"
+alias dev="cd $dev_dir" proj="cd $dev_proj_path"
 
 #---npm
 alias npmlistg='npm -g list --depth=0'
 alias npmupg='npm -g upgrade'
-alias npmmirrorchina='npm config set registry http://mirrors.cloud.tencent.com/npm/'
-#alias npmmirrorchina='npm config set registry=http://mirrors.cloud.tencent.com/npm/'
+alias npmmirrorchina='npm config set registry http://mirrors.cloud.tencent.com/npm/' #http://mirrors.cloud.tencent.com/npm/'
 
 #----golang
 export GOPROXY=https://goproxy.cn
 export GOPATH=$dev_env_path/go #default is ~/go
 export PATH=$GOPATH/bin:$PATH
 export GOROOT=$(go env GOROOT 2>/dev/null)
+#go telemetry on
 
 #---rust
 export RUSTUP_DIST_SERVER=https://mirrors.ustc.edu.cn/rust-static
@@ -31,43 +31,41 @@ export CARGO_TARGET_DIR="$dev_env_path/rust/build"
 alias rustup_dev_config='rustup install stable && rustup default stable && rustup component add rust-analyzer rust-src rustfmt clippy && rustup show'
 
 #---python
-alias python=python3
-alias pip=pip3
-alias pipmirrorchina='pip config set global.index-url https://mirrors.cloud.tencent.com/pypi/simple'
-#'pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple'
+alias python=python3 pip=pip3
+alias pipmirrorchina='pip config set global.index-url https://mirrors.cloud.tencent.com/pypi/simple' # https://pypi.tuna.tsinghua.edu.cn/simple'
 alias pipoutdated='pip list --outdated'
 alias pipupgrade='pip install --upgrade $(pip list --outdate 2>/dev/null |sed -n "3,$ p"|cut -d " " -f 1)'
 alias pydev='source ~/.virtualenvs/dev/bin/activate'
 alias pip_install_from_list='pip3 install -r pip.list --no-index --find-links=.'
 
 #---conda
-if [ -r "/usr/local/Caskroom/miniconda/base/etc/profile.d/conda.sh" ]; then
-  . "/usr/local/Caskroom/miniconda/base/etc/profile.d/conda.sh"
-elif [ -r "/opt/miniconda/etc/profile.d/conda.sh" ]; then
-  source "/opt/miniconda/etc/profile.d/conda.sh"
-fi
-# prevent auto active conda env, execute:
-# conda config --set auto_activate_base false
+# if [ -r "/usr/local/Caskroom/miniconda/base/etc/profile.d/conda.sh" ]; then
+#   . "/usr/local/Caskroom/miniconda/base/etc/profile.d/conda.sh"
+# elif [ -r "/opt/miniconda/etc/profile.d/conda.sh" ]; then
+#   source "/opt/miniconda/etc/profile.d/conda.sh"
+# fi
+# prevent auto active conda env, execute: conda config --set auto_activate_base false
 alias condaclean='conda clean -ady'
 
 #---jupyter lab
 # show env: jupyter --path
-export JUPYTERLAB_DIR=$dev_dir/jupyter
-export JUPYTER_RUNTIME_DIR=$HOME/.local/share/jupyter/runtime #--runtime-dir
-export JUPYTER_DATA_DIR=$HOME/.local/share/jupyter            #--data-dir
+# export JUPYTERLAB_DIR=$dev_dir/jupyter
+# export JUPYTER_RUNTIME_DIR=$HOME/.local/share/jupyter/runtime #--runtime-dir
+# export JUPYTER_DATA_DIR=$HOME/.local/share/jupyter            #--data-dir
 # export JUPYTER_CONFIG_DIR=
 
 #---mojo
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/.local/lib/mojo
-export PATH=$PATH:~/.modular/pkg/packages.modular.com_mojo/bin/
+#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/.local/lib/mojo
+#export PATH=$PATH:~/.modular/pkg/packages.modular.com_mojo/bin/
 
 #---flutter
-export FLUTTER_HOME=$dev_env_path/flutter
-export PATH=$FLUTTER_HOME/bin:$PATH
-export PUB_HOSTED_URL="https://pub.flutter-io.cn"
-export FLUTTER_STORAGE_BASE_URL="https://storage.flutter-io.cn"
-# export PUB_HOSTED_URL=https://mirror.sjtu.edu.cn/flutter-infra
-# export FLUTTER_STORAGE_BASE_URL=https://mirror.sjtu.edu.cn
+# export FLUTTER_HOME=$dev_env_path/flutter
+# export PATH=$FLUTTER_HOME/bin:$PATH
+# export PUB_HOSTED_URL="https://pub.flutter-io.cn"
+# export FLUTTER_STORAGE_BASE_URL="https://storage.flutter-io.cn"
+
+#---ansible
+export ANSIBLE_CONFIG=$dev_configs_path/ansible/ansible.cfg
 
 #---esp-idf
 if [[ -s /opt/esp-idf/export.sh ]]; then
@@ -80,14 +78,6 @@ fi
 if [[ $os == Darwin ]]; then
   export PATH="/usr/local/sbin:/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"
 fi
-
-#---environment module
-if [[ -r /usr/local/opt/modules/init/zsh ]]; then
-  source /usr/local/opt/modules/init/zsh
-elif [[ -r /usr/share/modules/init/zsh ]]; then
-  source /usr/share/modules/init/zsh
-fi
-[[ -d $dev_dir/modulefiles && $(command -v module) ]] && module use $dev_dir/modulefiles
 
 #+++++ exit if not interactive shell +++++
 [[ $- != *i* ]] && return
@@ -159,7 +149,6 @@ alias vi=vim
 alias nvimpluginstall='mkdir /tmp/nvim.bak && mv ~/.config/nvim ~/.local/share/nvim ~/.local/state/nvim ~/.cache/nvim /mtp/nvim.bak/; git clone https://github.com/NvChad/starter ~/.config/nvim && nvim && \rm -rf ~/.config/nvim/.git'
 if [[ -n $(command -v nvim) ]]; then
   export EDITOR=nvim
-  alias vi=nvim
   alias vim=nvim
   alias vimdiff='exec nvim -d ' # "$@
   alias ex='exec nvim -e '      # "$@"s
@@ -204,6 +193,7 @@ elif [[ $(command -v pacman) ]]; then
   alias paru='paru --bottomup'
   #makepkg aur
   alias aurinfo='updpkgsums && makepkg --printsrcinfo > .SRCINFO ; git status && echo ----git add -u---'
+
 elif [[ $(command -v apt) ]]; then
   [[ $user != root ]] && alias apt='sudo apt'
   function clean_oprhan_debs() {
@@ -276,8 +266,7 @@ fi
 
 #tar + compress/uncompress
 #eg tar -acvf xx.tar.zst xx ,compression type suffix is needed
-alias tarc="tar --exclude='.DS_Store' -acvf "
-alias tarx='tar -xvf '
+alias tarc="tar --exclude='.DS_Store' -acvf " tarx='tar -xvf '
 
 function dos2unix_all() {
   local dirpath=${1:-$(pwd)}
@@ -310,8 +299,7 @@ function nosync_git_icloud() {
 }
 
 #---network---
-alias ipv6='curl -s 6.ipw.cn'
-alias ipv4='curl -s 4.ipw.cn'
+alias ipv6='curl -s 6.ipw.cn' ipv4='curl -s 4.ipw.cn'
 alias ip_4_6_prefer='curl test.ipw.cn'
 alias myip='curl cip.cc && echo && echo IPv6: $(ipv6 || echo noIPv6)' #ident.me v6.ident.me
 alias myip_json='curl ipinfo.io'
@@ -494,11 +482,8 @@ elif [[ -r ~/.config/z/z.sh ]]; then
 fi
 
 #---shell history
-HISTFILE=~/.zsh_history
-HISTSIZE=2333
-SAVEHIST=2333
-alias history='history -i'
-alias history_all='history -i -$HISTSIZE' #history -15  #in bash: history 15
+HISTFILE=~/.zsh_history HISTSIZE=2333 SAVEHIST=2333
+alias history='history -i' history_all='history -i -$HISTSIZE' #history -15  #in bash: history 15
 
 #=== Compatible with the operation habits of bash
 #---shortcus

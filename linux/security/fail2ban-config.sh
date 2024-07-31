@@ -105,10 +105,11 @@ function gen_scripts() {
     set -eu
     unalias -a
     action=${script_name}
-    [[ $(whoami) != "root" && -n $(command -v sudo) ]] && sudo=sudo || sudo=""
     " >$script_name
 
     echo '
+    [[ $(whoami) != "root" && -n $(command -v sudo) ]] && sudo=sudo || sudo=""
+
     jail_list=$($sudo fail2ban-client status | grep -i 'list:' | cut -d ":" -f 2 | sed -E "s/\s//g")
 
     function usage() {
