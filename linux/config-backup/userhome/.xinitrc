@@ -19,8 +19,8 @@ esac
 
 echo "$session" >~/.xsession
 
-# unset SESSION_MANAGER
-# unset DBUS_SESSION_BUS_ADDRESS
+unset SESSION_MANAGER
+unset DBUS_SESSION_BUS_ADDRESS
 
 #dbus-launch - Utility to start a message bus from a shell script.
 #if run without dbus-launch, some issues may happen

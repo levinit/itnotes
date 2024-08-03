@@ -58,8 +58,8 @@ export JUPYTER_DATA_DIR=$HOME/.local/share/jupyter            #--data-dir
 # export JUPYTER_CONFIG_DIR=
 
 #---mojo
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/.local/lib/mojo
-export PATH=$PATH:~/.modular/pkg/packages.modular.com_mojo/bin/
+#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/.local/lib/mojo
+#export PATH=$PATH:~/.modular/pkg/packages.modular.com_mojo/bin/
 
 #---flutter
 export FLUTTER_HOME=$dev_env_path/flutter
@@ -82,12 +82,6 @@ if [[ $os == Darwin ]]; then
 fi
 
 #---environment module
-if [[ -r /usr/local/opt/modules/init/zsh ]]; then
-  source /usr/local/opt/modules/init/zsh
-elif [[ -r /usr/share/modules/init/zsh ]]; then
-  source /usr/share/modules/init/zsh
-fi
-[[ -d $dev_dir/modulefiles && $(command -v module) ]] && module use $dev_dir/modulefiles
 
 #+++++ exit if not interactive shell +++++
 [[ $- != *i* ]] && return
