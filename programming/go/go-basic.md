@@ -622,7 +622,7 @@ p2.age=18
 
   标签只对JSON、XML等某些解析器有意义，标签中有一些特殊的字符会被解析器识别，如：
   
-  - `omitempty`  如果数据中没有提供这个字段，解析器也会忽略该字段；但是如果类型是引用类型，还需要添加`*`在字段名字前。
+  - `omitempty`  如果数据中没有提供这个字段，解析器也会忽略该字段；但是如果类型是引用类型，还需要添加`*`在类型前面。
   - `default:<default_val>`  为该字段赋值给定的值。
   - `"-"`  忽略该字段。
   
@@ -632,7 +632,7 @@ p2.age=18
     Name string `json:"name" xml:"name"`
     Group string `json:"-"`
     UUID int   //没有tag，也会忽略
-    *Permissions []string `json:"Permissions,omitempty"`
+    Permissions *[]string `json:"Permissions,omitempty"`
     Desc string `json:"desc,omitempty" default:"no desc"`
   }
   ```
