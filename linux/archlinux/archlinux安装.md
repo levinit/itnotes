@@ -288,17 +288,18 @@ ls /sys/firmware/efi/  #如果该文件存在则表示使用UEFI启动
   | @home     | /home          | 家目录，可选   |
   | @log      | /var/log       | 日志目录，可选 |
   | @cache    | /var/cache     | 缓存目录，可选 |
-
+  | @lib      | /var/lib       | 程序运行数据   |
+  
   1. 将btrfs分区挂载到/mnt
-
+  
      ```shell
      mount /dev/nvme0n1p2 /mnt
      ```
-
+  
   2. 使用`btrfs subvolume create /mnt/<name>`创建子卷
-
+  
      一般name以`@` 开头，也可使用单个`@`字符作为卷名
-
+  
      ```shell
      btrfs subvolume create /mnt/@
      btrfs subvolume create /mnt/@home
