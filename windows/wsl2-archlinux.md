@@ -97,7 +97,7 @@ useradd -m -g wheel user1
 archlinux的wsl默认使用root用户登录。在wsl装创建了普通用户后，在windows terminal中配置wsl默认登录用户：
 
 ```powershell
- arch2 config --default-user user1
+ Arch config --default-user user1
 ```
 
 
