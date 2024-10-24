@@ -185,12 +185,12 @@ elif [[ $(command -v pacman) ]]; then
   [[ $user != root ]] && alias pacman='sudo pacman'
   alias i="pacman -S"
   alias r="pacman -Rscn"
-  command -v paru &>/dev/null && alias s="paru --bottomup" || alias s="pacman -Ss"
+  command -v yay &>/dev/null && alias s="yay --bottomup" || alias s="pacman -Ss"
   alias orphan='pacman -Rscn $(pacman -Qtdq)'
   alias pkgclean='orphan && paccache -rk 2 2>/dev/null'
   alias pkg_query_update='pacman -Sy && pacman -Qu'
-  alias up='if command -v paru; then paru -Syu; else pacman -Syu; fi ; pkgclean ; zsh_plugins_upgrade'
-  alias paru='paru --bottomup'
+  alias up='if command -v yay; then yay -Syu; else pacman -Syu; fi ; pkgclean ; zsh_plugins_upgrade'
+  alias yay='yay --bottomup'
   #makepkg aur
   alias aurinfo='updpkgsums && makepkg --printsrcinfo > .SRCINFO ; git status && echo ----git add -u---'
 
@@ -363,7 +363,7 @@ function fortune_gushici() {
   elif [[ $(command -v pacman) ]]; then
     command -v fortune || pacman -S fortune-mod --noconfirm
     # sudo \cp -av /tmp/fortune/data/{tang*,song*} /usr/share/fortune/
-    echo | paru -S fortune-mod-zh-hant --skipreview
+    echo | yay -S fortune-mod-zh-hant --skipreview
   fi
 }
 
