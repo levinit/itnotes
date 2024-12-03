@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>css转圈圈</title>
+</head>
+
+<body>
+  等待中<span class="loading-icon">&circlearrowright;</span>
+  <style>
+    @keyframes runaround {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    .loading-icon {
+      display: inline-block;
+      width: 1em;
+      height: 1em;
+      line-height: 0.875;
+      text-align: center;
+      color: orchid;
+      animation: runaround 1.5s linear 0.25s infinite;
+    }
+  </style>
+</body>
+
+</html>

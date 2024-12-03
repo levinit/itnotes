@@ -1,0 +1,13 @@
+app=ristretto
+custom_action_command=/usr/lib/xfce4/screenshooter/scripts/imgur-upload.sh %f %imgur_client_id
+last_user=
+last_extension=png
+enable_imgur_upload=true
+show_in_folder=false
+screenshot_dir=file:/home/levin/Pictures/螢幕截圖
+action=2
+delay=0
+region=3
+show_mouse=1
+show_border=1
+
