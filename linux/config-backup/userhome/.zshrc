@@ -10,8 +10,8 @@ dev_proj_path=$dev_dir/proj
 alias dev="cd $dev_dir" proj="cd $dev_proj_path"
 
 #---npm
-alias npmlistg='npm -g list --depth=0'
-alias npmupg='npm -g upgrade'
+alias npmlistg='sudo npm -g list --depth=0'
+alias npmupg='sudo npm -g upgrade'
 alias npmmirrorchina='npm config set registry http://mirrors.cloud.tencent.com/npm/' #http://mirrors.cloud.tencent.com/npm/'
 
 #----golang

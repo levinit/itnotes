@@ -104,6 +104,14 @@ location = "ghcr.io"
 
 
 
+通过dockerfile或者podman的文件（yaml格式）创建：
+
+```shell
+podman build -t <名字> -f <文件路径>
+```
+
+
+
 # 容器编排
 
 - `podman generate`从容器生成编排文件

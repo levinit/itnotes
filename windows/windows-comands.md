@@ -67,27 +67,51 @@ Find-Module -Name xxx
 
 
 
+# 文件管理
+
+## 链接
+
+- cmd
+
+  ```cmd
+  mklink <option> <link> <src>
+  ```
+
+  option：
+
+  - `/D` 创建目录符号链接（默认创建文件符号链接）
+  - `/H` 创建硬链接
+  - `/J`  创建目录联接
+
+- powershell
+
+  ```powershell
+  New-Item -Path <link> -ItemType SymbolicLink -Value <src>
+  ```
+
+  
+
 # 查询命令的路径
 
 例如查询reg命令的路径：
 
-cmd
+- cmd
 
-```cmd
-where reg
-```
+  ```cmd
+  where reg
+  ```
 
-powershell
+  
 
-```powershell
-Get-Command reg
-```
+- powershell
 
+  ```powershell
+  Get-Command reg
+  ```
 
+  
 
 # 防火墙
-
-Firewall.cpl
 
 ```powershell
 #查看防火墙状态
@@ -120,45 +144,45 @@ netsh interface portproxy delete v4tov4 listenaddress=<listen addr> listenport=<
 
 # 进程管理
 
-powershell
+- powershell
 
-```powershell
-get-process
-get-process explorer.exe  #查询explorer.exe进程
+  ```powershell
+  get-process
+  get-process explorer.exe  #查询explorer.exe进程
+  
+  #Get-WmiObject可以获得更详细的信息
+  #搜索名字为explorer.exe进程信息
+  Get-WmiObject win32_process -Filter "name = 'explorer.exe'"
+  
+  #搜索名字为explorer.exe进程信息（需要名字准确），并过滤出Name,Handle,CommandLine属性
+  Get-WmiObject -Class Win32_process -Filter "name = 'explorer.exe'" | Select-Object -Property Name,Path,ProcessId,CommandLine
+  
+  #搜索名字包含'%explorer%' 的进程信息，并过滤出Name,Handle,CommandLine属性
+  Get-WmiObject -Class Win32_process -Filter "name like '%explorer%'" | Select-Object -Property Name,Path,ProcessId,CommandLine
+  ```
 
-#Get-WmiObject可以获得更详细的信息
-#搜索名字为explorer.exe进程信息
-Get-WmiObject win32_process -Filter "name = 'explorer.exe'"
+  Get-WmiObject查找进程的输出示例：
 
-#搜索名字为explorer.exe进程信息（需要名字准确），并过滤出Name,Handle,CommandLine属性
-Get-WmiObject -Class Win32_process -Filter "name = 'explorer.exe'" | Select-Object -Property Name,Path,ProcessId,CommandLine
-
-#搜索名字包含'%explorer%' 的进程信息，并过滤出Name,Handle,CommandLine属性
-Get-WmiObject -Class Win32_process -Filter "name like '%explorer%'" | Select-Object -Property Name,Path,ProcessId,CommandLine
-```
-
-Get-WmiObject查找进程的输出示例：
-
-> ```powershell
-> Get-WmiObject -Class Win32_process -Filter "name = 'explorer.exe'" | Select-Object -Property Name,Path,ProcessId,CommandLine
-> 
-> Name         Path                    ProcessId CommandLine
-> ----         ----                    --------- -----------
-> explorer.exe C:\Windows\Explorer.EXE      5796 C:\Windows\Explorer.EXE
-> ```
+  > ```powershell
+  > Get-WmiObject -Class Win32_process -Filter "name = 'explorer.exe'" | Select-Object -Property Name,Path,ProcessId,CommandLine
+  > 
+  > Name         Path                    ProcessId CommandLine
+  > ----         ----                    --------- -----------
+  > explorer.exe C:\Windows\Explorer.EXE      5796 C:\Windows\Explorer.EXE
+  > ```
 
 
 
-cmd
+- cmd
 
-```cmd
-tasklist
-
-#wmic（win11中将被弃用）
-wmic process
-wmic process | find /i "explorer.exe"  #从进程中查找explorer.exe
-wmic process where "name like '%explorer%'" get processid,commandline
-```
+  ```cmd
+  tasklist
+  
+  #wmic（win11中将被弃用）
+  wmic process
+  wmic process | find /i "explorer.exe"  #从进程中查找explorer.exe
+  wmic process where "name like '%explorer%'" get processid,commandline
+  ```
 
 
 
