@@ -585,21 +585,39 @@ for _, record := range records {
 
 ## JSON库
 
-使用前应当定义数据结构。如果允许定义的字段在JSON数据中不存在，可以参考[结构体struct](#结构体struct)章节对字段设置`omitempty`标签，如果要设置默认值可以使用默认值`default:`标签。
+使用前应当定义数据结构。
+
+如果允许定义的字段在JSON数据中不存在，可在结构体字段后面json的tag中设置`omitempty`标签，如果要设置默认值可以使用默认值`default:`标签。
 
 ```go
-//---读写JSON文件
-file, err := os.Open("file.json")
+f, err := os.Open("file.json")
 if err != nil {
 	log.Fatal(err)
 }
-defer file.Close()
+defer f.Close()
 
+//--- 读
 var data interface{} //一个变量用以接受解析器的结果
 if err:=json.NewDecoder(file).Decode(&data);err != nil {
 	log.Fatal(err)
 }
 fmt.Println(data)
+
+//--- 写
+data1:= struct {
+    Name string `json:"name"`
+    Age  int    `json:"age;omitempty"`
+}{
+    Name: "zhangsan",
+    Age:  18,
+}
+
+json.NewEncoder(f).Encode(data1)
+
+//如果写入的文件要设置缩进
+jsonEncoder := json.NewEncoder(f)
+jsonEncoder.SetIndent("", "    ")
+jsonEncoder.Encode(data1)
 ```
 
 
