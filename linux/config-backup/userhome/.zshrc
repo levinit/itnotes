@@ -14,6 +14,16 @@ alias npmlistg='sudo npm -g list --depth=0'
 alias npmupg='sudo npm -g upgrade'
 alias npmmirrorchina='npm config set registry http://mirrors.cloud.tencent.com/npm/' #http://mirrors.cloud.tencent.com/npm/'
 
+#---bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+
+export BUN_STORE=$dev_env_path/bun/store
+mkdir -p $BUN_STORE
+
+# bun completions
+[ -s "/home/levin/.bun/_bun" ] && source "/home/levin/.bun/_bun"
+
 #----golang
 export GOPROXY=https://goproxy.cn
 export GOPATH=$dev_env_path/go #default is ~/go
@@ -363,7 +373,7 @@ function fortune_gushici() {
   elif [[ $(command -v pacman) ]]; then
     command -v fortune || pacman -S fortune-mod --noconfirm
     # sudo \cp -av /tmp/fortune/data/{tang*,song*} /usr/share/fortune/
-    echo | yay -S fortune-mod-zh-hant --skipreview
+    yes | yay -S fortune-mod-zh-hant
   fi
 }
 
@@ -512,3 +522,4 @@ zstyle ':completion:*:scp:*' tag-order '! users'
 #     [[ -f ~/.ssh-agent.env ]] && source ~/.ssh-agent.env
 #   fi
 # }
+
