@@ -388,10 +388,18 @@ case $session in
     *                 ) session=$1;;
 esac
 
+if [[ -z $(command -v $session) ]];
+then
+  echo "$session not found" > ~/start-xrdp.err
+  exit 1
+fi
+
+echo "$session" >~/.xsession
+
 unset SESSION_MANAGER
 unset DBUS_SESSION_BUS_ADDRESS
-exec dbus-launch $session
 
+exec dbus-launch "$session"
 vncserver -kill $DISPLAY
 ```
 

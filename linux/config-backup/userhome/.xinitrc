@@ -1,7 +1,11 @@
 #!/bin/bash
-session=xfce #${1:-gnome}
+session=cosmic #${1:-gnome}
 
 case $session in
+cosmic)
+    session=start-cosmic
+    #which xrdb &>/dev/null && xrdb -merge ~/.Xresources
+    ;;
 gnome)
     export XDG_SESSION_TYPE=x11
     export GDK_BACKEND=x11
@@ -17,11 +21,19 @@ kde* | plasma*)
     ;;
 esac
 
+if [[ -z $(command -v $session) ]];
+then
+  echo "$session not found" >> start-xrdp.err
+  exit 1
+fi
+
+
 echo "$session" >~/.xsession
 
 unset SESSION_MANAGER
 unset DBUS_SESSION_BUS_ADDRESS
 
-#dbus-launch - Utility to start a message bus from a shell script.
-#if run without dbus-launch, some issues may happen
 exec dbus-launch "$session"
+
+#for vnc
+#vncserver -kill $DISPLAY

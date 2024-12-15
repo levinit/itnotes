@@ -79,6 +79,28 @@
 
 
 
+# 查询包中所有文件的安装路径
+
+- pacman
+
+  ```shell
+  pacman -Ql <pkg-name>
+  ```
+
+- apt
+
+  ```shell
+  dpkg -S <pkg-name>
+  ```
+
+- dnf
+
+  ```shell
+  dnf repoquery --list <pkg-name>
+  ```
+
+
+
 # 查询命令/文件所属的软件包
 
 查看某个命令或文件等来自哪个软件包
