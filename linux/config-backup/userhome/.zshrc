@@ -12,14 +12,12 @@ alias dev="cd $dev_dir" proj="cd $dev_proj_path"
 #---npm
 alias npmlistg='sudo npm -g list --depth=0'
 alias npmupg='sudo npm -g upgrade'
-alias npmmirrorchina='npm config set registry http://mirrors.cloud.tencent.com/npm/' #http://mirrors.cloud.tencent.com/npm/'
 
 #---bun
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
-
 export BUN_STORE=$dev_env_path/bun/store
-mkdir -p $BUN_STORE
+(mkdir -p $BUN_STORE &)
 
 # bun completions
 [ -s "/home/levin/.bun/_bun" ] && source "/home/levin/.bun/_bun"
@@ -29,6 +27,7 @@ export GOPROXY=https://goproxy.cn
 export GOPATH=$dev_env_path/go #default is ~/go
 export PATH=$GOPATH/bin:$PATH
 export GOROOT=$(go env GOROOT 2>/dev/null)
+(mkdir -p $GOPATH &)
 #go telemetry on
 
 #---rust
@@ -45,8 +44,9 @@ alias python=python3 pip=pip3
 alias pipmirrorchina='pip config set global.index-url https://mirrors.cloud.tencent.com/pypi/simple' # https://pypi.tuna.tsinghua.edu.cn/simple'
 alias pipoutdated='pip list --outdated'
 alias pipupgrade='pip install --upgrade $(pip list --outdate 2>/dev/null |sed -n "3,$ p"|cut -d " " -f 1)'
-alias pydev='source ~/.virtualenvs/dev/bin/activate'
 alias pip_install_from_list='pip3 install -r pip.list --no-index --find-links=.'
+alias pydev='source ~/.virtualenvs/dev/bin/activate'
+alias pyenv='activate_venv(){echo active $@ venv;source ~/.virtualenvs/$1/bin/activate};activate_venv'
 
 #---conda
 # if [ -r "/usr/local/Caskroom/miniconda/base/etc/profile.d/conda.sh" ]; then
@@ -63,10 +63,6 @@ alias condaclean='conda clean -ady'
 # export JUPYTER_RUNTIME_DIR=$HOME/.local/share/jupyter/runtime #--runtime-dir
 # export JUPYTER_DATA_DIR=$HOME/.local/share/jupyter            #--data-dir
 # export JUPYTER_CONFIG_DIR=
-
-#---mojo
-#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/.local/lib/mojo
-#export PATH=$PATH:~/.modular/pkg/packages.modular.com_mojo/bin/
 
 #---flutter
 # export FLUTTER_HOME=$dev_env_path/flutter
@@ -195,6 +191,7 @@ elif [[ $(command -v pacman) ]]; then
   [[ $user != root ]] && alias pacman='sudo pacman'
   alias i="pacman -S"
   alias r="pacman -Rscn"
+  alias qs="pacman -Qs"
   command -v yay &>/dev/null && alias s="yay --bottomup" || alias s="pacman -Ss"
   alias orphan='pacman -Rscn $(pacman -Qtdq)'
   alias pkgclean='orphan && paccache -rk 2 2>/dev/null'
@@ -215,6 +212,7 @@ elif [[ $(command -v apt) ]]; then
   alias i="apt install"
   alias r="apt purge"
   alias s="apt search"
+  alias qs="apt list -i "
   alias orphan='[[ -n $(command -v deborphan) ]] && clean_oprhan_debs || echo "deborphan not installed"'
   alias pkgclean='apt autoremove && apt autoclean && orphan'
   alias pkg_query_update='apt update && apt list --upgradable'
@@ -522,4 +520,3 @@ zstyle ':completion:*:scp:*' tag-order '! users'
 #     [[ -f ~/.ssh-agent.env ]] && source ~/.ssh-agent.env
 #   fi
 # }
-
