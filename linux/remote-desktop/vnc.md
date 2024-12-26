@@ -355,6 +355,16 @@ vncserver -dpi 96 -geometry=1600x960
 
 ```shell
 #!/bin/sh
+
+#指定要使用什么桌面环境或窗口管理器
+session=gnome          #GNOME
+#session=dde           #DDE(Deepin桌面)
+#session=startxfce4    #xfce
+#session=mate          #MATE
+#session=startlxde     #lxde
+#session=kde           #KDE Plasma
+#session=i3            #i3wm
+
 export XKL_XMODMAP_DISABLE=1 #禁用XKB Xmodmap扩展，可能用于解决键盘布局相关的问题
 
 #vnc config tool show at the top-left in vnc window 开启后连上vnc会再左上角看到一个配置窗口
@@ -367,24 +377,17 @@ command -v vncconfig && vncconfig -iconic &
 #设置x资源 如果用户使用自定义的.xinitrc时执行：
 [ -r $HOME/.Xresources ] && xrdb $HOME/.Xresources
 
-#指定要使用什么桌面环境或窗口管理器
-session=gnome-session  #GNOME
-#session=startxfce4    #xfce
-#session=startlxde     #lxde
-#session='gnome-session --session=gnome-classic'
-#session=mate-session  #MATE
-#session=startdde      #DDE(Deepin桌面)
-#session=startkde      #KDE Plasma
-#session=i3            #i3wm
-
 # Copying clipboard content from the remote machine (need install autocutsel)
 command -v autocutsel && autocutsel -fork
     
 case $session in
-    gnome             ) session=gnome-sesion;;  #gnome-session-classic
-    i3|i3wm           ) session=i3;;
+    gnome             ) session=gnome-sesion;;     #session='gnome-session --session=gnome-classic'
     kde               ) session=startplasma-x11;;
     xfce|xfce4        ) session=startxfce4;;
+    lxde              ) session=startlxde;;
+    dde               ) session=startdde;;
+    mate              ) session=mate-session;;
+    i3|i3wm           ) session=i3;;
     *                 ) session=$1;;
 esac
 
