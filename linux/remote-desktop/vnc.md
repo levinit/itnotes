@@ -549,7 +549,6 @@ gsettings set org.gnome.desktop.lockdown disable-lock-screen true
 
 ## 启动失败
 
-
 ### xstartup: line * Trace/breakpoint trap   /etc/X11/xinit/xinitrc
 
 vnc日志提示类似：
@@ -580,31 +579,14 @@ vnc日志提示类似：
 </busconfig>
 ```
 
-重启相关服务：
-
-```shell
-systemctl restart messagebus
-systemctl restart gdm     #??
-```
 
 
-
-如果检查`abrt-cli list`或者`cat /var/log/messages`或者`journalctl -xe`等能看到关于gdm的类似报错：
-
-```shell
-ERROR: Failed to connect to system bus: Exhausted all available authentication mechan aborting..
-```
-
-重启dbus服务即可。
-
-注意：`restart`会造成现有的dbus全部中断！也就是其他X会话、wayland会话等中断！
+重启dbus服务，但是`restart`会造成现有的dbus全部中断！也就是其他X会话、wayland会话等中断，而且还是可能需要重启才能解决问题，因此建议直接重启。
 
 ```shell
 systemctl reload dbus  #如果依然无效再考虑restart
 systemctl restart dbus
 ```
-
-如不能解决则可能需要重启才能解决。
 
 
 

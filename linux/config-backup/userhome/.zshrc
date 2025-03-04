@@ -520,3 +520,5 @@ zstyle ':completion:*:scp:*' tag-order '! users'
 #     [[ -f ~/.ssh-agent.env ]] && source ~/.ssh-agent.env
 #   fi
 # }
+# Added by Windsurf
+export PATH="/Users/levin/.codeium/windsurf/bin:$PATH"
