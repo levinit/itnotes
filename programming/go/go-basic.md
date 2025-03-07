@@ -699,21 +699,23 @@ type Person struct {
 
   标签只对JSON、XML等某些解析器有意义，标签中有一些特殊的字符会被解析器识别，如：
 
-  - `omitempty`  如果数据中没有提供这个字段，解析器也会忽略该字段；但是如果类型是引用类型，还需要添加`*`在类型前面。
+  - `omitempty`  忽略空值字段，如果数据中没有提供这个字段，解析器会忽略该字段
+  - `omizero`   忽略零值字段，避免在数据没有提供该字段而解析后出现零值（例如 `time.Time` 类型，零值是 `"0001-01-01T00:00:00Z"`，这并不被视为 **空值**）
   - `default:<default_val>`  为该字段赋值给定的值。
   - `"-"`  忽略该字段。
-
+  
   ```go
   type Person struct {
     Id int `json:"id"`
-    Name string `json:"name" xml:"name"`
-    Group string `json:"-"`
-    UUID int   //没有tag，也会忽略
-    Permissions *[]string `json:"Permissions,omitempty"`
-    Desc string `json:"desc,omitempty" default:"no desc"`
+    Name string           `json:"name" xml:"name"`
+    Group string          `json:"-"`
+    UUID int              //没有tag，也会忽略
+    Age int               `json:"age,omizero"`  //如果数据中没有age字段，解析器会忽略，不会出现age:0
+    Permissions *[]string `json:"permissions,omitempty"`  //如果数据中没有permission，解析器会忽略
+    Desc string           `json:"desc,omitempty" default:"no desc"`
   }
   ```
-
+  
   对Person的实例进行json转换时，json的将采用标签名中定义的属性名，如是使用`id`而非`Id`
 
 
