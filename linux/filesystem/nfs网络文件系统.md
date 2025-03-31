@@ -150,7 +150,63 @@ mount --bind /home /srv/nfs/home
 
 
 
-其他常用选项
+常用选项
+
+- 用户访问控制
+
+  - `sec` 访问控制和身份验证机制，在`=`后可选择以下值：
+
+    - `sys`（默认）
+
+      使用 UNIX 用户 ID（UID）和组 ID（GID）进行身份验证。
+
+      NFS 的传统模式，但安全性较弱，因为 UID/GID 可以被客户端伪造。只建议在信任的可控网络中使用，例如在隔离的网络中，并限制可访问导出目录的主机网络（甚至限定主机）。
+
+
+    - `krb5`
+
+      使用 Kerberos 5 进行身份验证，确保用户的身份经过可信任的验证。适用于需要更高安全性的环境。
+
+
+    - `krb5i`
+
+      在 `krb5` 的基础上，增加了完整性保护（integrity protection）。确保数据在传输过程中不会被篡改。
+
+
+    - `krb5p`
+
+      在 `krb5i` 的基础上，增加了隐私保护（privacy protection）。传输的数据会被加密，防止窃听。
+
+
+    - `none`
+
+      允许匿名访问，通常用于公共共享目录，不进行任何身份验证。适用于无需安全保护的环境，但极不安全。
+
+      
+
+  - root用户的映射
+
+    - `root_squash`   root用户映射成匿名用户nfsnobody（默认）
+
+    - `no_root_squash`   不映射root为nfsnobody，即客户端root用户在共享目录仍具有root权限。
+
+      如果要启用该功能，配置中允许访问的客户端地址范围的主机应该是可控的，例如限制可访问导出目录的主机，掌握有可访问的主机的root权限，root权限不被不可信任的人获取。
+
+      
+
+  - 任何用户的映射
+
+    - `no_all_squash`  不映射用户（默认）
+
+    - `all_squash`  任何用户映射成匿名用户nfsnobody，NFS 服务器在客户端访问文件时，会检查该文件是否仍然属于已导出的目录（即“子树”）。这种检查的目的是防止**文件被移动或权限发生变化**后，客户端仍然访问错误的文件。
+
+      
+
+  - uid和gid的映射
+
+    `anonuid=`  或 `anongid=`   映射用户为指定的uid和gid，和`root_squash` 以及`all_squash`一同使用。
+
+  
 
 - 文件权限：
 
@@ -158,13 +214,14 @@ mount --bind /home /srv/nfs/home
 
   - `exec`（默认）或`noexec`  可以或不可执行二进制文件
 
-  - 目录树权限检查：
+  - 导出目录树权限检查：
 
     - `subtree_check`  NFS检查父目录的权限
-
     - `no_subtree_check`  不检查父目录权限（默认）
     
-      
+    客户端访问文件时，会检查该文件是否仍然属于已导出的目录（即“子树”），防止**文件被移动或权限发生变化**后，客户端仍然访问错误的文件。
+    
+    `subtree_check`会增加计算开销，`no_subtree_check`会增加安全隐患，因此`no_subtree_check`不适用于部分目录导出（如 `/home/user` 只导出 `/home/user/project`）及有严格的文件访问控制要求的情况。
 
 - 端口策略
 
@@ -185,28 +242,8 @@ mount --bind /home /srv/nfs/home
     - `wdelay`  一次操作将多个写入请求提交到磁盘（默认），即一个写入请求可能会等待其他写入请求一起写入磁盘。可减少写开销，但是如果NFS服务器接收到的主要是无关的小请求，这种行为实际上可能降低性能。
     - `no_wdelay`  任何写入请求都立即写入，**当使用async时，该设置无效**。 
 
-    
 
-- 用户映射
-
-  - root用户的映射
-
-    - `root_squash`   root用户映射成匿名用户nfsnobody（默认）
-
-    - `no_root_squash`   不映射root为nfsnobody，即客户端root用户在共享目录仍具有root权限。
-
-      安全建议：如果要启用该功能，配置中允许访问的客户端地址范围的主机应该是可控的，例如限制可访问的主机地址，掌握有可访问的主机的root权限，root权限不被不可信任的人获取。
-
-  - 任何用户的映射
-
-    - `no_all_squash`  不映射用户（默认）
-    - `all_squash`  任何用户映射成匿名用户nfsnobody
-
-  - uid和gid的映射
-
-    `anonuid=`  或 `anongid=`   映射用户为指定的uid和gid，和`root_squash` 以及`all_squash`一同使用。
-
-    
+  
 
 - 子目录是否隐藏：`no_hide`（默认）或`hide`
 
