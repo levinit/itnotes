@@ -249,11 +249,11 @@ yppush -v -h <slave-host> passwd.byuid
 #Domain域名，Map为nis的数据库名称
 #Security取值，port仅能使用<1024的端口，deny拒绝，none无限制
 # Host                : Domain : Map                  : Security 
-*			                : *      : shadow.byname        : port
-*			                : *      : passwd.adjunct.byname: port
-127.0.0.1/255.0.0.0   : *      : *                    : none
-10.0.0.1/255.255.255.0: *      : *                    : none
-*                     : *      : *                    : deny
+#*			          : *      : shadow.byname        : port
+#*                     : *      : passwd.adjunct.byname: port
+127.0.0.1/8           : *      : *                    : none
+10.0.0.1/24           : *      : *                    : none
+192.168.0.24          : *      : *                    : deny
   ```
 
   
