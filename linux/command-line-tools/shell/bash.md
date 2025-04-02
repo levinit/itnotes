@@ -211,7 +211,7 @@ PS1='[\u@\h \W]\$ '
 
 ```shell
 bash --norc
-ssh user@server -t "bash --norc"
+ssh user@server -t "/bin/bash --noprofile --norc" #用户跳过shell初始化
 ```
 
 # 变量

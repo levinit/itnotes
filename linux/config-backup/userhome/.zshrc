@@ -18,6 +18,7 @@ export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 export BUN_STORE=$dev_env_path/bun/store
 (mkdir -p $BUN_STORE &)
+export BUN_REGISTRY=https://registry.npmjs.org
 
 # bun completions
 [ -s "/home/levin/.bun/_bun" ] && source "/home/levin/.bun/_bun"

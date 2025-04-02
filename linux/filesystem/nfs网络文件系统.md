@@ -164,25 +164,26 @@ mount --bind /home /srv/nfs/home
 
 
     - `krb5`
-
+    
       使用 Kerberos 5 进行身份验证，确保用户的身份经过可信任的验证。适用于需要更高安全性的环境。
 
 
     - `krb5i`
-
+    
       在 `krb5` 的基础上，增加了完整性保护（integrity protection）。确保数据在传输过程中不会被篡改。
 
 
     - `krb5p`
-
+    
       在 `krb5i` 的基础上，增加了隐私保护（privacy protection）。传输的数据会被加密，防止窃听。
 
 
     - `none`
-
+    
       允许匿名访问，通常用于公共共享目录，不进行任何身份验证。适用于无需安全保护的环境，但极不安全。
 
-      
+
+​      
 
   - root用户的映射
 
@@ -243,7 +244,7 @@ mount --bind /home /srv/nfs/home
     - `no_wdelay`  任何写入请求都立即写入，**当使用async时，该设置无效**。 
 
 
-  
+
 
 - 子目录是否隐藏：`no_hide`（默认）或`hide`
 
@@ -306,7 +307,7 @@ mount 192.168.0.251:/music /music   #挂载子目录
 写入`/etc/fstab`自动挂载
 
 ```shell
-192.168.0.251:/share /share nfs defaults,_netdev,timeo=10,retrans=3	0 0
+192.168.0.251:/share /share nfs defaults,hard,intr,noatime,nodirtime,_netdev,timeo=10,retrans=3	0 0
 ```
 
 也可使用autofs等工具挂载。
@@ -315,30 +316,37 @@ mount 192.168.0.251:/music /music   #挂载子目录
 
 常用选项：
 
-- `timeo=<num>`   超时时间（单位秒），默认值根据具体客户端情况而定
+- `hard`或`soft`   硬挂载（默认行为，可不指定）与软挂载
 
-- `retrans=<num>`   重试次数
+  硬挂载：如果NFS服务器无响应，客户端会持续重试I/O操作，直到服务器恢复，进程会一直阻塞（挂起），无法自动退出，除非挂载时显式添加了`intr`（可中断）选项，否则无法通过常规方法（如`Ctrl+C`）终止挂起的进程。目的是确保写入操作最终完成，避免数据丢失或损坏。
 
-- `vers=<ver-num>`  NFS协议版本，如`4.2`，每个客户端系统的默认值根据具体情况而定。
+  软挂载：可以设置重试时间和超时，一般用在非关键临时数据（可容忍数据丢失）或只读文件系统（如仓库、镜像源）
 
-- `noacl`  关闭acl支持
+- `intr`   允许用户通过 信号（如 `SIGINT`、`SIGKILL`）强制中断挂起的 NFS 操作
 
-- `sec=`  一个或多个以冒号分隔的值，可以是：
+- `timeo=<num>`   超时时间（单位秒），默认值根据具体客户端情况而定，在指定了`soft`的情况下才生效
 
-  - `sec=sys` 使用本地 UNIX UID 和 GID（默认）；
-  - `sec=krb5` 使用 Kerberos V5；
-  - `sec=krb5i` 使用 Kerberos V5 进行用户身份验证，并使用安全校验和执行 NFS 操作的完整性检查；
-  - `sec=krb5p` 使用 Kerberos V5 进行用户身份验证、完整性检查，并加密 NFS 流量以防止流量嗅探。这是最安全的设置，但它也会涉及最大的性能开销。 							
+- `retrans=<num>`   重试次数，在指定了`soft`的情况下才生效
+
+- `vers=<ver-num>`  NFS协议版本，如`3`、`4.2`，每个客户端系统的默认值根据具体情况而定。
+
+- `acl`  启用ACL，NFSv3协议规范本身**不原生支持POSIX ACL**，其ACL功能依赖于文件服务器的本地文件系统是否支持ACL。
+
+- `sec=`  认证方式，参看服务端该选项说明，应和服务端一致
 
 - `noexec`  禁止客户端执行二进制文件
 
 - `port`  指定NFS服务器的端口号（默认为2049）
 
-- proc  指定通信协议为还是tcp
+- `proc`  指定通信协议为还是tcp
+
+- `noatime,nodirtime`  关闭文件和目录访问时间更新（可以减少IO）
+
+- `realtime`   仅在mtime（修改时间）变化或`atime`过旧才更新`atime`，和`noatime,nodirtime` 二选一
 
 - `rsize=<num>` 和 `wsize=<num>`  单一NFS 读写操作传输的最大字节数。
 
-  没有固定的默认值。默认情况下，NFS 使用服务器和客户端都支持的最大的可能值
+  默认情况下，NFS 会自动协商 `rsize` 和 `wsize`，选择**客户端和服务器都支持的最大值**（一般是1M）。
 
 
 
@@ -354,11 +362,80 @@ mount -o nolock \\192.168.0.251\share Z:
 
 
 
-# 其他相关配置
+# 高级配置
 
 ## NFS v4+的ACL
 
 v4+版本开始，不可再使用系统的ACL，而需要使用NFS内置的nfs4acl。
+
+
+
+## 性能调优
+
+本小节基于需要更高的IO性能要求，基于物理可控的网络场景，不考虑权限控制安全管理等内容（对与安全相关要求参考前文中的各处描述）
+
+
+
+服务端
+
+- 导出共享目录使用这些配置：
+
+  - 使用NFS v3
+
+  - 使用这些参数：
+    - `async`  异步写入
+    - `no_root_squash` 关闭目录检查，提升高目录访问，尤其是大量小文件。
+
+- NFS服务配置文件（一般是`/etc/nfs.conf`）调整：
+
+  ```ini
+  [nfsd]
+  rsize=8388608
+  wsize=8388608
+  #根据服务器配置性能提高threads值，以增加并发数量
+  threads=64       
+  
+  [mountd]
+  #manage-gids = false  #默认true
+  ```
+
+  提高 rsize 和 wsize可减少读写操作的网络交互次数，增加大文件访问性能（10Gb+ 网络下可以**增大到 8MB**（最大））；如果大量小文件场景更多，建议使用较低的值如`262144`，混合或者不定情况下可不设置，让系统自动协商。
+
+  可以使用`nfsstat -m` 查看默认 `rsize` 和 `wsize`。
+
+  
+
+  `manage-gids = false `会关闭GID查询，适用于单一GID场景。如果NFS 共享目录的访问权限基于组（GID）控制，某些用户可能无法访问本应属于其附加组的文件。
+
+
+
+客户端
+
+如无必要不要使用的挂载选项：`acl,sync,atime,soft,wdely,subtree_check,fsid=0,lock,intr`
+
+根据需要使用这些参数挂载，示例：
+
+```shell
+io01:/share  /share defaults,vers=3,ha rd,intr,fsc,noatime,nodiratime,rsize=8388608,wsize=8388608,proto=tcp,hard,_netdev 0 0
+```
+
+| 参数                          | 作用                                                         |
+| ----------------------------- | ------------------------------------------------------------ |
+| `fsc`                         | 启用 `fscache`，本地缓存 NFS 读取数据，提高重复访问性能（需 `cachefilesd`） |
+| `vers=3`                      | 使用 NFS v3，无状态                                          |
+| `noatime,nodiratime`          | 关闭文件访问时间更新，减少 I/O                               |
+| `rsize=8388608,wsize=8388608` | 设置 8MB 读/写缓存，提高吞吐量                               |
+| `proto=tcp`                   | 使用 TCP 代替 UDP，适合稳定大流量传输                        |
+| `hard,intr`                   | `hard`硬挂载，避免 NFS 超时导致 I/O 错误，`intr`允许用户中断 |
+| `_netdev`                     | 确保 NFS 在网络就绪后才挂载                                  |
+
+fsc需要启用`cachefilesd`服务（**适用于大文件、重复读的场景**，如果是高频小文件访问，效果有限。）
+
+如果小文件场景多，应当减少rsize和wsize，如设置为`262144`。
+
+如果系统不明确需要 `atime`，应当使用`noatime`和`nodiratime`减少I/O。*潜在问题：某些程序依赖 `atime` 来判断文件是否被读取过，如 `mutt`、`tmpwatch`，极少有程序依赖目录的 `atime`。则如果有兼容性问题，可以用 `relatime` 代替 `noatime`。*
+
+`hard,intr`用于硬挂载（实际上是NFS默认行为，可不指定）并允许用户中断，避免无限挂起无法进行任何操作。
 
 
 
