@@ -307,7 +307,7 @@ mount 192.168.0.251:/music /music   #挂载子目录
 写入`/etc/fstab`自动挂载
 
 ```shell
-192.168.0.251:/share /share nfs defaults,hard,intr,noatime,nodirtime,_netdev,timeo=10,retrans=3	0 0
+192.168.0.251:/share /share nfs defaults,hard,intr,noatime,nodirtime,_netdev	0 0
 ```
 
 也可使用autofs等工具挂载。
@@ -324,9 +324,9 @@ mount 192.168.0.251:/music /music   #挂载子目录
 
 - `intr`   允许用户通过 信号（如 `SIGINT`、`SIGKILL`）强制中断挂起的 NFS 操作
 
-- `timeo=<num>`   超时时间（单位秒），默认值根据具体客户端情况而定，在指定了`soft`的情况下才生效
+- `timeo=<num>,retrans=<num>`   超时时间（单位秒）和重试次数。
 
-- `retrans=<num>`   重试次数，在指定了`soft`的情况下才生效
+  *在`soft`模式下，这两个值限制了客户端挂载失败后每次尝试挂载的超时最大值和可尝试挂载的次数，`hard`模式下，客户端会一直尝试挂载，这两个值只限制前`retrans`次及这些次数中的单次超时限制，尝试次数超过设置后仍然继续尝试挂载，这些设值不再影响。*
 
 - `vers=<ver-num>`  NFS协议版本，如`3`、`4.2`，每个客户端系统的默认值根据具体情况而定。
 
@@ -347,6 +347,16 @@ mount 192.168.0.251:/music /music   #挂载子目录
 - `rsize=<num>` 和 `wsize=<num>`  单一NFS 读写操作传输的最大字节数。
 
   默认情况下，NFS 会自动协商 `rsize` 和 `wsize`，选择**客户端和服务器都支持的最大值**（一般是1M）。
+  
+- `fsc`  `fsc`（File System Caching）是 NFS 客户端的**本地磁盘缓存**功能，允许 NFS 在本地磁盘上缓存文件，减少对服务器的重复访问。仅支持NFS v4.1及以上，不可与`sync`同用。
+
+  检查是否支持：
+
+  ```shell
+  grep CONFIG_NFS_FSCACHE=y /boot/config-$(uname -r)
+  ```
+
+  并需要已经安装`cachefilesd`并启用`cachefilesd`服务。
 
 
 
@@ -416,20 +426,17 @@ v4+版本开始，不可再使用系统的ACL，而需要使用NFS内置的nfs4a
 根据需要使用这些参数挂载，示例：
 
 ```shell
-io01:/share  /share defaults,vers=3,ha rd,intr,fsc,noatime,nodiratime,rsize=8388608,wsize=8388608,proto=tcp,hard,_netdev 0 0
+io01:/share  /share defaults,vers=3,hard,intr,noatime,nodiratime,rsize=8388608,wsize=8388608,proto=tcp,hard,_netdev 0 0
 ```
 
 | 参数                          | 作用                                                         |
 | ----------------------------- | ------------------------------------------------------------ |
 | `fsc`                         | 启用 `fscache`，本地缓存 NFS 读取数据，提高重复访问性能（需 `cachefilesd`） |
-| `vers=3`                      | 使用 NFS v3，无状态                                          |
 | `noatime,nodiratime`          | 关闭文件访问时间更新，减少 I/O                               |
 | `rsize=8388608,wsize=8388608` | 设置 8MB 读/写缓存，提高吞吐量                               |
 | `proto=tcp`                   | 使用 TCP 代替 UDP，适合稳定大流量传输                        |
 | `hard,intr`                   | `hard`硬挂载，避免 NFS 超时导致 I/O 错误，`intr`允许用户中断 |
 | `_netdev`                     | 确保 NFS 在网络就绪后才挂载                                  |
-
-fsc需要启用`cachefilesd`服务（**适用于大文件、重复读的场景**，如果是高频小文件访问，效果有限。）
 
 如果小文件场景多，应当减少rsize和wsize，如设置为`262144`。
 
