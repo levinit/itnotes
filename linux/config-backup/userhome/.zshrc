@@ -21,7 +21,7 @@ export BUN_STORE=$dev_env_path/bun/store
 export BUN_REGISTRY=https://registry.npmjs.org
 
 # bun completions
-[ -s "/home/levin/.bun/_bun" ] && source "/home/levin/.bun/_bun"
+[ -s "~/.bun/_bun" ] && source "~/.bun/_bun"
 
 #----golang
 export GOPROXY=https://goproxy.cn
@@ -75,11 +75,11 @@ alias condaclean='conda clean -ady'
 export ANSIBLE_CONFIG=$dev_configs_path/ansible/ansible.cfg
 
 #---esp-idf
-if [[ -s /opt/esp-idf/export.sh ]]; then
-  source /opt/esp-idf/export.sh >/dev/null
-elif [[ -s $dev_env_path/esp-idf/export.sh ]]; then
-  source $dev_env_path/esp-idf/export.sh >/dev/null
-fi
+#if [[ -s /opt/esp-idf/export.sh ]]; then
+#  source /opt/esp-idf/export.sh >/dev/null
+#elif [[ -s $dev_env_path/esp-idf/export.sh ]]; then
+#  source $dev_env_path/esp-idf/export.sh >/dev/null
+#fi
 
 #---specify $PATH
 if [[ $os == Darwin ]]; then
@@ -98,6 +98,7 @@ eval "$(starship init zsh)"
 #===== welcom msg =====
 echo -e "+++ $HOST : $(uname -rsm) +++\n\e[1;36m@$(date)\e[0m"
 
+#--- IP info
 if [[ $os == Linux && -n $(command -v ip) ]]; then #iproute
   local default_gw=$(ip r | grep default | head -n 1 | grep -Po "(?<=via ).+(?= dev)")
   ip -4 -br a | grep -vE "lo|169.254" | while read ip_info; do
@@ -122,15 +123,16 @@ elif [[ -n $(command -v ifconfig) ]]; then #net-tools (ifconfig)
   echo -e "gateway:\e[3;35m" $(echo $gateway)"\e[0m\n\e[31m$(echo "$network_info" | sed -E -e "/^$/d" -e "s/\t/\s/g")\e[0m"
 fi
 
+#---fortune
 if [[ -n $(command -v fortune) ]]; then
   if [[ $os == Darwin ]]; then
     fortune song100 tang300 2>/dev/null
-  else
+  elif [[ $os == Linux ]]; then
     fortune chinese-hant song100-hant tang300-hant 2>/dev/null
   fi
 fi
-echo
 
+#---calendar
 if [[ -n $(command -v ccal) ]]; then
   ccal -u
 elif [[ -n $(command -v cal) ]]; then
@@ -141,6 +143,7 @@ fi
 
 #===== post load scripts =====
 test -e ~/.iterm2_shell_integration.zsh && source ~/.iterm2_shell_integration.zsh || true
+
 test -r ~/.shell.env.postload.sh && source ~/.shell.env.postload.sh || true
 
 #=====utility=====
@@ -306,6 +309,12 @@ function nosync_git_icloud() {
   done
   unset sub_dirpath
 }
+
+#---git alias
+alias gm='git merge '
+alias gf='git fetch'
+alias gp='git push'
+alias gc='git checkout'
 
 #---network---
 alias ipv6='curl -s 6.ipw.cn' ipv4='curl -s 4.ipw.cn'
