@@ -1,0 +1,12 @@
+server{
+	listen  1996;
+	server_name 132.232.114.236;
+
+	location / {
+		auth_basic "another";
+		#use htpasswd generate lock-info file
+		#htpasswd -c /etc/nginx/conf.d/lock username password
+		auth_basic_user_file /etc/nginx/conf.d/visiti-lock-info;
+	}
+}
+
