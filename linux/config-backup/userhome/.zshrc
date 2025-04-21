@@ -141,11 +141,6 @@ fi
 
 #===== welcome msg end =====
 
-#===== post load scripts =====
-test -e ~/.iterm2_shell_integration.zsh && source ~/.iterm2_shell_integration.zsh || true
-
-test -r ~/.shell.env.postload.sh && source ~/.shell.env.postload.sh || true
-
 #=====utility=====
 #------ vim & neovim ------
 #pacman -S vim-plugin --no-comfirm
@@ -273,7 +268,6 @@ if [[ -n $(command -v gio) && -n $XDG_CURRENT_DESKTOP ]]; then
   alias rm='echo "[tip] rm is an alias for [gio trash], it will move file to Trash" && gio trash '
   alias trash='gio trash '
   alias trashlist='echo "[tip] use gio trash --restore to restore a file" && echo "---~/.local/share/Trash---" && ls ~/.local/share/Trash/files'
-  alias trashclean='rm -rf ~/.local/share/Trash/*'
 fi
 
 #tar + compress/uncompress
@@ -387,21 +381,29 @@ function fortune_gushici() {
 
 #===== functions for config files =====
 function create_config_file_symbols() {
+  # common config files in ~/
   comm_home_backup_dir=~/Documents/it/itnotes/linux/config-backup/userhome
+  common_confs_in_home=(.tmux.conf .condarc .zlogout .zshrc .gitignore_global .vimrc .makepkg.conf)
+  
+  # private files in ~/
   private_home_backup_dir=~/Documents/os-config/home.config
+  private_confs_in_home=(.gitconfig .ssh/id_ed25519 .ssh/id_ed25519.pub .ssh/config)
 
-  confs_in_home_common=(.tmux.conf .condarc .zlogout .zshrc .gitignore_global .vimrc .makepkg.conf)
-  confs_in_home_private=(.gitconfig .ssh/id_ed25519 .ssh/id_ed25519.pub .ssh/config)
+  # common config files in ~/.config
+  common_home_config_backup_dir=$comm_home_backup_dir/.config
+  common_confs_in_home_config=(dconf/backup-dconf.sh dconf/dconf.conf startship.toml)
 
-  for conf in ${confs_in_home_common[*]}; do
+  for conf in ${common_confs_in_home[*]}; do
     [[ -f $comm_home_backup_dir/$conf ]] && ln -sfv $comm_home_backup_dir/$conf ~/$conf
   done
-  for conf in ${confs_in_home_private[*]}; do
+  
+  for conf in ${private_confs_in_home[*]}; do
     [[ -f $private_home_backup_dir/$conf ]] && ln -sfv $private_home_backup_dir/$conf ~/$conf
   done
 
-  #for starship
-  ln -sfv $comm_home_backup_dir/.config/starship.toml ~/.config/starship.toml
+  for conf in ${common_confs_in_home_config[*]}; do
+    [[ -f $common_home_config_backup_dir/$conf ]] && ln -sfv $common_home_config_backup_dir/$conf ~/$conf
+  done
 }
 
 function backup_pkgs() {
@@ -530,3 +532,8 @@ zstyle ':completion:*:scp:*' tag-order '! users'
 #     [[ -f ~/.ssh-agent.env ]] && source ~/.ssh-agent.env
 #   fi
 # }
+#===== post load scripts =====
+test -e ~/.iterm2_shell_integration.zsh && source ~/.iterm2_shell_integration.zsh || true
+
+test -r ~/.shell.env.postload.sh && source ~/.shell.env.postload.sh || true
+

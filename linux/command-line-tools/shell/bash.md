@@ -161,27 +161,53 @@ PS1='[\u@\h \W]\$ '
 
 
 
-### shell配置文件载入顺序
+### 配置文件载入顺序
 
 一般如果没有对系统文件进行修改，多数发行版会按以下顺序读取配置文件：
 
-- 登录shell读取
+- 登录式shell流程
 
-  1. `/etc/environment`  （只能用于配置环境变量）
+  如执行`bash -l`、`su -l <user>`、ssh登录等。
+  
+  1. `/etc/environment`
+  
+     仅设置环境变量（不会执行 shell 命令）
+
   2. `/etc/profile`
-  3. `/etc/bashrc`       或名为 `/etc/bash.bashrc`
-  4. `/etc/profile.d/*.sh` （以文件名顺序确定读取顺序，一般是在bashrc中source的）
-  5. `~/.bash_profile`
-  6. `~/.bashrc ` （实际上一般是在`~/.bash_profile`中source的）
+
+     系统范围的初始化脚本，会加载 `/etc/profile.d/*.sh`
+  
+  3. `/etc/profile.d/*.sh`
+  
+     按文件名顺序执行
+  
+  4. `~/.bash_profile`
+  
+     用户登录脚本，若存在通常会 source ~/.bashrc
+  
+  5. `~/.bashrc `
+  
+     用户 shell 初始化设置
+  
+  *登录式 shell 不会自动加载 /etc/bashrc（或 /etc/bash.bashrc），但可能通过 ~/.bashrc 间接加载。*
+  
+  
 
 - 非登录shell读取
 
-  1. `/etc/bashrc`（或名为`/etc/bash.bashrc`）
-  2. `~/.bashrc`
+  1. `~/.bashrc`
 
-  
+     用户 shell 初始化设置，通常在其中包含一行 `source /etc/bashrc` 或 `source /etc/bash.bashrc`
 
-不同发行版可能略有出入。
+
+
+另外，对于`/etc/bashrc`或者`/etc/bash.bashrc`，不同发行版可能有不同处理方式，例如：
+
+- RHEL系：默认的`~/.bashrc`的文件中会读取`/etc/bashrc`
+- SUSE系：倾向于在登录（在`/etc/proifle`中）和非登录环境（在默认的`~/.bashrc`中）都读取`/etc/bashrc`
+- Debian系：在`/etc/profile`中读取`/etc/bash.bashrc`
+
+
 
 另：如果存在`~/.bash_logout`，会在退出shell时会读取该文件。
 
