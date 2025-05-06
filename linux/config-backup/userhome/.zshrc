@@ -112,7 +112,7 @@ if [[ $os == Linux && -n $(command -v ip) ]]; then #iproute
   echo -e "default gateway: \e[1;35m$default_gw\e[0m"
   echo -e "\e[31m$(echo "$network_info" | column -t)\e[0m"
 
-elif [[ -n $(command -v ifconfig) ]]; then #net-tools (ifconfig)
+elif command -v ifconfig &>/dev/null; then #BSD
   local innerips=$(ifconfig | grep inet | grep -vE "inet6|127.0.0.1" | grep -v 169.254 | cut -d " " -f 2)
   for innerip in ${innerips[@]}; do network_info="$network_info""$ip\n"; done
   for interface in $(ifconfig -lu); do
@@ -124,7 +124,7 @@ elif [[ -n $(command -v ifconfig) ]]; then #net-tools (ifconfig)
 fi
 
 #---fortune
-if [[ -n $(command -v fortune) ]]; then
+if command -v fortune &>/dev/null; then
   if [[ $os == Darwin ]]; then
     fortune song100 tang300 2>/dev/null
   elif [[ $os == Linux ]]; then
@@ -133,9 +133,9 @@ if [[ -n $(command -v fortune) ]]; then
 fi
 
 #---calendar
-if [[ -n $(command -v ccal) ]]; then
+if command -v ccal &>/dev/null; then
   ccal -u
-elif [[ -n $(command -v cal) ]]; then
+elif command -v cal &>/dev/null; then
   cal -m
 fi
 
@@ -152,7 +152,7 @@ alias vi=vim
 
 #neovim
 alias nvimpluginstall='mkdir /tmp/nvim.bak && mv ~/.config/nvim ~/.local/share/nvim ~/.local/state/nvim ~/.cache/nvim /mtp/nvim.bak/; git clone https://github.com/NvChad/starter ~/.config/nvim && nvim && \rm -rf ~/.config/nvim/.git'
-if [[ -n $(command -v nvim) ]]; then
+if command -v nvim &>/dev/null; then
   export EDITOR=nvim
   alias vim=nvim
   alias vimdiff='exec nvim -d ' # "$@
@@ -186,7 +186,7 @@ if [[ $os == Darwin ]]; then
   alias finderplugin='brew install qlcolorcode qlstephen qlmarkdown quicklook-json qlimagesize qlvideo webpquicklook' #suspicious-package suspicious-package quicklook-pat provisionql quicklookase
 
   alias up='brew cu -ay --no-brew-update ; brew update -v ; brew upgrade -g; zsh_plugins_upgrade' # mas upgrade # && brew doctor
-elif [[ $(command -v pacman) ]]; then
+elif command -v pacman &>/dev/null; then
   [[ $user != root ]] && alias pacman='sudo pacman'
   alias i="pacman -S"
   alias r="pacman -Rscn"
@@ -200,7 +200,7 @@ elif [[ $(command -v pacman) ]]; then
   #makepkg aur
   alias aurinfo='updpkgsums && makepkg --printsrcinfo > .SRCINFO ; git status && echo ----git add -u---'
 
-elif [[ $(command -v apt) ]]; then
+elif command -v apt &>/dev/null; then
   [[ $user != root ]] && alias apt='sudo apt'
   function clean_oprhan_debs() {
     while true; do
@@ -368,11 +368,11 @@ alias fzfv="fzf --preview 'cat {}'"
 
 #---中文古诗词---
 function fortune_gushici() {
-  if [[ $(command -v brew) ]]; then
+  if command -v brew &>/dev/null; then
     command -v fortune || brew install fortune
     git clone https://github.com/ruanyf/fortunes.git /tmp/fortune
     \cp -av /tmp/fortune/data/{tang*,song*} /usr/local/Cellar/fortune/9708/share/games/fortunes
-  elif [[ $(command -v pacman) ]]; then
+  elif command -v pacman &>/dev/null; then
     command -v fortune || pacman -S fortune-mod --noconfirm
     # sudo \cp -av /tmp/fortune/data/{tang*,song*} /usr/share/fortune/
     yes | yay -S fortune-mod-zh-hant
@@ -407,7 +407,7 @@ function create_config_file_symbols() {
 }
 
 function backup_pkgs() {
-  if [[ -n $(command -v brew) ]]; then
+  if command -v brew &>/dev/null; then
     brew bundle dump --describe --force --file=~/Documents/os-config/macos/brew-bundle-backup
     echo "[tip] reinstall macos apps from backupfile"
     echo -e "1. install brew and 'brew install mas' (optional) \n2. execute "brew bundle --file=$homebrew_backup_file" "
@@ -437,14 +437,14 @@ function install_z() {
   mkdir -p ~/.config/z && mv z/{z.1,z.sh} ~/.config/z/ && mv z /tmp/zsh-z-git && rm -rfv /tmp/zsh-z-git
 }
 function zsh_plugins_install() {
-  if [[ -n $(command -v pacman) ]]; then
+  if command -v pacman &>/dev/null; then
     pacman -S --noconfirm zsh starship zsh-autosuggestions zsh-completions zsh-lovers zsh-syntax-highlighting
     echo "!!! install z by aur: z-git" && s z-git
-  elif [[ -n $(command -v apt) ]]; then
+  elif command -v apt &>/dev/null; then
     apt install -y zsh zsh-autosuggestions zsh-syntax-highlighting
     sudo curl -sS https://starship.rs/install.sh | sh
     install_z
-  elif [[ -n $(command -v brew) ]]; then
+  elif command -v brew &>/dev/null; then
     brew install zsh starship zsh-autosuggestions zsh-syntax-highlighting
     install_z
   else

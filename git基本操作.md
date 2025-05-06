@@ -333,7 +333,18 @@ git rev-parse --short HEAD #最近一次提交快照的前面部分（7位）has
 - 删除分支
 
   - `git branch -d <branch-name>` 强行删除**未被合并过**的分支：`git branch -D <branch-name>`
+  
   - `git push origin -d <branch-name>`  删除远程分支
+  
+  - 找回删除的分支
+  
+    ```shell
+    git reflog
+    #找到删除前的提交哈希，自定义一个branch名字，checkout即可
+    git checkout -b <branch-name> <hash>
+    ```
+  
+    
   
   
 
