@@ -307,7 +307,7 @@ mount 192.168.0.251:/music /music   #挂载子目录
 写入`/etc/fstab`自动挂载
 
 ```shell
-192.168.0.251:/share /share nfs defaults,hard,intr,noatime,nodirtime,_netdev	0 0
+192.168.0.251:/share /share nfs defaults,noatime,x-system.auto,nofail,_netdev	0 0
 ```
 
 也可使用autofs等工具挂载。
@@ -315,6 +315,8 @@ mount 192.168.0.251:/music /music   #挂载子目录
 
 
 常用选项：
+
+- `default`  默认挂载选项`rw, suid, dev, exec, auto, nouser, async`
 
 - `hard`或`soft`   硬挂载（默认行为，可不指定）与软挂载
 
@@ -340,9 +342,15 @@ mount 192.168.0.251:/music /music   #挂载子目录
 
 - `proc`  指定通信协议为还是tcp
 
-- `noatime,nodirtime`  关闭文件和目录访问时间更新（可以减少IO）
+- `_netdev`   声明这是网络设备，等待网络就绪后挂载
 
-- `realtime`   仅在mtime（修改时间）变化或`atime`过旧才更新`atime`，和`noatime,nodirtime` 二选一
+- `noatime`  关闭文件和目录访问时间更新（可以减少IO）
+
+- `realtime`   仅在mtime（修改时间）变化或`atime`过旧才更新`atime`，和`noatime` 二选一
+
+- `x-system.auto`  通知 systemd 此挂载应自动处理（和 auto 类似），兼容 systemd 自动挂载系统
+
+- `nofail`  即使挂载失败也不阻止系统启动（防止 boot 卡死）
 
 - `rsize=<num>` 和 `wsize=<num>`  单一NFS 读写操作传输的最大字节数。
 
@@ -403,7 +411,7 @@ v4+版本开始，不可再使用系统的ACL，而需要使用NFS内置的nfs4a
   rsize=8388608
   wsize=8388608
   #根据服务器配置性能提高threads值，以增加并发数量
-  threads=64       
+  threads=128
   
   [mountd]
   #manage-gids = false  #默认true
@@ -426,7 +434,8 @@ v4+版本开始，不可再使用系统的ACL，而需要使用NFS内置的nfs4a
 根据需要使用这些参数挂载，示例：
 
 ```shell
-io01:/share  /share defaults,vers=3,hard,intr,noatime,nodiratime,rsize=8388608,wsize=8388608,proto=tcp,hard,_netdev 0 0
+io01:/share  /share defaults,_netdev,nofail,x-system.auto,intr,noatime,vers=3 0 0
+#io01:/share  /share defaults,_netdev,nofail,x-system.auto,hard,intr,noatime,vers=3,rsize=8388608,wsize=8388608,proto=tcp 0 0
 ```
 
 | 参数                          | 作用                                                         |
@@ -440,7 +449,7 @@ io01:/share  /share defaults,vers=3,hard,intr,noatime,nodiratime,rsize=8388608,w
 
 如果小文件场景多，应当减少rsize和wsize，如设置为`262144`。
 
-如果系统不明确需要 `atime`，应当使用`noatime`和`nodiratime`减少I/O。*潜在问题：某些程序依赖 `atime` 来判断文件是否被读取过，如 `mutt`、`tmpwatch`，极少有程序依赖目录的 `atime`。则如果有兼容性问题，可以用 `relatime` 代替 `noatime`。*
+如果系统不明确需要 `atime`，应当使用`noatime`减少I/O。*潜在问题：某些程序依赖 `atime` 来判断文件是否被读取过，如 `mutt`、`tmpwatch`，极少有程序依赖目录的 `atime`。则如果有兼容性问题，可以用 `relatime` 代替 `noatime`。*
 
 `hard,intr`用于硬挂载（实际上是NFS默认行为，可不指定）并允许用户中断，避免无限挂起无法进行任何操作。
 
