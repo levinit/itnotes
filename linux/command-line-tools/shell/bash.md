@@ -833,15 +833,20 @@ read是bash内建命令。
 
 选项：
 
-- -p   提示信息
-- -t    等待时间（单位：秒）
-- -d   持续读取直到读入定界符（delimiter）为止
-- -r    不允许反斜杠转义任何字符
-- -n   指定接收输入的字符数
-- -s    不显示输入的数据，用于机密信息的输入（如密码）
+- `-p`   提示信息
+- `-t`    等待时间（单位：秒）
+- `-d`   持续读取直到读入定界符（delimiter）为止
+- `-r`    不允许反斜杠转义任何字符
+- `-n`   指定接收输入的字符数
+- `-s`    不显示输入的数据，用于机密信息的输入（如密码）
+- `-a <array_name>`  以分隔符（默认为任意长度空白字符串）将字符串读取为数组 
 
 ```shell
-read -p "please input username:"read -s -p "please input password:"read -p "请输入名字：" name  #将用户的输入内容赋值给name变量#使用-d -r 将多行内容存到一个变量中read -d -r '' msg << TIPYou should reboot system after installation.\nGood Luck!\nTIPecho $msg    #将会输出那两行提示内容 TIP是界定符 两个TIP间的内容被存到msg变量中
+read -p "please input username:"    name
+read -s -p "please input password:" password
+
+#将用户的输入内容赋值给name变量#使用-d -r
+read -d -r '' msg << TIPYou should reboot system after installation.\nGood Luck!\nTIPecho $msg
 ```
 
 read 读取字符串内容，以指定字符为分隔符，将字符串读取为数组：
@@ -1377,33 +1382,37 @@ test 2 -gt 3 && echo "front is big"
 
 - 循环的重定向参看[循环](#循环)
 
-### Here Document和Here Strings输入重定向
+### Here Document和Here String输入重定向
 
-- Here Document：`<<`用来将两个分隔标志之间的内容重定向到一个交互式 Shell 脚本或程序
+- Here Document：使用`<<`符号将多行输入（两个同名标记之间的内容）传递给命令的标准输入（stdin）
 
-  两个分隔标志可以是任意名字，`EOF` 是一个常被使用的标志名。
+  - 标记可以是任意名字，`EOF` 是一个常被使用的标志名。
 
-  第一个分隔标志后面可使用输出重定向符合、管道符号。
+  - 开始标记后面可使用输出重定向符合、管道符号。
 
-  第二个分隔标志必须顶格写且后面不能有内容（注释或空格等也不行），两个标志之间的内容作为输入内容交由`<<`前面的命令处理。
+  - 结束标记必须单独一行顶格写，且后面不能有内容（注释或空格等也不行）
 
-  `<<`后面添加`-`，即`<<-`，将会忽略分隔符中内容行的制表符（Tab）。
+  - `<<`后面添加`-`，即`<<-`，将会忽略分隔符中内容行的制表符（Tab）。
 
-  用于将交互式命令行的多行输入转换为batch方式。
+  ```shell
+  cat << EOF
+      Hello  #如果空白是Tab，将被忽略（输出内容忽略Tab）
+    she    l  l   #如果空白是空格，空格仍然有效
+  EOF
+  
+  mysql << EOF ｜ tee db-list.txt  #将输出内容写入db-list.txt
+  show databases;  #本行sql语句将交由mysql程序执行
+  EOF
+  ```
+  
+  
 
-```shell
-cat << EOF
-    Hello  #如果空白是Tab，将被忽略（输出内容忽略Tab）
-  she    l  l   #如果空白是空格，空格仍然有效
-EOF
+- Here String：使用`<<<`符号将单行字符串直接传递给命令的标准输入（stdin）
 
-mysql << EOF ｜ tee db-list.txt  #将输出内容写入db-list.txt
-show databases;  #本行sql语句将交由mysql程序执行
-EOF
-```
-
-- Here Strings：`<<<`后面的字符串作为标准输入交由前面的命令处理
-
+  - 字符串如果有空白分隔符（IFS，如空格），要使用引号包裹字符串
+  - Here String 会自动在字符串末尾添加换行符，若需去除，可用 `printf`，如`<<$(printf %s 'aaa')`
+  - Here String 后面的内容如果以引号包裹，引号内部也能使用换行符，但是输入的内容在语法上是单一行，换行符是字符串的一部分，而非 Shell 的语法换行。
+  
   ```shell
   tr a-z A-Z <<< 'hello shell' #输出 HELLO SHELL
   
@@ -1411,8 +1420,7 @@ EOF
   select user from mysql.user;
   '
   ```
-
-  注意字符串如果有空白分隔符（IFS，如空格），要使用引号包裹字符串。
+  
 
 
 
