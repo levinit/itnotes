@@ -99,29 +99,33 @@ eval "$(starship init zsh)"
 echo -e "+++ $HOST : $(uname -rsm) +++\n\e[1;36m@$(date)\e[0m"
 
 #--- IP info
-if [[ $os == Linux && -n $(command -v ip) ]]; then #iproute
-  local default_gw=$(ip r | grep default | head -n 1 | grep -Po "(?<=via ).+(?= dev)")
-  ip -4 -br a | grep -vE "lo|169.254" | while read ip_info; do
-    local interface=$(echo $ip_info | cut -d " " -f 1)
-    local ip=$(echo $ip_info | grep -Eow "[0-9.]+/[0-9]{1,2}")
-    [[ -z $ip ]] && continue
-    local gw=$(ip r | grep $interface | head -n 1 | grep -Po "(?<=via ).+(?= dev)")
-    [[ -z $gw ]] && gw="..."
-    network_info="$interface: $gw  <--  $ip\n""$network_info"
-  done
-  echo -e "default gateway: \e[1;35m$default_gw\e[0m"
-  echo -e "\e[31m$(echo "$network_info" | column -t)\e[0m"
+function show_ip() {
+  if [[ $os == Linux && -n $(command -v ip) ]]; then #iproute
+    local default_gw=$(ip r | grep default | head -n 1 | grep -Po "(?<=via ).+(?= dev)")
+    ip -4 -br a | grep -vE "lo|169.254" | while read ip_info; do
+      local interface=$(echo $ip_info | cut -d " " -f 1)
+      local ip=$(echo $ip_info | grep -Eow "[0-9.]+/[0-9]{1,2}")
+      [[ -z $ip ]] && continue
+      local gw=$(ip r | grep $interface | head -n 1 | grep -Po "(?<=via ).+(?= dev)")
+      [[ -z $gw ]] && gw="..."
+      network_info="$interface: $gw  <--  $ip\n""$network_info"
+    done
+    echo -e "default gateway: \e[1;35m$default_gw\e[0m"
+    echo -e "\e[31m$(echo "$network_info" | column -t)\e[0m"
 
-elif command -v ifconfig &>/dev/null; then #BSD
-  local innerips=$(ifconfig | grep inet | grep -vE "inet6|127.0.0.1" | grep -v 169.254 | cut -d " " -f 2)
-  for innerip in ${innerips[@]}; do network_info="$network_info""$ip\n"; done
-  for interface in $(ifconfig -lu); do
-    [[ $interface == lo0 ]] && continue
-    local network_info=$(ifconfig $interface | grep -w inet | awk -v interface=$interface '/inet6?/{print interface": "$2}')"\n$network_info"
-  done
-  local gateway=$(netstat -rn | grep "default" | awk '{print $2}' | head -n 1)
-  echo -e "gateway:\e[3;35m" $(echo $gateway)"\e[0m\n\e[31m$(echo "$network_info" | sed -E -e "/^$/d" -e "s/\t/\s/g")\e[0m"
-fi
+  elif command -v ifconfig &>/dev/null; then #BSD
+    local innerips=$(ifconfig | grep inet | grep -vE "inet6|127.0.0.1" | grep -v 169.254 | cut -d " " -f 2)
+    for innerip in ${innerips[@]}; do network_info="$network_info""$ip\n"; done
+    for interface in $(ifconfig -lu); do
+      [[ $interface == lo0 ]] && continue
+      local network_info=$(ifconfig $interface | grep -w inet | awk -v interface=$interface '/inet6?/{print interface": "$2}')"\n$network_info"
+    done
+    local gateway=$(netstat -rn | grep "default" | awk '{print $2}' | head -n 1)
+    echo -e "gateway:\e[3;35m" $(echo $gateway)"\e[0m\n\e[31m$(echo "$network_info" | sed -E -e "/^$/d" -e "s/\t/\s/g")\e[0m"
+  fi
+}
+
+show_ip && unset show_ip
 
 #---fortune
 if command -v fortune &>/dev/null; then
@@ -253,8 +257,12 @@ alias en='export LANG=en_US.UTF-8 LC_CTYPE=en_US.UTF-8 LC_MESSAGES=en_US.UTF-8'
 #---file operations
 alias scp='scp -r'
 alias ls='ls --color -F'
-alias ll='ls -lh'
-alias la='ls -flh' #'ls -lah'
+alias l='ls -lhAF'
+alias ll='ls -lhAF'
+alias la='ls -lhAF' #'ls -lah'
+alias ..='cd ../'
+alias ...='cd ../..'
+alias ....='cd ../../..'
 alias cp='cp -iv'
 [[ -n $(command -v rsync) ]] && alias cp='echo "---cp is directed to an rsync command alias---" && rsync -av --progress --human-readable "$@"'
 alias grep='grep --color'
@@ -262,12 +270,15 @@ alias tree='tree -C -L 1 --dirsfirst'
 alias iconvgbk='iconv -f GBK -t UTF-8'                      #iconv -- file content encoding
 alias convmvgbk='convmv -f GBK -t UTF-8 --notest --nosmart' #convmv -- filename encoding
 
+alias open='xdg-open'
+
 #gio for trash
-if [[ -n $(command -v gio) && -n $XDG_CURRENT_DESKTOP ]]; then
+if command -v gio &>/dev/null; then # && -n $XDG_CURRENT_DESKTOP ]]; then
   alias trashclean='gio trash --empty'
   alias rm='echo "[tip] rm is an alias for [gio trash], it will move file to Trash" && gio trash '
   alias trash='gio trash '
   alias trashlist='echo "[tip] use gio trash --restore to restore a file" && echo "---~/.local/share/Trash---" && ls ~/.local/share/Trash/files'
+  alias open='gio open'
 fi
 
 #tar + compress/uncompress
@@ -384,7 +395,7 @@ function create_config_file_symbols() {
   # common config files in ~/
   comm_home_backup_dir=~/Documents/it/itnotes/linux/config-backup/userhome
   common_confs_in_home=(.tmux.conf .condarc .zlogout .zshrc .gitignore_global .vimrc .makepkg.conf)
-  
+
   # private files in ~/
   private_home_backup_dir=~/Documents/os-config/home.config
   private_confs_in_home=(.gitconfig .ssh/id_ed25519 .ssh/id_ed25519.pub .ssh/config)
@@ -396,7 +407,7 @@ function create_config_file_symbols() {
   for conf in ${common_confs_in_home[*]}; do
     [[ -f $comm_home_backup_dir/$conf ]] && ln -sfv $comm_home_backup_dir/$conf ~/$conf
   done
-  
+
   for conf in ${private_confs_in_home[*]}; do
     [[ -f $private_home_backup_dir/$conf ]] && ln -sfv $private_home_backup_dir/$conf ~/$conf
   done
@@ -536,4 +547,3 @@ zstyle ':completion:*:scp:*' tag-order '! users'
 test -e ~/.iterm2_shell_integration.zsh && source ~/.iterm2_shell_integration.zsh || true
 
 test -r ~/.shell.env.postload.sh && source ~/.shell.env.postload.sh || true
-
