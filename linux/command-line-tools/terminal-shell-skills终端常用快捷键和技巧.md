@@ -108,11 +108,14 @@ Mac键盘中，将<kbd>Ctrl</kbd>替换成<kbd>control</kbd>，<kbd>Alt</kbd>替
   - 当光标在字符间时，**对调光标前后两个字符的位置**且光标后移一位（transposition)
   - 当光标在所有字符末尾时，对调最后两个字符位置
 
-  **注意**：在方块和下划线光标里，这句话中的1应该描述为：
+  **注意**：
 
-  光标在字符上时，对调光标所在字符和光标前一个字符的位置
+  - 在方块和下划线光标里，这句话中的1应该描述为：光标在字符上时，对调光标所在字符和光标前一个字符的位置
+  - 如果安装有fzf，该快捷键可能被覆盖为调用fzf
 
 - <kbd>Alt</kbd><kbd>t</kbd>  对调单词，规则参照<kbd>Ctrl</kbd><kbd>t</kbd>
+
+
 
 # 命令历史
 
@@ -158,13 +161,13 @@ Mac键盘中，将<kbd>Ctrl</kbd>替换成<kbd>control</kbd>，<kbd>Alt</kbd>替
 
 
 
-- <kbd>Alt</kbd><kbd>.</kbd>  或 <kbd>esc</kbd><kbd>.</kbd>  粘贴上一条命令中的最后一部分参数
+- <kbd>Alt</kbd><kbd>.</kbd>  或 <kbd>esc</kbd><kbd>.</kbd>  粘贴上一条命令中的最后一个参数
 
   一条命令以IFS（空白分隔符，一个或多个空格/tab）分割成若干部分。
 
   Mac使用后者
 
-- <kbd>Alt</kbd>n<kbd>.</kbd>  粘贴上一条命令中第n（一个数字）部分参数
+- <kbd>Alt</kbd>n<kbd>.</kbd> （按住<kbd>Alt</kbd>同时快速按下n次<kbd>.</kbd>）粘贴前面第n条命令的最后一个参数
 
   Mac不适用
 
