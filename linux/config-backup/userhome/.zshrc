@@ -270,8 +270,6 @@ alias tree='tree -C -L 1 --dirsfirst'
 alias iconvgbk='iconv -f GBK -t UTF-8'                      #iconv -- file content encoding
 alias convmvgbk='convmv -f GBK -t UTF-8 --notest --nosmart' #convmv -- filename encoding
 
-alias open='xdg-open'
-
 #gio for trash
 if command -v gio &>/dev/null; then # && -n $XDG_CURRENT_DESKTOP ]]; then
   alias trashclean='gio trash --empty'
@@ -320,6 +318,14 @@ alias gm='git merge '
 alias gf='git fetch'
 alias gp='git push'
 alias gc='git checkout'
+function forcecheckout(){
+  local branch=${1:-main}
+  git fetch
+  git checkout -b tmp_branch_$branch
+  git branch -D $branch
+  git switch $branch
+  git branch -D tmp_branch_$branch
+}
 
 #---network---
 alias ipv6='curl -s 6.ipw.cn' ipv4='curl -s 4.ipw.cn'
