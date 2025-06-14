@@ -320,6 +320,14 @@ alias gm='git merge '
 alias gf='git fetch'
 alias gp='git push'
 alias gc='git checkout'
+function forcecheckout(){
+  local branch=${1:-main}
+  git fetch
+  git checkout -b tmp_branch_$branch
+  git branch -D $branch
+  git switch $branch
+  git branch -D tmp_branch_$branch
+}
 
 #---network---
 alias ipv6='curl -s 6.ipw.cn' ipv4='curl -s 4.ipw.cn'
