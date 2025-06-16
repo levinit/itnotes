@@ -270,8 +270,6 @@ alias tree='tree -C -L 1 --dirsfirst'
 alias iconvgbk='iconv -f GBK -t UTF-8'                      #iconv -- file content encoding
 alias convmvgbk='convmv -f GBK -t UTF-8 --notest --nosmart' #convmv -- filename encoding
 
-alias open='xdg-open'
-
 #gio for trash
 if command -v gio &>/dev/null; then # && -n $XDG_CURRENT_DESKTOP ]]; then
   alias trashclean='gio trash --empty'
@@ -280,6 +278,7 @@ if command -v gio &>/dev/null; then # && -n $XDG_CURRENT_DESKTOP ]]; then
   alias trashlist='echo "[tip] use gio trash --restore to restore a file" && echo "---~/.local/share/Trash---" && ls ~/.local/share/Trash/files'
   alias open='gio open'
 fi
+#alias open='xdg-open'
 
 #tar + compress/uncompress
 #eg tar -acvf xx.tar.zst xx ,compression type suffix is needed
@@ -526,7 +525,7 @@ bindkey '^[[3~' delete-char      #ctrl h
 
 #---operation style compatibility
 autoload -U +X bashcompinit && bashcompinit 2>/dev/null
-autoload -Uz compinit && compinit 2>/dev/null
+autoload -Uz compinit 2>/dev/null
 autoload -U select-word-style
 select-word-style bash
 setopt no_nomatch #no error when no match
