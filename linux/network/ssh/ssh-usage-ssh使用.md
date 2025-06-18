@@ -829,125 +829,187 @@ user@host:/remote/folder /mount/point  fuse.sshfs noauto,x-systemd.automount,_ne
 
   
 
-## 针对IP限制
+## 针对客户端IP限制
 
-IP白名单和黑名单
+### `sshd`配置Match
 
+修改服务器的`/etc/ssh/sshd_config`文件，保存后需要重启`sshd`。
 
-  - 白名单配置文件`/etc/hosts.allow`和黑名单配置文件`/etc/hosts.deny`
+```shell
+# 默认拒绝所有人登录
+DenyUsers ALL
 
-    hosts.allow 的设定优先于 hosts.deny：
-
-    当hosts.allow（允许登录列表） 存在时，优先以其设定为准；
-
-    在hosts.allow（禁止登录列表） 没有规定到的项，会在hosts.deny中继续限制（如果有）。
-
-    
-
-
-
-- 黑名单`/etc/hosts.deny`中添加禁止列表，示例：
-
-  ```shell
-  #程序名字:来源地址[:spawn操作:twist操作]
-  sshd:ALL  #禁止所有
-  sshd:192.168.0.1 10.0.0.0/24
-  #可以添加警告信息发送给其他用户已经登陆的客户端
-  sshd:ALL: spawn (echo -e "security notice from host $(/bin/hostname)\n") | /bin/mail -s "%d-%h security" root & \
-    : twist (/bin/echo "WARNING connection not allowed." )
-  ```
-
-  spawn和twist是可选后续操作，例如当有非法来源请求时，向请求者发送警告，并向管理员发送通知邮件。示例中spawn部分是向root用户发送邮件提示有来自某个主机发出的告警，twist部分的警告信息将呈现给发起请求的客户端。
+# 允许特定 IP 段用户登录
+Match Address 192.168.10.0/24
+    AllowGroups hpcusers
+    AllowUsers  user1 user2
+```
 
 
 
+### TCP Wrappers
+
+TCP Wrappers 机制适用于链接到 `libwrap` 的服务，新版本可能不再支持，可使用防火墙配置进行代替。
+检查 `sshd` 是否支持：
+
+```shell
+ldd /usr/sbin/sshd | grep libwrap #输出类似libwrap.so.0 => /lib64/libwrap.so.0表示支持
+```
+
+
+
+IP白名单配置文件`/etc/hosts.allow`和黑名单配置文件`/etc/hosts.deny`：
+
+- 当`hosts.allow`（允许登录列表） 存在时，优先以其设定为准；
+
+- 在`hosts.allow`（禁止登录列表） 没有规定到的项，会在`hosts.deny`中继续限制（如果有）；
+- `hosts.allow`优先级高于`hosts.deny`，`hosts.deny`在 `hosts.allow` 没命中的情况下才生效！
+
+
+
+黑名单`/etc/hosts.deny`中添加禁止列表，示例：
+
+```shell
+#程序名字:来源地址[:spawn操作:twist操作]
+sshd:ALL  #禁止所有
+#sshd:192.168.0.1 10.0.0.0/24
+
+#可以添加警告信息发送给其他用户已经登陆的客户端
+sshd:ALL: spawn (echo -e "security notice from host $(/bin/hostname)\n") | /bin/mail -s "%d-%h security" root & \
+  : twist (/bin/echo "WARNING connection not allowed." )
+```
+
+spawn和twist是可选后续操作，例如当有非法来源请求时，向请求者发送警告，并向管理员发送通知邮件。
+
+示例中spawn部分是向root用户发送邮件提示有来自某个主机发出的告警，twist部分的警告信息将呈现给发起请求的客户端。
 
 
 
 ## 针对用户限制
 
+### 用户认证策略
+
+修改服务器的`/etc/ssh/sshd_config`文件，保存后需要重启`sshd`。
+
 - root用户登录限制
 
-  禁止root用户登录或仅允许其使用密钥登录。
-
-  修改服务器的`/etc/ssh/sshd_config`文件中的`PermitRootLogin` 的值，值可以为：
-
-  - `no`或`yes`  禁止或允许root用户登录
-  - `prohibit-password`或者`without-password`  不允许使用密码登录（可以使用其他认证方式，例如ssh密钥）
-  - `forced-commands-only`  只能使用密钥登录 且 仅允许使用授权的命令
-
-  
-
-- 对指定用户认证策略的限制
-
-  编辑`/etc/ssh/sshd_config`文件，保存后需要重启sshd。
-
-  禁止所有用户使用密码登录：
-
   ```shell
-  PasswordAuthentication no #默认yes
+  PermitRootLogin  no
   ```
 
-  指定用户或用户组只能使用密码登录：
+  值可以为：
+
+  - `no`或`yes`  禁止或允许root用户登录
+
+  - `prohibit-password`或者`without-password`  不允许使用密码认证
+
+  - `forced-commands-only`  只能使用密钥登录 且 仅允许使用授权的命令
+
+
+
+
+- 用户认证策略
 
   ```shell
+  PasswordAuthentication no #默认yes  是否允许使用密码认证
+  
+  #指定用户或用户组只能使用密码登录
   #for User
   Match User user1,user2
       PasswordAuthentication no
+  
   #for Group
   Match Group group1
       PasswordAuthentication no
-      
+  
   #exclude spefied user
   Match User !root
-      PasswordAuthentication no
+      PasswordAuthentication n
   ```
 
 
 
-- sshd_config设置用户白名单和黑名单
+### `sshd`配置用户白名单和黑名单
 
-  编辑`/etc/ssh/sshd_config`文件，保存后需要重启sshd。
+限制编辑`/etc/ssh/sshd_config`文件，保存后需要重启`sshd`。
 
-  - sshd控制，在`/etc/sshd_config`中添加配置行：
+```shell
+#白名单示例
+AllowUsers user1 user2  #允许的用户
+AllowGroups grp1 grp2   #允许的用户组
 
-    - 白名单示例：
+#黑名单示例
+DenyUsers user1 user2  #禁止的用户  所有用户使用 ALL
+DenyGroups grp1 grp2   #禁止的用户组 所有用户组使用 ALL
+```
 
-      ```shell
-      AllowUsers user1 user2  #允许的用户
-      AllowGroups grp1 grp2   #允许的用户组
-      ```
+同时设置 `AllowUsers` 与 `AllowGroups`，用户必须匹配 `AllowUsers` 中的某个用户名，**且**属于 `AllowGroups` 中的某个组，才能登录。
 
-    - 黑名单示例：
+设置 `DenyUsers` 与 `DenyGroups` 时，用户**只要**匹配 `DenyUsers` 中的某个用户名，**或**属于任意 `DenyGroups` 中某个组，就会被拒绝登录。
 
-      ```shell
-      DenyUsers user1 user2  #禁止的用户
-      DenyGroups grp1 grp2   #禁止的用户组
-      ```
+**Deny 优先级高于 Allow**！
 
 
 
-​    
+### PAM配置用户白名单和黑名单
 
-  - PAM设置用户白名单和黑名单
+可选用以下方式
 
-    1. 在`/etc/pam.d/sshd`文件中添加：
+- `pam_listfile.so` 模块
 
-       ```shell
-       auth  required  pam_listfile.so  item=user  sense=deny  file=/etc/ssh/deny onerr=succeed
-       ```
+  1. 在`/etc/pam.d/sshd`文件中添加：
 
-       `sense`取值：黑名单值为`deny`，白名单值为`allow`。
+     ```shell
+     auth required pam_listfile.so item=group sense=allow file=/etc/ssh/ssh.allow_groups onerr=fail
+     auth required pam_listfile.so item=user  sense=allow file=/etc/ssh/ssh.allow_users  onerr=fail
+     auth substack password-auth
+     ```
 
-    2. 在`/etc/ssh/denyhosts`中添加黑名单/白名单用户，一行一个用户名。
-    
-    
+     `sense`取值：黑名单值为`deny`，白名单值为`allow`。
+
+  2. 在上面配置的file对应的文件中添加黑名单/白名单用户/用户组，一行一个。
+
+  
+
+- `pam_access.so` + `/etc/security/access.conf`（规则更灵活）
+
+  1. 在 /etc/pam.d/sshd 中添加：
+
+     ```shell
+     # 通常放在 account required pam_nologin.so 或 account include password-auth 之前
+     account required pam_access.so 
+     ```
+
+  2. 编辑 `/etc/security/access.conf`
+
+     这是一个基于“用户/组 + 来源主机”的控制文件。例子
+
+     ```shell
+     #permission : users/groups : origins
+     
+     + : root : ALL
+     + : git : ALL
+     + : lsfadmin : ALL
+     + : %cad : ALL
+     - : ALL : ALL
+     ```
+
+     + `+`表示允许，`-` 表示拒绝
+
+     - `ALL` 通配所有
+
+     - `%groupname` 表示组
+
+     - tty、console、主机名/IP也可指定来源
+
+
 
 # 问题解决
 
 ssh命令中使用参数`-v`可输出详细的调试信息，`-vvv`可以显示更多的信息。
 
 在ssh服务端检查sshd日志，如`systemctl status sshd`。
+
 
 
 ## ssh密钥登录失败问题

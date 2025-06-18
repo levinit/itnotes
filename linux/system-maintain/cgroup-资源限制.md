@@ -26,11 +26,11 @@ cgroup可以对不同资源控制器进行限制，如cpu, memory, blkio, device
 
 - **生产环境**修改前充分测试
 
-> 注意：所有/sys/fs/cgroup下的修改重启后失效，需通过配置文件或systemd持久化
-
 
 
 # 临时修改
+
+注意：**所有/sys/fs/cgroup下的修改重启后失效，需通过配置文件或systemd持久化**
 
 直接操作 `/sys/fs/cgroup/`下的文件即可。示例：
 
@@ -81,18 +81,25 @@ echo $$ > /sys/fs/cgroup/myapp_v2/cgroup.procs
 
 ## cgroups v1 配置
 
+对于RHEL，需要安装有libcgroup-tools
+
 ### 配置文件
 
 ```shell
-# /etc/cgconfig.d/*.conf 示例
+# /etc/cgconfig.d/*.conf 示例 
+# 注意：注释不能直接写在行内，需要单独一行
 group all_limits {
     cpu {
-        cpu.shares = 1024;          # CPU 相对权重（默认值）
-        cpu.cfs_quota_us = 400000;  # 限制 4 核（400000us/100000us）
+        # CPU 相对权重（默认值1024）
+        cpu.shares = 1024;
+        # 限制 4 核（400000us/100000us）
+        cpu.cfs_quota_us = 400000;
     }
     memory {
-        memory.limit_in_bytes = 8G;         # 限制 8GB 内存
-        memory.memsw.limit_in_bytes = 10G;  # 限制 8GB RAM + 2GB Swap
+        # 限制 8GB 内存
+        memory.limit_in_bytes = 8G;
+        # 限制 8GB RAM + 2GB Swap
+        memory.memsw.limit_in_bytes = 10G;
     }
 }
 ```
@@ -102,7 +109,7 @@ group all_limits {
 立即加载启用：
 
 ```shell
-cgconfigparser -l /etc/cgconfig.d/
+cgconfigparser -L /etc/cgconfig.d/  #-L指定目录，-l指定文件
 ```
 
 
@@ -121,8 +128,6 @@ mount -t cgroup -o cpu,cpuacct cpu /sys/fs/cgroup/cpu
 systemctl restart cgconfig
 ```
 
-对于RHEL，需要安装有libcgroup-tools
-
 
 
 ### 用户级限制
@@ -130,19 +135,25 @@ systemctl restart cgconfig
 配置`/etc/cgrules.conf`，添加类似内容：
 
 ```shell
-#排除限制的用户或用户组
-root:*     *    /
-user1:*    *    /
-@group1:*  *    /
+# /etc/cgrules.conf
+#<user|@group> <controllers> <cgroup_path>
+# 排除系统关键用户和组
+root:*       *        /
+daemon:*     *        /
+@systemd:*   *        /
+@wheel:*     *        /
 
-#其余用户受到前面配置的cgconfig.d/*.conf限制
-*:*     cpu,memeory  /all_limits
+# 默认规则：所有其他用户应用限制
+*:*          cpu,memory  all_limits/
+
+# End of file
 ```
 
 重启服务生效：
 
 ```shell
-systemctl restart cgred
+sudo systemctl restart cgconfig
+sudo systemctl restart cgred
 ```
 
 
