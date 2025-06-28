@@ -20,7 +20,7 @@ podman计成 rootless ，它可以在没有 root 权限的情况下运行。
 
 ## 镜像源
 
-配置文件为registries.conf，示例：
+配置文件为`registries.conf`（TOML格式），示例：
 
 ```shell
 #unqualified-search-registries = ["docker.io","quay.io" "registry.redhat.io", "registry.access.redhat.com"]

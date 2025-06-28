@@ -40,22 +40,44 @@ rsync 镜像同步目录，最好在目录最后加上`/`：
 ```shell
 #同步a b 目录
 #将删除b目录中存在但a目录不存在的文件，即保证a b完全一致
-rsync -avPu --delete a/ b/
+rsync -avzPu --delete a/ b/
 ```
 
-- `a` 或 `--archive`  等于`-rlptgoD`
-- `P` 或 `--progress`  显示进度
-- `-h` 或 `--human-readable`  显示数字转为可读性更强的形式（转换文件大小单位 如1005.2k显示为1M）
-- `W` 或 `--whole-file` 跳过增量传输算法，直接传输整个文件，在带宽较高时适用
-- `u`  或 `--update`    如果目标文件已经存在且更新则跳过
-  -  `--inplace`   update destination files in-place (SEE MAN PAGE)
-  - `--append`    append data onto shorter files
-  - `--append-verify`   like --append, but with old data in file checksum
-- `z` 或 `--compress`  压缩传输数据
-  - `--compress-level=NUM`    explicitly set compression level
-- `--delete`   从目标目录中删除无关的文件（目标目录中Í存在的文件在源目录不存在）
+- `--dry-run` 只显示将要执行的操作，而不实际执行
+- `-i` 或 `--itemize-changes`  显示每个文件的变化信息
+- `-a` 或 `--archive` 归档模式，等同于`-rltpgoD`，即递归处理目录，保留符号链接、权限、时间戳、组、所有者和设备信息
+- `-r` 或 `--recursive` 递归处理目录
+- `-l` 或 `--links` 复制符号链接（默认行为）
+- `-p` 或 `--perms` 复制文件权限（默认行为）
+- `-t` 或 `--times` 复制文件的时间戳（默认行为）
+- `-g` 或 `--group` 复制文件的组信息
+- `-o` 或 `--owner` 复制文件的所有者信息
+- `-D` 复制设备文件和特殊文件（等同于`--devices --specials`）
+  - `--devices` 复制设备文件
+  - `--specials` 复制特殊文件（如管道和套接字
+- `-L` 或 `--copy-links`  复制符号链接指向的文件，而不是链接本身
+
+> 默认情况下，rsync 会通过 文件大小 和 修改时间（mtime） 来判断文件是否需要同步，跨平台同步时不一定可靠。
+
+- `--size-only`  只根据文件大小来决定是否更新文件
+- `-c` 或 `--checksum`  使用校验和来决定是否更新文件
+- `-u`  或 `--update`    如果目标文件已经存在且更新则跳过（即目标文件比源文件新时不更新，依赖时间戳）
+  - `--inplace`   直接在目标文件上更新，而不是创建一个临时文件
+  - `--append`    追加数据到较短的文件
+  - `--append-verify`   类似于 --append，但会对文件中的旧数据进行校验和
+- `--ignore-existing`  忽略目标目录中已经存在的文件（可适用于初始化备份）
+- `--delete`   从目标目录中删除无关的文件（目标目录中存在的文件在源目录不存在）
 - `--exclude=<pattern>`  排除文件名与该模式匹配的文件
-- `v`  显示详情
+
+- `--partial`  保留部分传输的文件（如果传输中断，下一次传输将从中断处继续）
+- `--partial-dir=<dir>`  指定部分传输文件的目录(默认是`.part`目录)
+- `-P` 或 `--progress`  显示进度
+- `-h` 或 `--human-readable`  显示数字转为可读性更强的形式（转换文件大小单位 如1005.2k显示为1M）
+- `-W` 或 `--whole-file` 跳过增量传输算法，直接传输整个文件，在带宽较高时适用
+- `-z` 或 `--compress`  压缩传输数据
+  - `--compress-level=NUM`    显式设置压缩级别
+
+- `-v`  显示详情
 
 
 

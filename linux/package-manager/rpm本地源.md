@@ -55,19 +55,19 @@ yum makecache   #更新repo缓存
    这里以[中国科技大学开源软件镜像](https://mirrors.ustc.edu.cn/)站——https://mirrors.ustc.edu.cn/为例（参看中科大源[同步方法与注意事项](https://mirrors.ustc.edu.cn/help/rsync-guide.html)），将公共镜像源同步到`/srv/repo`下：
 
    ```shell
-   rsync -avz rsync://rsync.mirrors.ustc.edu.cn/repo/centos/7.5.1804/ /srv/repo/
+   rsync -avz --progress -i rsync://rsync.mirrors.ustc.edu.cn/repo/centos/7.9.2009/ /srv/repo/
    ```
 
    如果不想同步所有的文件夹，可以使用排除参数：
 
    ```shell
-   rsync -avz --exclude 'isos' rsync://rsync.mirrors.ustc.edu.cn/repo/centos/7.5.1804/ /srv/repo/
+   rsync -avz --progress -i --exclude 'isos' rsync://rsync.mirrors.ustc.edu.cn/repo/centos/7.9.2009/ /srv/repo/
    ```
 
    如果要排除多个目录，可以指定一个排除文件
 
    ```shell
-   rsync -avz --exclude-from=./exclude.list 'isos' rsync://rsync.mirrors.ustc.edu.cn/repo/centos/7.5.1804/ /srv/repo/
+   rsync -avz --progress -i --exclude-from=./exclude.list 'isos' rsync://rsync.mirrors.ustc.edu.cn/repo/centos/7.9.2009/ /srv/repo/
    ```
 
    排除文件`exclude.list`示例：

@@ -99,7 +99,7 @@ eval "$(starship init zsh)"
 echo -e "+++ $HOST : $(uname -rsm) +++\n\e[1;36m@$(date)\e[0m"
 
 #--- IP info
-function show_ip() {
+show_ip() {
   if [[ $os == Linux && -n $(command -v ip) ]]; then #iproute
     local default_gw=$(ip r | grep default | head -n 1 | grep -Po "(?<=via ).+(?= dev)")
     ip -4 -br a | grep -vE "lo|169.254" | while read ip_info; do
@@ -238,7 +238,7 @@ if [[ $user != root ]]; then
   alias firewall-cmd='sudo firewall-cmd'
 fi
 
-function cleancache() {
+cleancache() {
   pkgclean
   id | grep -Ew "wheel|sudo|root" && echo "clean packages cache" && pkgclean
   echo "clean zsh rubbish files..."
@@ -264,7 +264,7 @@ alias ..='cd ../'
 alias ...='cd ../..'
 alias ....='cd ../../..'
 alias cp='cp -iv'
-[[ -n $(command -v rsync) ]] && alias cp='echo "---cp is directed to an rsync command alias---" && rsync -av --progress --human-readable "$@"'
+[[ -n $(command -v rsync) ]] && alias cp='echo "---cp is directed to an rsync command alias---" && rsync -av --progress --human-readable -- "$@"'
 alias grep='grep --color'
 alias tree='tree -C -L 1 --dirsfirst'
 alias iconvgbk='iconv -f GBK -t UTF-8'                      #iconv -- file content encoding
@@ -284,20 +284,18 @@ fi
 #eg tar -acvf xx.tar.zst xx ,compression type suffix is needed
 alias tarc="tar --exclude='.DS_Store' -acvf " tarx='tar -xvf '
 
-function dos2unix_all() {
-  local dirpath=${1:-$(pwd)}
-  dos2unix $dirpath/*
-  \ls -1 | while read line; do
-    [[ -d $dirpath/$line ]] && dos2unix_all $dirpath/$line
-  done
+dos2unix_all() {
+  find "${1:-$(pwd)}" -type f -exec dos2unix {} \;
 }
 
 #--- git
+alias gitgc='git gc --aggressive --prune=now'
+alias gitrmlog='git reflog expire --expire=now --all && git gc --aggressive --prune=now'
 alias git_force_pull_main="git fetch && git checkout -b atmp1 && git branch -D main && git switch main && git branch -D atmp1"
 
 
 # .git nosync for icloud
-function git_init_nosync_icloud() {
+git_init_nosync_icloud() {
   git init . && mv .git .git.nosync && ln -s .git.nosync .git
   touch .gitignore
   grep ".git.nosync" .gitignore || echo ".git.nosync" >>.gitignore
@@ -305,7 +303,7 @@ function git_init_nosync_icloud() {
   ls -1a | grep .git
 }
 
-function nosync_git_icloud() {
+nosync_git_icloud() {
   local dirpath=$1
   if [[ ! -d $dirpath ]]; then
     echo "dirpath $dirpath not exist or not a directory, usage: nosync_git <dirpath>"
@@ -381,7 +379,7 @@ fi
 alias fzfv="fzf --preview 'cat {}'"
 
 #---中文古诗词---
-function fortune_gushici() {
+fortune_gushici() {
   if command -v brew &>/dev/null; then
     command -v fortune || brew install fortune
     git clone https://github.com/ruanyf/fortunes.git /tmp/fortune
@@ -394,7 +392,7 @@ function fortune_gushici() {
 }
 
 #===== functions for config files =====
-function create_config_file_symbols() {
+create_config_file_symbols() {
   # common config files in ~/
   comm_home_backup_dir=~/Documents/it/itnotes/linux/config-backup/userhome
   common_confs_in_home=(.tmux.conf .condarc .zlogout .zshrc .gitignore_global .vimrc .makepkg.conf)
@@ -420,7 +418,7 @@ function create_config_file_symbols() {
   done
 }
 
-function backup_pkgs() {
+backup_pkgs() {
   if command -v brew &>/dev/null; then
     brew bundle dump --describe --force --file=~/Documents/os-config/macos/brew-bundle-backup
     echo "[tip] reinstall macos apps from backupfile"
@@ -446,11 +444,11 @@ alias bash='export onlybash=true;bash '
 [[ -n $onlybash ]] && return
 
 #===== ZSH configs =====
-function install_z() {
+install_z() {
   echo "install z to ~/config/z" && git clone --depth 1 https://github.com/rupa/z.git
   mkdir -p ~/.config/z && mv z/{z.1,z.sh} ~/.config/z/ && mv z /tmp/zsh-z-git && rm -rfv /tmp/zsh-z-git
 }
-function zsh_plugins_install() {
+zsh_plugins_install() {
   if command -v pacman &>/dev/null; then
     pacman -S --noconfirm zsh starship zsh-autosuggestions zsh-completions zsh-lovers zsh-syntax-highlighting
     echo "!!! install z by aur: z-git" && s z-git
@@ -468,7 +466,7 @@ function zsh_plugins_install() {
   fi
 }
 
-function zsh_plugins_upgrade() {
+zsh_plugins_upgrade() {
   local curdir=$PWD
   if [[ $ZSH == ~/.zsh ]]; then
     cd ~/.zsh/plugins/zsh-syntax-highlighting && git pull &
