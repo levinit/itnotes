@@ -1,0 +1,12 @@
+*~
+.DS_Store
+__MACOSX
+dataSources.xml.rej
+node_modules
+.localized
+desktop.ini
+Thumbs.db
+.~*
+*.sw*
+*.pyc
+__pycache__
