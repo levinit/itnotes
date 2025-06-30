@@ -1,0 +1,18 @@
+#!/bin/sh
+
+unset SESSION_MANAGER
+unset DBUS_SESSION_BUS_ADDRESS
+
+export XKL_XMODMAP_DISABLE=1
+
+#session=startxfce
+#session=startlxde
+session=gnome-session
+# session=startdde
+#session=startkde
+#session=i3
+
+#need install autocutsel(synchronizes the two copy/paste buffers mainly used by X applications)
+autocutsel -fork
+
+exec dbus-launch $session
