@@ -1,0 +1,7 @@
+.directory
+desktop.ini
+.temp*
+.*sync*
+.tmp*
+.git.nosync
+.DS_Store
