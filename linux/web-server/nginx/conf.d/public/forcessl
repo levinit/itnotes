@@ -1,0 +1,4 @@
+#强制使用ssl 在server中引用
+    listen 80;
+    #server_name xxx;
+    return 301 https://$server_name$request_uri;
