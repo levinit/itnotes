@@ -1,0 +1,15 @@
+#---fcitx5
+#comment the following 2 lines if using wayland
+#GTK_IM_MODULE=fcitx
+#QT_IM_MODULE=fcitx
+#
+#XMODIFIERS=@im=fcitx
+#SDL_IM_MODULE=fcitx
+#INPUT_METHOD=fcitx
+#GLFW_IM_MODULE=fcitx
+#
+#---ibus
+#如果一些程序中不能输入中文件，使用--xim启动ibus，如ibus-deamon --xim
+GTK_IM_MODULE=ibus
+QT_IM_MODULE=ibus
+XMODIFIERS=@im=ibus

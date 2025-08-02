@@ -1,0 +1,29 @@
+#在 Conda 4.7 后，官方的 default 源组默认只包含 main 和 r (windows 会包含 msys2) channel，其他官方源仍支持手动添加。但官方建议不再使用 free channel.
+default_channels:
+# https://mirrors.tuna.tsinghua.edu.cn
+  - https://mirrors.sjtug.sjtu.edu.cn/anaconda/pkgs/r
+  - https://mirrors.sjtug.sjtu.edu.cn/anaconda/pkgs/main
+  - https://mirrors.sjtug.sjtu.edu.cn/anaconda/pkgs/mro
+  - https://mirrors.sjtug.sjtu.edu.cn/anaconda/pkgs/msys2
+  - https://mirrors.sjtug.sjtu.edu.cn/anaconda/pkgs/pro
+
+custom_channels:
+#https://mirrors.tuna.tsinghua.edu.cn
+  conda-forge: https://mirrors.sjtug.sjtu.edu.cn/anaconda/cloud/
+  menpo: https://mirrors.sjtug.sjtu.edu.cn/anaconda/cloud/
+  soumith: https://mirrors.sjtug.sjtu.edu.cn/anaconda/cloud/
+  viscid-hub: https://mirrors.sjtug.sjtu.edu.cn/anaconda/cloud/
+  pytorch: https://mirrors.sjtug.sjtu.edu.cn/anaconda/cloud/
+
+channels:
+  - defaults
+  - conda-forge
+  - menpo
+  - soumith
+  - viscid-hub
+  - pytorch
+
+# show_channel_urls: true
+channel_priority: flexible
+ssl_verify: true
+auto_activate_base: false

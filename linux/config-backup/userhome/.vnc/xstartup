@@ -1,0 +1,49 @@
+#!/bin/sh
+  ### 环境变量设置
+  export XKL_XMODMAP_DISABLE=1 #禁用XKB Xmodmap扩展，可能用于解决键盘布局相关的问题
+  
+  #vnc config tool show at the top-left in vnc window 开启后连上vnc会再左上角看到一个配置窗口
+  command -v vncconfig && vncconfig -iconic &
+  
+  #一些发行版安装vncserver后，调用执行/etc/X11/xinit/xinitrc文件即可
+  #[[ -r /etc/X11/xinit/xinitrc ]] && source /etc/X11/xinit/xinitrc
+  #/etc/X11/xinit/xinitrc文件中包含执行exec行，如果顺利执行，下面的内容并不会执行
+  
+  ### 加载资源配置，如果用户使用自定义的.xinitrc时执行：
+  [ -r $HOME/.Xresources ] && xrdb $HOME/.Xresources
+  
+  ### 指定使用什么桌面环境或窗口管理器
+  session=gnome-session  #GNOME
+  #session=startxfce4    #xfce
+  #session=startlxde     #lxde
+  #session='gnome-session --session=gnome-classic'
+  #session=mate-session  #MATE
+  #session=startdde      #DDE(Deepin桌面)
+  #session=startkde      #KDE Plasma
+  #session=i3            #i3wm
+  
+  # Copying clipboard content from the remote machine (need install autocutsel)
+  command -v autocutsel && autocutsel -fork
+      
+  case $session in
+      gnome             ) session=gnome-sesion;;  #gnome-session-classic
+      i3|i3wm           ) session=i3;;
+      kde               ) session=startplasma-x11;;
+      xfce|xfce4        ) session=startxfce4;;
+      *                 ) session=$1;;
+  esac
+  
+  if [[ -z $(command -v $session) ]];
+  then
+    echo "$session not found" > ~/start-session.err
+    exit 1
+  fi
+  
+  echo "$session" >~/.xsession
+  
+  unset SESSION_MANAGER
+  unset DBUS_SESSION_BUS_ADDRESS
+  
+  exec dbus-run-session -- "$session"
+  # exec dbus-launch "$session"
+  vncserver -kill $DISPLAY

@@ -1,0 +1,15 @@
+[Unit]
+
+Description=Enable NVIDIA card
+
+DefaultDependencies=no
+
+[Service]
+
+Type=oneshot
+
+ExecStart=/bin/sh -c 'echo ON > /proc/acpi/bbswitch'
+
+[Install]
+
+WantedBy=shutdown.target
