@@ -399,7 +399,7 @@ if [[ -f ~/.cache/pkg_last_update ]]; then
 	fi
 	unset pkg_last_update pkg_list_backup_dir
 else
-	mkdir ~/.cache && echo $(date +%s) >~/.cache/pkg_last_update
+	mkdir -p ~/.cache && echo $(date +%s) >~/.cache/pkg_last_update
 fi
 
 #===== ZSH configs =====

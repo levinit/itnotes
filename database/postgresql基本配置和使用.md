@@ -142,6 +142,22 @@ Linix中安装postgres后，其数据存储的目录一般是`/var/lib/pgsql/dat
 
 ### `pg_hba.conf`  数据库访问配置文件
 
+**pg_hba.conf 文件的更改对当前连接不影响，仅影响更改配置之后的新的连接**，因此修改后需要重载数据库（当然重启postgresql服务也可以）。重载数据库不会中断服务。
+
+可在psql中执行一下SQL命令进行配置重载：
+
+```shell
+SELECT pg_reload_conf();
+```
+
+或者执行以下shell命令：
+
+```shell
+pg_ctl reload -D /path/to/your/data_directory #如/var/lib/pgsql/data
+```
+
+
+
 修改客户端登录验证，避免认证权限过于宽泛。
 
 *提示：initdb方式初始化时若使用`-A`参数，则会自动为本地连接启动 "trust" 认证。*
@@ -162,8 +178,6 @@ host    replication    all      127.0.0.1/32   ident
 host    replication    all      ::1/128        ident
 ```
 具体配置可参看配置文件中的示例说明。
-
-注意：**pg_hba.conf 文件的更改对当前连接不影响，仅影响更改配置之后的新的连接**，因此修改后需要重载（或重启）数据库。*可使用`pg_ctl reload -D /var/lib/pgsql/` 重载数据库，或者`DATABASE`/`USER`值为`all`时表示所有数据库/用户。*
 
 - TYPE值：
   - `local`

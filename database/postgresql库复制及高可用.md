@@ -21,7 +21,7 @@ wal_level = replica
 archive_mode = on
 archive_command = 'cp %p /var/lib/postgresql/archive/%f'
 max_wal_senders = 10
-wal_keep_size = 512MB
+wal_keep_size = 512  # in megabytes; 0 disables
 
 # 建议开启日志
 log_connections = on
@@ -32,24 +32,43 @@ log_disconnections = on
 
 ```conf
 # host replication 用户 IP段 认证方式
-host replication repl_user 192.168.1.0/24 md5
+host replication repl_user 192.168.1.0/24 scram-sha-256
 ```
 
-创建复制用户：
+ `pg_hba.conf`可在psql中执行一下SQL命令进行配置重载：
+
+```shell
+SELECT pg_reload_conf();
+```
+
+或者执行以下shell命令：
+
+```shell
+pg_ctl reload -D /path/to/your/data_directory
+```
+
+当然也可重启postgresql服务。
+
+
+
+创建专用于复制任务的用户（推荐创建）：
 
 ```bash
-psql -U postgres
-CREATE ROLE repl_user REPLICATION LOGIN ENCRYPTED PASSWORD 'your_password';
+psql -U postgres  #或者切换到postgres用户然后用psql即可进入命令行
+# 目前的版本ENCRYPTED总是默认的，因此不写也可以
+CREATE ROLE repl_user with REPLICATION LOGIN ENCRYPTED PASSWORD 'your_password';
 ```
 
 
 
 ##  从库准备
 
-在从库上执行（清空已有数据）：
+使用postgres用户执行（如果不是则需要同步完主库数据后将data目录递归授权给postgres）。
+
+在从库上清空data数据并同步主库数据：
 
 ```bash
-rm -rf /var/lib/postgresql/data/*
+rm -rfv /var/lib/postgresql/data/*
 pg_basebackup -h 主库IP -U repl_user -D /var/lib/postgresql/data --wal-method=stream -P
 ```
 
@@ -62,7 +81,7 @@ touch /var/lib/postgresql/data/standby.signal
 配置 `postgresql.conf`：
 
 ```conf
-primary_conninfo = 'host=主库IP port=5432 user=repl_user password=your_password'
+primary_conninfo = 'host=主库主机名或IP port=5432 user=repl_user password=your_password'
 ```
 
 启动从库
