@@ -606,7 +606,13 @@ kinit admin
 klist    #检查票据是否获取成功
 ```
 
+
+
 ### 添加/删除用户和设置密码
+
+注意：IPA的用户管理主要为Unix设计，因此默认创建的就是posixAccount，位于`cn=users,cn=accounts`下，而且如果不指定用户组，则默认在ipausers（Non-POSIX组）。其Web UI的users列表也只会显示这些用户。
+
+创建非posixAccount参看[创建仅查询服务的用户](#创建仅查询服务的用户)
 
   ```shell
   #添加用户
@@ -642,8 +648,11 @@ klist    #检查票据是否获取成功
   #查看现有组列表
   ipa group-find
   
-  #如果组不存在，先创建组（支持 POSIX 组）
+  #创建组（支持 POSIX 组）,非posix组使用--nonposix
   ipa group-add --gid=<GID> <group_name>
+  
+  #删除组
+  ipa group-del <group_name>
   
   #将用户添加到某个组
   ipa group-add-member <group_name> --users=<username>
@@ -653,11 +662,14 @@ klist    #检查票据是否获取成功
   
   #修改用户的主组（Primary GID）
   ipa user-mod <username> --gidnumber=<new_gid>
+  
+  #查看用户组信息
+  ipa group-show ipausers --all
   ```
 
 
 
-### 密码策略
+### 用户密码策略
 
   ```shell
   #查看当前全局密码策略
@@ -687,56 +699,55 @@ klist    #检查票据是否获取成功
 
 
 
+### 创建仅查询服务的用户
 
-## 安全管理
+这些用户主要用户服务/查询，不允许登录系统，建议创建非posixAccount用户或者创建不可登录shell（设置为/sbin/nologin）的用户。
 
-- 日常管理中，如无必要应当减少使用`admin`管理，一些常用的管理操作如用户管理可以在策略管理中授权给特定的用户；一些需要root执行的命令如`firewalld`可以添加sudo规则授权给特定用户。
+以用户名为ldapbind为例。
 
-- 应当禁止admin登录shell
+- 创建一个存在于`cn=sysaccounts,cn=etc`下的非posixAccount
 
-- 不要设置简单的密码策略；如果可以，应当开启密码过期策略，并定期更换密码。
+  ```shell
+  kinit admin #获取票据后创建
+  
+  ldapadd -Y GSSAPI <<EOF
+  dn: uid=ldapbind,cn=sysaccounts,cn=etc,dc=dev,dc=vm
+  objectClass: account
+  objectClass: simpleSecurityObject
+  uid: ldapbind
+  userPassword: 改用户的密码写在这里
+  EOF
+  ```
 
+  创建的用户的Bind DN为 `uid=ldapbind,sysaccounts,cn=etc,dc=grp,dc`
 
-
-### 第三方接入
-
-应当单独创建只读且不可登录的专用账户，例如：
-
-```shell
-# 这种账号通常不受密码过期策略限制，适合服务调用
-#ipa service-add ldap/$(hostname) # 如果是给特定服务，可以这样
-# 但更通用的方式是创建一个简单的用户并限制权限
-ipa user-add ldapbind --first "LDAP" --last "Bind" --password --shell /sbin/nologin
-
-# 创建一个只读组
-ipa group-add ldap_readonly --desc "ReadOnly group for LDAP binding"
-# 将用户加入该组
-ipa group-add-member ldap_readonly --users=ldapbind
-```
-
-接入时通常需要以下信息：
-
-- **Bind DN**: `uid=ldapbind,cn=users,cn=accounts,dc=ipa,dc=grp,dc=hpc`
-- **Base DN**: `cn=users,cn=accounts,dc=ipa,dc=grp,dc=hpc` (查询用户的起点)
-- **LDAP Server**: `ipa.dev.ic` (确保你的 PC 能解析此域名，此处以 `dev.ic` 域为例)
-- **Port**: `389` (LDAP) 或 `636` (LDAPS)
-
-额外建议：
-
-1. **禁用密码过期**：对于这种服务账号，建议手动将其从全局密码策略中排除，或者设置一个极长的有效期，否则一旦密码过期，你所有的第三方服务都会断开。
-
-   ```shell
-   # FreeIPA中密码策略基于用户组，这里为先前创建的 ldap_readonly 组设置密码永不过期
-   ipa pwpolicy-add ldap_readonly --maxlife=999999 --minlife=0 --history=0 --priority=1
-   ```
-
-2. **SSL/TLS 强制要求**：第三方接入时强制勾选 **"Use LDAPS"** 或 **"StartTLS"**，防止绑定密码在局域网内明文传输。
-
-   注意：这要求接入者必须安装证书，可在其系统中安装IPA的CA证书，或者配置`LDAPTLS_CACERT=/path/to/ca.crt`，这样它们就能自动识别并信任你的 IPA Server。
+  `cn=sysaccounts,cn=etc`是 FreeIPA 的底层目录树（DIT）中，这是专门为**纯服务、纯机器查询**预留的，不会被同步到*nix主机上，且默认就不会密码过期。缺点是**不能在IPA web ui的users列表中看到**。
+  
+  ```shell
+  # 确保你已经 kinit admin
+  ldapsearch -Y GSSAPI -b "cn=sysaccounts,cn=etc,dc=dev,dc=vm" "(uid=ldapbind)"
+  ```
 
 
 
-### 数据备份
+- 创建不可登录的posixAccount账户，shell为/sbin/nologin
+
+  ```shell
+  # 1. 创建不可登录的用户
+  ipa user-add ldapbind --first="LDAP" --last="Bind" --shell=/sbin/nologin --password
+  # 2. 设置密码不过期
+  ipa pwpolicy-add-user --users=ldapbind --maxlife=999999
+  
+  # （建议）创建专门的组来存放这类账号，并将账号从ipausers中移除
+  ipa group-add searchonly --nonposix --desc "Service accounts for LDAP binding"
+  ipa group-add-member searchonly  --users=ldapbind
+  ipa group-remove-member ipausers --users=ldapbind
+  ```
+  创建的用户的Bind DN为：`uid=ldapbind,cn=users,cn=accounts,dc=grp,dc=hpc`
+
+
+
+## 数据备份
 
 - 备份服务端数据
 
@@ -757,22 +768,4 @@ ipa group-add-member ldap_readonly --users=ldapbind
   ipactl restart
   ipa-healthcheck
   ```
-
-  
-
-## 故障排查
-
-常见问题：
-
-- **DNS 解析失败**：确保客户端能解析 FreeIPA 服务器。
-- **时间不同步**：检查 `chronyd` 服务状态。
-- **权限不足**：使用 `admin` 账号操作。
-
-```shell
-# FreeIPA 服务端日志
-journalctl -u ipa -f
-
-# 客户端 SSSD 日志
-journalctl -u sssd -f
-```
 
