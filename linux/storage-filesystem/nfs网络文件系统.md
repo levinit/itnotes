@@ -344,7 +344,14 @@ mount 192.168.0.251:/music /music   #挂载子目录
 
 - `_netdev`   声明这是网络设备，等待网络就绪后挂载
 
-- `noatime`  关闭文件和目录访问时间更新（可以减少IO）
+- `noatime`和`nodiratime`  关闭文件和目录访问时间更新（可以减少IO）
+
+- `actimeo` 是一个快捷参数，它同时设置了以下四个内核变量：
+
+  - **`acregmin` / `acregmax`**：普通文件的属性在缓存中保留的最短/最长时间。
+  - **`acdirmin` / `acdirmax`**：目录（文件夹）属性在缓存中保留的最短/最长时间。
+
+  默认3秒，用于控制客户端缓存文件元数据信息（attributes）的时间。
 
 - `realtime`   仅在mtime（修改时间）变化或`atime`过旧才更新`atime`，和`noatime` 二选一
 
@@ -416,11 +423,10 @@ v4+版本开始，不可再使用系统的ACL，而需要使用NFS内置的nfs4a
 
   ```ini
   [nfsd]
-  rsize=8388608
-  wsize=8388608
-  #根据服务器配置性能提高threads值，以增加并发数量
+  rsize=1048576
+  wsize=1048576
+  #根据服务器配置性能提高threads值，根据实际情况调整1cpu开4-8threads
   threads=128
-  actimeo=60 
   
   [mountd]
   #manage-gids = false  #默认true
@@ -451,16 +457,19 @@ io01:/share  /share defaults,_netdev,nofail,x-system.auto,intr,noatime,vers=3 0 
 | ----------------------------- | ------------------------------------------------------------ |
 | `fsc`                         | 启用 `fscache`，本地缓存 NFS 读取数据，提高重复访问性能（需 `cachefilesd`） |
 | `noatime,nodiratime`          | 关闭文件访问时间更新，减少 I/O                               |
-| `rsize=8388608,wsize=8388608` | 设置 8MB 读/写缓存，提高吞吐量                               |
+| `rsize=1048576,wsize=1048576` | 设置 1MB 读/写缓存，提高吞吐量                               |
 | `proto=tcp`                   | 使用 TCP 代替 UDP，适合稳定大流量传输                        |
 | `hard,intr`                   | `hard`硬挂载，避免 NFS 超时导致 I/O 错误，`intr`允许用户中断 |
 | `_netdev`                     | 确保 NFS 在网络就绪后才挂载                                  |
+| `actime=15`                   | 元数据缓存时间（读同一个文件超过N秒才会重新获取元数据）      |
 
 如果小文件场景多，应当减少rsize和wsize，如设置为`262144`。
 
-如果系统不明确需要 `atime`，应当使用`noatime`减少I/O。*潜在问题：某些程序依赖 `atime` 来判断文件是否被读取过，如 `mutt`、`tmpwatch`，极少有程序依赖目录的 `atime`。则如果有兼容性问题，可以用 `relatime` 代替 `noatime`。*
+如果系统不明确需要 `atime`，应当使用`noatime`和`nodiratime`减少I/O。现在的应用极少有靠读取文件accesstime来处理逻辑的。
 
 `hard,intr`用于硬挂载（实际上是NFS默认行为，可不指定）并允许用户中断，避免无限挂起无法进行任何操作。
+
+`actimeo`一般是默认3秒，适当调大，可以减少频繁发送`GETATTR`请求（获取元数据），当然其副作用是增加元数据更新的延迟（例如节点A更新了文件大小，节点B要N秒才能感知）。
 
 
 
