@@ -44,13 +44,35 @@ at相关命令：
 
 
 
-### at任务创建
+## at任务创建
 
-- 使用脚本`at <时间点> -f <脚本名>`
+- 交互模式
 
-- 使用交互式命令行
+  1. 输入`at [选项 参数] 时间点`，然后回车
 
-  1. 输入`at [选项 参数] 时间点，然后回车
+  2. 此时会出现 `at>` 提示符，输入你要执行的命令（可以多行）
+
+     注意：命令可能需要使用绝对路径
+
+  3. 按下<kbd>Ctrl</kbd> <kbd>d</kbd>退出at交互式命令行
+
+
+
+- 批处理命令行
+
+  ```shell
+  #at <时间点> -f <脚本名>
+  at 02:00 tomorrow -f /home/user/scripts/stop_monitor.sh 
+  
+  # 从标准输入获取要执行的命令，使用管道符传递
+  echo "crontab -l | grep -v 'server_monitor.csv' | crontab -" | at now + 7 days
+  
+  echo "sh /tmp/cleanup.sh" | at now + 10 minutes
+  ```
+
+- 交互式命令行
+
+  1. 输入`at [选项 参数] 时间点`，然后回车
 
   2. 输入要执行的命令
 
@@ -60,7 +82,7 @@ at相关命令：
 
 
 
-### at时间点表述方式
+## at时间点表述方式
 
 at的时间表述方式多样，扩展自POSIX.2的标准。
 
