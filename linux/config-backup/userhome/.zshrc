@@ -36,7 +36,7 @@ export GOPATH=$dev_env_path/go #default is ~/go
 export PATH=$GOPATH/bin:$PATH
 export GOROOT=$(go env GOROOT 2>/dev/null)
 (command -v go &>/dev/null && (test -d $GOPATH || mkdir -p $GOPATH) &)
-unset GOEXPERIMENT  #使用1.25.2+的DWARF
+unset GOEXPERIMENT #使用1.25.2+的DWARF
 #go telemetry on
 
 #---rust
@@ -68,15 +68,6 @@ alias uvenv="envname=$(basename $PWD) && uv venv $dev_env_path/uv/venvs/$envname
 
 #---ansible
 export ANSIBLE_CONFIG=$dev_configs_path/ansible/ansible.cfg
-
-#---ollama
-#export OLLAMA_MODELS="~/Public/llm/ollama/models"
-#export OLLAMA_LOGFILE="~/Public/llm/ollama/ollama.log"
-export OLLAMA_HOST="0.0.0.0:11434"
-export OLLAMA_ORIGINS="*"
-export OLLAMA_FLASH_ATTENTION=1
-#export OLLAMA_KV_CACHE_TYPE=q8_0
-#export OLLAMA_CONTEXT_LENGTH=8192
 
 [[ $- != *i* ]] && return # exit if not interactive shell
 
@@ -141,14 +132,8 @@ fi
 
 #=====utility=====
 #------ vim & neovim ------
-#pacman -S vim-plugin --no-comfirm
-alias vimplugup="[[ -f ~/.vim/autoload/plug.vim ]] && vim -c 'PlugUpgrade' -c 'PlugInstall' -c 'PlugUpdate' -c 'q' -c 'q'"
-alias vimpluginstall="curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim && \rm -rfv ~/.vim/autoload/plugin.vim.old && vimplugup"
-
 export EDITOR=vim
 alias vi=vim
-
-#neovim
 if command -v nvim &>/dev/null; then
 	export EDITOR=nvim
 	alias vim=nvim
@@ -247,36 +232,32 @@ alias tc='export LANG=zh_TW.UTF-8 LC_CTYPE=zh_TW.UTF-8 LC_MESSAGES=zh_TW.UTF-8'
 alias en='export LANG=en_US.UTF-8 LC_CTYPE=en_US.UTF-8 LC_MESSAGES=en_US.UTF-8'
 
 #---file operations
-alias scp='scp -r'
+alias scp='echo "\e[1;33m[Tips]\e[0m rsync -avP 效率更高且支持断点续传" >&2 ; \scp'
 alias ls='ls --color -F'
-alias l='ls -lhAF'
-alias ll='ls -lhAF'
-alias la='ls -lhAF' #'ls -lah'
-alias ..='cd ../'
-alias ...='cd ../..'
-alias ....='cd ../../..'
+alias ll='ls -lF' lh='ls -lhF' la='ls -lAF' lah='ls -lhAF' #'ls -lah'
+alias ..='cd ../' ...='cd ../..' ....='cd ../../..'
 alias cp='cp -iv'
-[[ -n $(command -v rsync) ]] && alias cp='echo "---cp is directed to an rsync command alias---" && rsync -av --progress --human-readable -- "$@"'
 alias grep='grep --color'
 alias tree='tree -C -L 1 --dirsfirst'
 alias iconvgbk='iconv -f GBK -t UTF-8'                      #iconv -- file content encoding
 alias convmvgbk='convmv -f GBK -t UTF-8 --notest --nosmart' #convmv -- filename encoding
 
 #gio for trash
-if [[ $os == Linux ]]; then
-	if command -v gio &>/dev/null; then # && -n $XDG_CURRENT_DESKTOP ]]; then
-		alias trashclean='gio trash --empty'
-		alias rm='echo "[tip] rm is an alias for [gio trash], it will move file to Trash" && gio trash '
-		alias trash='gio trash '
-		alias trashlist='echo "[tip] use gio trash --restore to restore a file" && echo "---~/.local/share/Trash---" && ls ~/.local/share/Trash/files'
-		alias open='gio open'
-	fi
+if command -v gio &>/dev/null; then # && -n $XDG_CURRENT_DESKTOP ]]; then
+	alias trashclean='gio trash --empty'
+	alias rm='echo "[tip] rm is an alias for [gio trash], it will move file to Trash" >&2 ; gio trash '
+	alias trash='gio trash '
+	alias trashlist='echo "[tip] use gio trash --restore to restore a file" >&2 ; echo "---~/.local/share/Trash---" >&2 ; ls ~/.local/share/Trash/files'
+	alias open='gio open'
 fi
 #alias open='xdg-open'
 
 #tar + compress/uncompress
 #eg tar -acvf xx.tar.zst xx ,compression type suffix is needed
-alias tarc="tar --exclude='.DS_Store' -acvf " tarx='tar -xvf '
+export TAR_OPTIONS="--exclude='.DS_Store' --exclude='__MACOSX' --exclude='desktop.ini' --exclude='thumbs.db' --exclude='.tmp'"
+alias tarc='tar -acvf'
+alias tarx='tar -xvf'
+alias tarl='\tar -tf'
 
 dos2unix_all() {
 	find "${1:-$(pwd)}" -type f -print0 | xargs -0 -n 8 dos2unix
@@ -286,10 +267,7 @@ dos2unix_all() {
 alias gitgc='git gc --aggressive --prune=now'
 alias gitrmlog='git reflog expire --expire=now --all && git gc --aggressive --prune=now'
 alias git_force_pull_main="git branch -D atmp1 ; git fetch && git checkout -b atmp1 && git branch -D main && git switch main && git branch -D atmp1"
-alias gm='git merge '
-alias gf='git fetch'
-alias gp='git push'
-alias gs='git switch'
+alias gm='git merge' gf='git fetch' gp='git push' gs='git switch'
 
 # .git nosync for icloud
 git_init_nosync_icloud() {
@@ -387,13 +365,14 @@ if [[ -f ~/.cache/pkg_last_update ]]; then
 		echo $(date +%s) >~/.cache/pkg_last_update
 		case $package_manager in
 		pacman)
-			pacman -Qqe >$pkg_list_backup_dir/pacman.packagelist
+			pacman -Qqen >$pkg_list_backup_dir/pacman.list.txt                  #native pkgs(offical repo)
+			pacman -Qqem >~/Documents/os-config/home.config/pacman.aur.list.txt #no official pkgs
 			;;
 		apt)
-			dpkg --get-selections >$pkg_list_backup_dir/apt.packagelist
+			dpkg --get-selections >$pkg_list_backup_dir/apt.list.txt
 			;;
 		brew)
-			brew list >$pkg_list_backup_dir/brew.packagelist
+			brew list >$pkg_list_backup_dir/brew.list.txt
 			;;
 		esac
 	fi
@@ -403,6 +382,7 @@ else
 fi
 
 #===== ZSH configs =====
+#---plugins
 zsh_plugins=(zsh-autosuggestions zsh-syntax-highlighting)
 
 shell_plugins() {
@@ -411,11 +391,7 @@ shell_plugins() {
 	elif [[ $package_manager == "apt" ]]; then
 		apt install -y zsh zoxide starship ${zsh_plugins[@]} zsh-completions
 	elif [[ $package_manager == "brew" ]]; then
-		brew install zsh starship zoxide ${zsh_plugins[@]} zsh-completions
-	else
-		git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_PLUGINS:-~/.zsh/plugins}/zsh-autosuggestions
-		git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_PLUGINS:-~/.zsh/plugins}/zsh-syntax-highlighting
-		git clone --depth 1 https://github.com/rupa && mkdir -p ~/.config/z && mv z/{z.1,z.sh} ~/.config/z/ && mv z /tmp/zsh-z-git && rm -rfv /tmp/zsh-z-git
+		brew install zsh starship zoxide ${zsh_plugins[@]} #zsh-completions
 	fi
 	unset plugin
 }
@@ -436,12 +412,11 @@ Darwin)
 	;;
 esac
 
-# load plugins.They can be found in $ZSH_PLUGINS/*
+# load plugins.They can be found in $ZSH_PLUGINS/* zsh-completions no need source
 for plugin in ${zsh_plugins[*]}; do
-	[[ -d $ZSH_PLUGINS_DIR/$plugin ]] && source $ZSH_PLUGINS_DIR/$plugin/$plugin.zsh
+	[[ -f $ZSH_PLUGINS_DIR/$plugin/$plugin.zsh ]] && source $ZSH_PLUGINS_DIR/$plugin/$plugin.zsh
 done
 unset plugin
-test -d $ZSH_PLUGINS_DIR/zsh-completions && FPATH=$ZSH_PLUGINS_DIR/zsh-completions:$FPATH
 unset ZSH_PLUGINS_DIR zsh_plugins
 
 #plugins config
@@ -470,7 +445,7 @@ select-word-style bash
 setopt no_nomatch #no error when no match
 zstyle ':completion:*:scp:*' tag-order '! users'
 
-#---ssh-agent
+#===== ssh-agent
 function active_ssh_agent() {
 	if [[ -z $(ps -eo pid,user,command | grep -w $USER | grep "ssh-agent" | grep -v grep) ]]; then
 		eval $(ssh-agent -s)
@@ -486,6 +461,3 @@ active_ssh_agent
 
 #===== post load scripts =====
 test -r ~/.shell.env.postload.sh && source ~/.shell.env.postload.sh || true
-
-# Added by Antigravity
-export PATH="/Users/levin/.antigravity/antigravity/bin:$PATH"
