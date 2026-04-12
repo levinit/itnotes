@@ -162,7 +162,7 @@ Darwin)
 
 	export HOMEBREW_NO_AUTO_UPDATE=true
 	alias i="brew install"
-	alias r="brew uninstall"
+	alias r="brew uninstall --zap"
 	alias s="brew search"
 	alias list="brew list"
 	alias pkg_query_update='brew outdated'
