@@ -182,7 +182,7 @@ dnf install -y freeipa-server-dns
   ```shell
   # --no-ntp不使用IPA设置ntp
   # --no-ui-redirect不让IPA配置的httpd服务的根路径跳到ipa/ui路径（这样可以在80/443处理其他web服务）
-  ipa-server-install --no-ntp #--no-ui-redirect
+  ipa-server-install --no-ntp --no-host-dns #--no-ui-redirect
   ```
 
   默认只询问以下内容，如果需要更多设置项，需要增加相关的命令行选项参数。示例：
@@ -213,7 +213,7 @@ dnf install -y freeipa-server-dns
   
   ```shell
   # 示例 1：不安装 DNS，仅使用外部 DNS 或本地 hosts（去掉了与 DNS 相关的参数）
-  ipa-server-install --realm=GRP.HPC --domain=ipa.grp.hpc --ds-password=pwd_admin_ --admin-password=pwd_admin_ --no-ntp --unattended #--no-ui-redirect 
+  ipa-server-install --realm=GRP.HPC --domain=ipa.grp.hpc --ds-password=pwd_admin_ --admin-password=pwd_admin_ --no-ntp --no-host-dns --unattended #--no-ui-redirect 
   
   # 示例 2：启用并自动配置集成 DNS (-setup-dns)
   ipa-server-install --realm=GRP.HPC --domain=ipa.grp.hpc --ds-password=pwd_admin_ --admin-password=pwd_admin_ --ssh-trust-dns --setup-dns --forwarder=192.168.122.247 --no-ntp --unattended #--no-ui-redirect
@@ -462,23 +462,24 @@ dnf install -y oddjob-mkhomedir
        ```
   
     2. 在客户端使用该 OTP 加入使用`--password=RANDOM_OTP`而不需要 `--principal=admin`
-  
-  
-  ```shell
-  ipa-client-install \
-      --domain=ipa.grp.hpc \
-      --server=ipa.grp.hpc \
-      --realm=GRP.HPC \
-      --no-ntp \
-      --password=<OTP> \
-      --ssh-trust-dns \
-      --request-cert \
-      --collect-stats \
-      --enable-dns-updates \
-      --unattended
-      
-  #--principal=admin \
-  ```
+    
+       ```shell
+       ipa-client-install \
+           --domain=ipa.grp.hpc \
+           --server=ipa.grp.hpc \
+           --realm=GRP.HPC \
+           --no-ntp \
+           --password=<OTP> \
+           --ssh-trust-dns \
+           --request-cert \
+           --collect-stats \
+           --enable-dns-updates \
+           --unattended
+           
+       #--principal=admin \
+       ```
+    
+       
   
   
 
@@ -615,8 +616,8 @@ klist    #检查票据是否获取成功
 创建非posixAccount参看[创建仅查询服务的用户](#创建仅查询服务的用户)
 
   ```shell
-  #添加用户
-  ipa user-add --first=<first_name> --last=<last_name> [--uid-=<uid> --gidnumber=<gid1[,gid2,...]>] [-p <password>] <username>
+  #添加用户 --password需要交互式填入密码 --random可以生成随机密码
+  ipa user-add --first=<first_name> --last=<last_name> [--uid-=<uid> --gidnumber=<gid1[,gid2,...]>] [--password ] <username>
   
   #删除用户 --preserve=false会删除用户家目录
   ipa user-del <username> [--preserve=false]
@@ -629,6 +630,9 @@ klist    #检查票据是否获取成功
   
   #设置密码
   ipa passwd <username> --password  #输入两次密码
+  
+  #修改shell
+  ipa user-mod --shell=/bin/bash <username>
   ```
 
   
