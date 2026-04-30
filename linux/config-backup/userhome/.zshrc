@@ -184,6 +184,7 @@ Linux)
 		alias yay='yay --bottomup'
 		#makepkg aur
 		alias aurinfo='updpkgsums && makepkg --printsrcinfo > .SRCINFO ; git status && echo ----git add -u---'
+    alias aurdepcheck='namcap PKGBUILD && namcap *.pkg.tar.zst'
 	elif command -v apt &>/dev/null; then
 		package_manager="apt"
 		[[ $user != root ]] && alias apt='sudo apt'
