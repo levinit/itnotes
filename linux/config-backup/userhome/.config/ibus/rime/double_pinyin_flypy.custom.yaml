@@ -1,0 +1,13 @@
+patch:
+  # 候选词个数
+  "menu/page_size": 9
+
+  # 双拼方案 去掉这些无用依赖： 全拼拆字  五笔 笔画
+  "schema/dependencies":
+    - radical_pinyin_flypy # 参考 https://github.com/mirtlecn/rime-radical-pinyin
+    # - wubi98_mint       # 98五笔库 https://github.com/yanhuacuo/98wubi-tables
+    # - stroke
+    - melt_eng # 英文方案
+
+  # 设置默认为英文输入
+  # "switches/@0/reset": 1

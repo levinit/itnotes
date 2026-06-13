@@ -1,0 +1,81 @@
+[Hotkey]
+# 重複觸發鍵時枚舉輸入法
+EnumerateWithTriggerKeys=True
+# 枚舉輸入法向前
+EnumerateForwardKeys=
+# 枚舉輸入法向後
+EnumerateBackwardKeys=
+# 枚舉時略過第一個輸入法
+EnumerateSkipFirst=False
+
+[Hotkey/TriggerKeys]
+0=Control+space
+1=Zenkaku_Hankaku
+2=Hangul
+
+[Hotkey/AltTriggerKeys]
+0=Shift+Shift_L
+
+[Hotkey/EnumerateGroupForwardKeys]
+0=Super+space
+
+[Hotkey/EnumerateGroupBackwardKeys]
+0=Shift+Super+space
+
+[Hotkey/ActivateKeys]
+0=Hangul_Hanja
+
+[Hotkey/DeactivateKeys]
+0=Hangul_Romaja
+
+[Hotkey/PrevPage]
+0=Up
+
+[Hotkey/NextPage]
+0=Down
+
+[Hotkey/PrevCandidate]
+0=Shift+Tab
+
+[Hotkey/NextCandidate]
+0=Tab
+
+[Hotkey/TogglePreedit]
+0=Control+Alt+P
+
+[Behavior]
+# 預設啟用
+ActiveByDefault=True
+# 重新聚焦時重置狀態
+resetStateWhenFocusIn=Program
+# 共享輸入法狀態
+ShareInputState=All
+# 在應用程式中顯示預編輯
+PreeditEnabledByDefault=True
+# 當切換輸入法時顯示輸入法資訊
+ShowInputMethodInformation=True
+# 當切換輸入焦點時顯示輸入法資訊
+showInputMethodInformationWhenFocusIn=True
+# 顯示緊湊的輸入法訊息
+CompactInputMethodInformation=True
+# 顯示第一個輸入法資訊
+ShowFirstInputMethodInformation=True
+# 預設頁面大小
+DefaultPageSize=5
+# 覆蓋 Xkb 選項
+OverrideXkbOption=False
+# 自定 Xkb 選項
+CustomXkbOption=
+# Force Enabled Addons
+EnabledAddons=
+# Force Disabled Addons
+DisabledAddons=
+# Preload input method to be used by default
+PreloadInputMethod=True
+# 允許在密碼輸入框中使用輸入法
+AllowInputMethodForPassword=False
+# 輸入密碼時顯示預編輯文本
+ShowPreeditForPassword=False
+# 儲存使用者數據的時間間隔（以分鐘為單位）
+AutoSavePeriod=30
+

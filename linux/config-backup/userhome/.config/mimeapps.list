@@ -1,0 +1,5 @@
+[Added Associations]
+inode/directory=org.gnome.Nautilus.desktop;dolphin.desktop;
+x-scheme-handler/sms=org.gnome.Shell.Extensions.GSConnect.desktop;
+application/x-shellscript=org.gnome.gedit.desktop;visual-studio-code.desktop;
+text/plain=org.gnome.gedit.desktop;
