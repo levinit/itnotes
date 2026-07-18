@@ -626,16 +626,19 @@ klist    #检查票据是否获取成功
   
   #查看用户信息
   ipa user-find [--all]                 #查看所有用户
-  ipa user-show <username> -all [--raw] #--all查看指定用户所有信息，--raw展示原始信息
+  ipa user-show <username> -all [--raw] #--all查看指定用户所有信息，--raw展示LDAP格式原始信息
   
   #设置密码
-  ipa passwd <username> --password  #输入两次密码
+  ipa passwd <username> --password  #需要交互式输入两次密码
+  ipa passwd <username> <password>  #直接设置密码
   
   #修改shell
   ipa user-mod --shell=/bin/bash <username>
   ```
 
-  
+  注意：在默认情况下，添加用户时设置的密码是**初始密码**。用户在第一次通过 SSH 或 WebUI 登录时，系统会强制要求他们更改密码，如果不希望他们首次登录时被迫改密码，可以使用`ipa passwd`命令设置密码。
+
+
 
   用户自己修改密码：
 
@@ -772,4 +775,26 @@ klist    #检查票据是否获取成功
   ipactl restart
   ipa-healthcheck
   ```
+
+
+
+## 问题解决
+
+### 清理缓存
+
+SSSD 的“负向缓存（Negative Cache）”机制，可能在一些时候总是不能更新信息（即使使用了`sss_cache -E`）。清理缓存：
+
+```shell
+# 1. 清空所有 SSSD 缓存
+sss_cache -E
+
+# 2. 清除 SSSD 内存中的内部状态文件（可选，但最彻底）
+rm -f /var/lib/sss/db/cache_*.ldb
+
+# 3. 重启 SSSD 守护进程
+systemctl restart sssd
+
+# 4. 再次验证
+id <username>
+```
 
