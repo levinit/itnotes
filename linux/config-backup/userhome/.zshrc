@@ -17,7 +17,7 @@ if command -v mise &>/dev/null; then
 fi
 
 #-golang
-export GOPROXY="https://goproxy.io,https://mirrors.cloud.tencent.com/go/,https://mirrors.aliyun.com/goproxy/,https://goproxy.cn,direct"
+export GOPROXY="https://goproxy.cn,https://mirrors.cloud.tencent.com/go/,https://mirrors.aliyun.com/goproxy/,direct"
 export GOPATH="$dev_env_dir/go"
 export GOBIN="$GOPATH/bin"
 export PATH=$GOBIN:$PATH
