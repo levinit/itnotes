@@ -1,0 +1,10 @@
+patch:
+  # 候选词列表的显示方式，horizontal: false表示竖向显示，true（默认值）表示横向显示。
+  # "style/horizontal": true
+
+  # ibus的配色功能约等于无用，桌面高度融合，可在ibus-setup中选择
+  # rime自带：aqua (水蓝)  azure (天蓝)  ink (墨色)  luna (月白)
+  # 亮色模式皮肤 mint_light_green(碧皓青)
+  # "style/color_scheme": mint_light_green
+  # 暗色模式皮肤 mint_dark_green(碧月青)
+  # "style/color_scheme_dark": mint_dark_green

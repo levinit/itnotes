@@ -1,0 +1,14 @@
+# 本文件放在 Windows 主機的使用者目錄下，命名為 .wslconfig
+# %USERPROFILE%\.wslconfig
+
+[wsl2]
+swap=0
+
+# 開啟鏡像網路模式，讓 WSL2 與 Windows 共享 127.0.0.1
+networkingMode=mirrored
+
+# 自動將 Windows 主機的 代理同步給 WSL2
+autoProxy=true
+
+# 開啟 DNS 隧道，防止 Linux 內部發生 DNS 嚴重解析超時
+dnsTunneling=true

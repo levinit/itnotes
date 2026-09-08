@@ -1,0 +1,11 @@
+Windows Registry Editor Version 5.00
+[-HKEY_CLASSES_ROOT\*\shell\runas]
+[-HKEY_CLASSES_ROOT\Directory\shell\runas]
+[-HKEY_CLASSES_ROOT\dllfile\shell]
+[-HKEY_CLASSES_ROOT\Drive\shell\runas]
+[-HKEY_CLASSES_ROOT\exefile\shell\runas]
+[HKEY_CLASSES_ROOT\exefile\shell\runas]
+"HasLUAShield"=""
+[HKEY_CLASSES_ROOT\exefile\shell\runas\command]
+@="\"%1\" %*"
+"IsolatedCommand"="\"%1\" %*"

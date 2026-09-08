@@ -1,0 +1,14 @@
+patch:
+  schema_list:
+    - schema: double_pinyin_flypy # 小鹤双拼
+    - schema: rime_mint # 薄荷拼音
+    - schema: melt_eng
+
+  # 切换方案的快捷键
+  "switcher/hotkeys":
+    - Control+Shift+space
+    # - Control+grave       #和vscoce的终端快捷键冲突
+    # - Control+Shift+grave #和vscoce的终端快捷键冲突
+
+  # 候选词个数
+  "menu/page_size": 9

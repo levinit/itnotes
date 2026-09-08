@@ -1,0 +1,26 @@
+# see https://mise.en.dev/configuration.html
+# run `mise cfg` to check where config file is
+
+[settings]
+env_shell_expand = true
+
+color_theme = "catppuccin"
+
+auto_install           = false
+not_found_auto_install = false
+
+#npm.package_manager = "bun"
+#python.uv_venv_auto = "create|source"
+
+
+[tools]
+#lua   = "latest"
+#node  = "lts"
+neovim = "latest"
+python = { version = "latest", os = ["macos", "windows"] }
+
+[env]
+#dev_env_dir = "$HOME/Public/dev/env"
+
+### append env to PATH
+#_.path=["$GOBIN", "$CARGO_HOME/bin"]
