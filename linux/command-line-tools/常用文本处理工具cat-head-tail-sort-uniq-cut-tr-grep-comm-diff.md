@@ -18,7 +18,7 @@
 
   - `-v`或`--show-nonprinting`  使用`^`和`M-`符号（除`LFD`和`TAB`）
   - `-E`  `--show-ends  `  在行尾显示`$`符号（即在行尾显示`$` ）
-  - `-T`  `--show-tabs`  将tab字符显示为`^|`符号
+  - `-T`  `--show-tabs`  将tab字符显示为`^I`符号
 
 示例：
 

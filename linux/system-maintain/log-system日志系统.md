@@ -61,17 +61,17 @@ rsyslog的主配置位于`/etc/rsyslog.conf`，一般不修改该文件，而是
 
     前提是当前该用户已经登录，如`admin1`
 
-  - 忽略或丢弃日志，使用`~`
+  - 忽略或丢弃日志，使用`stop`（旧语法为`~`）
 
   - 执行指定的脚本
 
 示例：
 
 ```shell
-*.*                                         @192.168.1.99:514
-authpriv.*                          var/log/secure
+*.*                                    @192.168.1.99:514
+authpriv.*                             /var/log/secure
 local7.*                               /var/log/boot.log
-cron.*                                   /var/log/cron
+cron.*                                 /var/log/cron
 ```
 
 ## rsyslog日志服务器

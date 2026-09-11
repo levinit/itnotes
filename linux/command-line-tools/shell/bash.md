@@ -49,8 +49,9 @@ unix（及其衍生版）和linux的常见shell，粗略分为三类：Bourne Sh
 本文以bash为基础，部分与sh差异将特别说明（标明为bash的特性除外）。查看当前shell
 
 ```shell
-echo $SHELL        #查看当前使用的shell
-echo $shell        #某些shell中可能使用小写的环境变量
+echo $0            #查看当前交互环境中运行的shell
+ps -p $$ -o comm=  #通过当前进程PID查看实际运行的shell
+echo $SHELL        #查看用户的默认登录shell（记录于/etc/passwd）
 cat /etc/shells    #查看当前系统支持的shell
 ```
 

@@ -94,10 +94,10 @@ ldap中组织结构的描述术语：
 
 - Oracel Internet Directory(OID)
 
-# 图形界面管理工具
+# 常用管理与客户端工具
 
-- [freeIPA](https://www.freeipa.org/page/Main_Page)
-- [ldap-account-manager](https://www.ldap-account-manager.org/lamcms/) (LAM)
-- [ldapadmin](http://www.ldapadmin.org)
-- [apache ds studio](https://directory.apache.org/studio/downloads.html)
-- windows AD管理器
+- [FreeIPA Web UI](https://www.freeipa.org/page/Main_Page)（开箱即用的 Web 端统一管理控制台）
+- [Apache Directory Studio](https://directory.apache.org/studio/)（跨平台 Eclipse 架构的 LDAP 桌面客户端，支持目录树浏览、Schema 检查与 LDIF 编辑）
+- [phpLDAPadmin](http://phpldapadmin.sourceforge.net/)（轻量 Web 端管理工具）
+- [LDAP Account Manager](https://www.ldap-account-manager.org/lamcms/) (LAM)
+- Windows Active Directory 域控制器管理工具 (RSAT)

@@ -1,6 +1,6 @@
-https://www.freeipa.org/page/Quick_Start_Guide
+[FreeIPA 官方文档](https://www.freeipa.org/page/Documentation) | [Red Hat IdM 官方手册](https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html/accessing_identity_management_services/index)
 
-IPA的RedHat企业版[IPA- Red Hat Identity Management](https://www.google.com/search?client=safari&rls=en&q=redhat+IPA&ie=UTF-8&oe=UTF-8)
+[TOC]
 
 # 服务端
 
@@ -165,10 +165,12 @@ firewall-cmd --reload
 
 ## 安装部署 FreeIPA Server
 
-
 安装 FreeIPA 服务端（如果不需要集成DNS则不安装freeipa-server-dns） 
 
 ```shell
+# RHEL 8 / Rocky 8 系统需先启用 IdM 模块流（RHEL 9 / Rocky 9 忽略此步直接安装）：
+# dnf module enable idm:DL1 -y
+
 dnf install -y freeipa-server
 
 # 如果还要使用IPA集成的DNS服务
@@ -213,7 +215,7 @@ dnf install -y freeipa-server-dns
   
   ```shell
   # 示例 1：不安装 DNS，仅使用外部 DNS 或本地 hosts（去掉了与 DNS 相关的参数）
-  ipa-server-install --realm=GRP.HPC --domain=ipa.grp.hpc --ds-password=pwd_admin_ --admin-password=pwd_admin_ --no-ntp --no-host-dns --unattended #--no-ui-redirect 
+  ipa-server-install --realm=GRP.HPC --domain=grp.hpc --ds-password=pwd_admin_ --admin-password=pwd_admin_ --no-ntp --no-host-dns --unattended #--no-ui-redirect 
   
   # 示例 2：启用并自动配置集成 DNS (-setup-dns)
   ipa-server-install --realm=GRP.HPC --domain=ipa.grp.hpc --ds-password=pwd_admin_ --admin-password=pwd_admin_ --ssh-trust-dns --setup-dns --forwarder=192.168.122.247 --no-ntp --unattended #--no-ui-redirect
@@ -465,7 +467,7 @@ dnf install -y oddjob-mkhomedir
     
        ```shell
        ipa-client-install \
-           --domain=ipa.grp.hpc \
+           --domain=grp.hpc \
            --server=ipa.grp.hpc \
            --realm=GRP.HPC \
            --no-ntp \
@@ -560,6 +562,57 @@ systemctl enable --now oddjobd
 
 
 
+## Kerberos 与 SSH GSSAPI 免密登录
+
+使用 FreeIPA 自带的 Kerberos 认证，集群内无需向各节点分发 `~/.ssh/authorized_keys` 即可实现免密单点登录。
+
+### 配置 SSH 支持 GSSAPI
+
+在各节点 `/etc/ssh/sshd_config` 中确认开启：
+
+```shell
+GSSAPIAuthentication yes
+GSSAPICleanupCredentials yes
+```
+
+重启 sshd 服务：
+
+```shell
+systemctl reload sshd
+```
+
+客户端在 `/etc/ssh/ssh_config` 或用户 `~/.ssh/config` 中配置：
+
+```shell
+Host *.grp.hpc
+    GSSAPIAuthentication yes
+    GSSAPIDelegateCredentials yes
+```
+
+用户在登录节点获取一次票据后，即可免密 SSH 登录集群任意受信任主机：
+
+```shell
+kinit <username>
+ssh node01.grp.hpc   # 验证票据后免密登录
+```
+
+### 导出 Keytab 供服务免交互认证
+
+对于后台服务或自动化批处理脚本，可为其导出 keytab 密钥文件，无需交互输入密码：
+
+```shell
+# 在 IPA Server 上为主机或服务账号导出 keytab
+ipa-getkeytab -s ipa.grp.hpc -p <username>@GRP.HPC -k /etc/security/keytabs/<username>.keytab
+
+# 严格限制 keytab 读取权限
+chmod 600 /etc/security/keytabs/<username>.keytab
+
+# 脚本中使用 keytab 免交互获取票据
+kinit -kt /etc/security/keytabs/<username>.keytab <username>@GRP.HPC
+```
+
+
+
 # 管理 FreeIPA
 
 ## Web 管理界面
@@ -586,14 +639,47 @@ systemctl enable --now oddjobd
 
 
 
-## 添加客户端主机
+## 主机组与访问控制（HBAC）
+
+FreeIPA 默认规则 `allow_all` 会放行所有用户登录所有主机。在多节点集群中，建议通过主机组（Hostgroup）与 HBAC（基于主机的访问控制）细化权限。
+
+### 主机与主机组管理
 
 ```shell
-#添加主机
+# 手动添加主机条目
 ipa host-add client1.ipa.grp.hpc
 
-#允许用户登录客户端 realm管理
-realm permit user1@ipa.grp.hpc
+# 查看主机列表
+ipa host-find
+
+# 创建主机组（如区分计算节点与登录节点）
+ipa hostgroup-add compute-nodes --desc="Compute Worker Nodes"
+ipa hostgroup-add login-nodes --desc="Login Nodes"
+
+# 将主机加入主机组
+ipa hostgroup-add-member compute-nodes --hosts=node01.grp.hpc,node02.grp.hpc
+
+# 查看主机组详情
+ipa hostgroup-show compute-nodes
+```
+
+### HBAC 访问规则配置
+
+```shell
+# 查看现有 HBAC 规则
+ipa hbacrule-find
+
+# 建议禁用默认全员全主机放行规则
+ipa hbacrule-disable allow_all
+
+# 创建新规则：仅允许指定用户组通过 SSH 访问指定主机组
+ipa hbacrule-add allow_login_access --desc="Allow users to access login nodes"
+ipa hbacrule-add-user allow_login_access --groups=developers,admins
+ipa hbacrule-add-host allow_login_access --hostgroups=login-nodes
+ipa hbacrule-add-service allow_login_access --hbacsvcs=sshd
+
+# 测试验证用户对某台主机的访问权限
+ipa hbactest --user=user1 --host=client1.ipa.grp.hpc --service=sshd
 ```
 
 
@@ -797,4 +883,32 @@ systemctl restart sssd
 # 4. 再次验证
 id <username>
 ```
+
+
+
+### 证书检查与过期修复
+
+FreeIPA 内部所有组件（LDAP、KDC、HTTP、CA 复制）均强依赖证书，由 `certmonger` 服务自动监控轮换。
+
+- 检查证书状态
+
+  ```shell
+  # 查看由 certmonger 跟踪的所有证书状态与到期时间
+  getcert list
+
+  # 检查证书健康状况
+  ipa-healthcheck --source=ipahealthcheck.ipa.certs
+  ```
+
+- 证书过期无法启动修复 (`ipa-cert-fix`)
+
+  若因节点停机过久或时钟跳变导致证书过期，FreeIPA 服务会拒绝启动（`ipactl start` 报错）。RHEL 8.1+ / Rocky 8+ 提供官方工具一键修复：
+
+  ```shell
+  # 运行修复工具自动重新签发过期证书
+  ipa-cert-fix
+  
+  # 重启 FreeIPA 全部服务
+  ipactl restart
+  ```
 

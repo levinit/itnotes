@@ -82,8 +82,8 @@ authconfig --update <密码策略配置参数>
 
 参看`authconfig --help`：
 
->     --passminlen=<number>         密码最大长度 
->     --passminclass=<number>       密码中最多字符数
+>     --passminlen=<number>         密码最小长度 
+>     --passminclass=<number>       密码中最少字符类别数（大写/小写/数字/特殊字符）
 >     --passmaxrepeat=<number>      密码中同一字符最多连续使用次数
 >     --passmaxclassrepeat=<number> 密码同一类别中最多连续使用同一字符次数
 >     

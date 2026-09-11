@@ -130,7 +130,7 @@ xCAT使用数十种**tables**（表）来存储不同的数据。常用tables（
 - 关闭selinux（或者自行进行相应配置）
 
   1. 编辑`/etc/selinux/config`，设置`SELINUX=disabled` 。（需要重启后生效）
-  2. `setenfore 0`本次临时关闭。
+  2. `setenforce 0`本次临时关闭。
 
 - 关闭iptables/firewalld。（或者自行配置相关规则）
 

@@ -52,7 +52,7 @@ fstrim -v /
 /dev/sda2  /home   ext4   defaults,noatime,discard   0  2
 ```
 
-使用systemd的系统启用`fstrimer.timer`即可开启每周一次的自动trim任务：
+使用systemd的系统启用`fstrim.timer`即可开启每周一次的自动trim任务：
 
 ```shell
 systemctl enable fstrim.timer
@@ -60,7 +60,7 @@ systemctl enable fstrim.timer
 
 # swapiness
 
-将swapiness的值改低（如1到10）会减少内存的交换，从而提升一些系统上的响应度。
+将swappiness的值改低（如1到10）会减少匿名内存交换到磁盘的频率，从而提升系统响应度并减少 SSD 写入磨损。
 
 ```shell
 cat /proc/sys/vm/swappiness    #检查swappiness值
@@ -82,7 +82,7 @@ vm.vfs_cache_pressure=50
 
 使用tmpfs将频繁读取的文件置于内存。
 
-- 内存剩余比例没有少于swappiness规定的百分比时，linux不会去用交换区。
+- 将 swappiness 调低可使内核优先回收文件缓存而非积极换出匿名内存，降低对交换分区的读写压力。
 - `df -h`可查看使用tmpfs的情况。
 
 ### 修改tpmfs分配大小

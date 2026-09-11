@@ -243,7 +243,7 @@ tar添加以下参数指定压缩算法一次性实现归档tar包+压缩/解压
   tar -acvf test.tar.zst test/  #tar检测到.zst后缀，使用zstd压缩
   tar -acvf test.tar.xz  test/  #tar检测到.xz后缀，使用xz压缩
   
-  tar -xvf  tets.tar.xz. #tar自动检测压缩算法并解压
+  tar -xvf test.tar.xz          #tar自动检测压缩算法并解压
   ```
 
   
@@ -278,9 +278,9 @@ tar添加以下参数指定压缩算法一次性实现归档tar包+压缩/解压
   示例：
   
   ```shell
-  tar -xJvf test.tar.xz test        #解压xz后解包tar
-  tar -cJvf tets.tar.xz test        #打包tar后压缩为xz格式
-  tar -cvf --zstd test.tar.zst test #使用zstd
+  tar -xJvf test.tar.xz              #解压xz后解包tar
+  tar -cJvf test.tar.xz test         #打包tar后压缩为xz格式
+  tar --zstd -cvf test.tar.zst test  #使用zstd打包压缩（注意-f后须紧随文件名）
   ```
   
   

@@ -8,7 +8,7 @@ mysql被收购后衍生的分支，由社区维护。
 
    ```shell
    #指定运行用户和数据存放位置
-   mysql_install_db --user=mysql --datadir=/var/lib/mysql  --basedir=/var/lib/mysql --datadir=/var/lib/mysql/data
+   mysql_install_db --user=mysql --basedir=/usr --datadir=/var/lib/mysql
    
    #mariadb
    mariadb-install-db --user=mysql --basedir=/usr --datadir=/var/lib/mysql
@@ -71,8 +71,7 @@ mysql被收购后衍生的分支，由社区维护。
    --:del root remote access
    delete from user where user='root' and host!='localhost';
    --if you want to set a password for root:
-   --SET PASSWORD FOR 'root'@'localhost' = PASSWORD('new_pwd');
-   --SET PASSWORD FOR 'root'@'%' = PASSWORD('new_pwd');
+   --ALTER USER 'root'@'localhost' IDENTIFIED BY 'new_pwd';
    --:del test db
    drop database if exists test;
    --:del anymous users
@@ -155,9 +154,9 @@ pid-file = /var/run/mysqld/mysqld.pid  #进程标识号文件
 
 ##安全
 #skip-networking  #禁止远程访问
-#密码策略
-validate_password_policy = 0
-validate_password_length = 6
+#密码策略（MySQL 8.0使用点分命名格式）
+#validate_password.policy = 0
+#validate_password.length = 6
 
 #auto-rehash  #no-auto-rehash  #自动补全（默认关闭）
 
@@ -207,21 +206,25 @@ mysql [-h <host>] -u <user> -p <password> [-D <database_name>]
 
 ## 增删用户
 
-- 创建用户
+- 创建用户与授权
 
-  创建一个名为'user1'的用户，授予其可以从10.1.1.0/24网段访问，并授予权限：
+  创建一个名为'user1'的用户，允许从10.0.0.0/24网段访问，并授予权限：
 
   ```sql
-  -- password改为实际的密码字符
-  GRANT ALL PRIVILEGES ON db1.* TO 'user1'@'10.0.0.%' IDENTIFIED BY 'user_password';
+  -- 创建用户（password改为实际密码）
+  CREATE USER 'user1'@'10.0.0.%' IDENTIFIED BY 'user_password';
+  -- 授予数据库权限
+  GRANT ALL PRIVILEGES ON db1.* TO 'user1'@'10.0.0.%';
   FLUSH PRIVILEGES;
   
   -- 另一个例子，创建并授予'root'@'127.0.0.1'用户所有数据库权限
   -- WITH GRANT OPTION 表示该用户可以将自己拥有的权限授权给别人
-  GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1' IDENTIFIED BY 'password' WITH GRANT OPTION;
+  CREATE USER 'root'@'127.0.0.1' IDENTIFIED BY 'password';
+  GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1' WITH GRANT OPTION;
+  FLUSH PRIVILEGES;
   ```
 
-  提示：用`%`代之任意地址
+  提示：用`%`代表任意地址
 
   
 
@@ -229,7 +232,7 @@ mysql [-h <host>] -u <user> -p <password> [-D <database_name>]
 
   ```sql
   -- 删除用户 'user1'@'127.0.0.1'
-  drop user 'user1'@'127.0.0.1';
+  DROP USER 'user1'@'127.0.0.1';
   ```
 
 
@@ -237,10 +240,11 @@ mysql [-h <host>] -u <user> -p <password> [-D <database_name>]
 ## 设置密码
 
 ```sql
--- 更改密码 方式1
-UPDATE mysql.user SET authentication_string=PASSWORD('new_password') WHERE User='username';
+-- 更改密码 方式1（推荐标准语法）
+ALTER USER 'username'@'hostname' IDENTIFIED BY 'new_password';
 -- 更改密码 方式2
 SET PASSWORD FOR 'username'@'hostname' = 'new_password';
+FLUSH PRIVILEGES;
 ```
 
 
@@ -267,15 +271,13 @@ SET PASSWORD FOR 'username'@'hostname' = 'new_password';
      mysql  #或为 mysql -u root
      ```
 
-  4. 执行SQL语句修改，这里示例将root密码设置为`root`：
+  4. 执行SQL语句修改，这里示例将root密码设置为`123456`：
 
-     ```mariadb
-     use mysql;
-     FLUSH PRIVILEGES;
-     --set root password 123456
-     SET PASSWORD FOR 'root'@'localhost' = PASSWORD('123456');
-     exit
-     ```
+      ```mariadb
+      FLUSH PRIVILEGES;
+      ALTER USER 'root'@'localhost' IDENTIFIED BY '123456';
+      exit;
+      ```
 
   5. 终止mysqld/mariadb进程，再重启服务。
 
@@ -286,47 +288,45 @@ SET PASSWORD FOR 'username'@'hostname' = 'new_password';
 
 - 方法二
 
-  1. 在`my.cnf`的mysqld下添加`skip-grant-tables`
+   1. 在`my.cnf`的mysqld下添加`skip-grant-tables`
 
-     ```ini
-     [mysqld]
-     skip-grant-tables
-     ```
+      ```ini
+      [mysqld]
+      skip-grant-tables
+      ```
 
-  2. 重启mysql服务
+   2. 重启mysql服务
 
-  3. 使用`mysql -uroot -p`登录mysql命令行
+   3. 使用`mysql -uroot`登录mysql命令行
 
-  4. 执行SQL语句修改密码，这里示例将root密码设置为`root`：
+   4. 执行SQL语句修改密码，这里示例将root密码设置为`root`：
 
-     ```mysql
-     use mysql
-     update mysql.user set authentication_string=password('root') where user='root';
-     flush privileges;  
-     ```
+      ```mysql
+      FLUSH PRIVILEGES;
+      ALTER USER 'root'@'localhost' IDENTIFIED BY 'root';
+      FLUSH PRIVILEGES;
+      ```
 
-     注意：mysql5.6以下版本设置密码使用`update user set password =password('root') where user='root';`。
-
-  5. 去掉`my.cnf`中的`skip-grant-tables`，重启mysql服务，以`mysql -uroot -proot`即可登录mysql。
+   5. 去掉`my.cnf`中的`skip-grant-tables`，重启mysql服务，以`mysql -uroot -proot`即可登录mysql。
 
 
 
 ### 修改密码强度策略
 
-MySQL5.6.6版本之后增加了密码强度验证插件validate_password，默认策略较为严格，要求密码满足三种不同类型的字符（例如数字+字母+符号）。
+MySQL 默认可能启用密码强度验证组件 validate_password，策略较严格时要求密码包含大小写字母、数字及特殊符号且具备最小长度。
 
-通过修改validate_password_policy的值降低密码强度要求，例如修改为最小3个字符的任意字符密码：
+可在运行时修改全局变量降低密码强度要求（MySQL 8.0+ 使用点分命名）：
 
 ```sql
- select @@validate_password_policy;
- set global validate_password_policy=0;
- set global validate_password_mixed_case_count=0;
- set global validate_password_number_count=3;
- set global validate_password_special_char_count=0;
- set global validate_password_length=3;
- SHOW VARIABLES LIKE 'validate_password%';
- flush privileges;
- SET PASSWORD FOR 'root'@'localhost' = PASSWORD('123');
+SHOW VARIABLES LIKE 'validate_password%';
+-- MySQL 8.0+:
+SET GLOBAL validate_password.policy = 0;
+SET GLOBAL validate_password.length = 4;
+-- MySQL 5.7:
+-- SET GLOBAL validate_password_policy = 0;
+-- SET GLOBAL validate_password_length = 4;
+
+ALTER USER 'root'@'localhost' IDENTIFIED BY '123456';
 ```
 
 也可以参看[配置文件](#配置文件)中关于密码强度策略的设置。

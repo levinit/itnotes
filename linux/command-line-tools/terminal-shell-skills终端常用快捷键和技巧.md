@@ -31,18 +31,18 @@ Mac键盘中，将<kbd>Ctrl</kbd>替换成<kbd>control</kbd>，<kbd>Alt</kbd>替
 
 
 
-- <kbd>Ctrl</kbd><kbd>f</kbd>  向前(front)移动一个字符（同左方向键）
-- <kbd>Ctrl</kbd><kbd>b</kbd>  向后(back)移动一个字符（同右方向键）
+- <kbd>Ctrl</kbd><kbd>f</kbd>  向前(forward)移动一个字符（同右方向键）
+- <kbd>Ctrl</kbd><kbd>b</kbd>  向后(backward)移动一个字符（同左方向键）
 
 
 
-- <kbd>Alt</kbd><kbd>f</kbd>  向前移动到下一个单词尾部
-- <kbd>Alt</kbd><kbd>b</kbd>  向后移动到上一个单词头部
+- <kbd>Alt</kbd><kbd>f</kbd>  向前移动到下一个单词
+- <kbd>Alt</kbd><kbd>b</kbd>  向后移动到上一个单词
 
 
 
-- <kbd>Ctrl</kbd><kbd>&leftarrow;</kbd>  移动到当前单词结尾
-- <kbd>Ctrl</kbd><kbd>&rightarrow;</kbd>  移动到当前单词开头
+- <kbd>Ctrl</kbd><kbd>&leftarrow;</kbd>  向左移动一个单词（移动到单词开头）
+- <kbd>Ctrl</kbd><kbd>&rightarrow;</kbd>  向右移动一个单词（移动到单词结尾）
 
 
 

@@ -40,7 +40,7 @@ Polkit 定义了两种不同的内容：
   - auth_self  使用任意本地用户验证
   - auth_admin  需要管理员身份验证
   - auth_self_keep  同auth_self ，在一段时间内（如5分钟）保持验证（例如输入过一次密码，一段时间内无需再次输入密码）
-  - auth_self_admin  同auth_admin ，在一段时间内（如5分钟）保持验证
+  - auth_admin_keep  同auth_admin ，在一段时间内（如5分钟）保持验证
 
   
 

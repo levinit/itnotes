@@ -1,21 +1,19 @@
 
 
-# firewalld和iptables
+# firewalld与底层过滤框架
 
-firewalld服务底层仍然是调用iptables。
+firewalld 是用户态的防火墙管理守护进程，其默认后端为 `nftables`（亦可配置为 `iptables`），规则最终交由 Linux 内核的 netfilter 子系统执行过滤。
 
-> - firewalld可以动态修改单条规则，动态管理规则集，允许更新规则而不破坏现有会话和连接；iptables，在修改了规则后必须得全部刷新才可以生效。
+> - firewalld 支持动态规则管理（D-Bus 接口），允许在不中断现有连接和会话的情况下即时生效规则；传统 iptables 脚本通常需要重载整套规则链。
 >
 >   ```shell
 >   firewall-cmd --reload  #firewalld 重载配置
 >   iptables-save          #保存iptables的配置
 >   ```
 >
-> - firewalld使用区域和服务而不是链式规则。
+> - firewalld 使用区域（Zone）和服务（Service）进行抽象管理，而非直接编辑原始的链式规则。
 >
-> - firewalld默认是拒绝的，需要设置以后才能放行；iptables默认是允许的，需要拒绝的才去限制。
->
-> - firewalld自身并不具备防火墙的功能，而是和iptables一样需要通过内核的netfilter来实现。firewalld和iptables一样，它们的作用都用于维护规则，而真正使用规则干活的是内核的netfilter。只不过firewalld和iptables的结果以及使用方法不一样！
+> - firewalld 默认各区域的入站策略通常为拒绝（只放行显式允许的服务或端口）；iptables 默认规则链策略通常为 ACCEPT。
 
 
 
