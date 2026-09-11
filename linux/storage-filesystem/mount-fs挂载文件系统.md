@@ -113,8 +113,11 @@ mount /dev/sdc /mnt    #不指定文件类型直接挂载（系统可识别时�
 #mount -t <fs-type> <fs-source> <dir>
 mount -t nfs ioserver:/share /share  #使用-t指定类型
 
-#挂载回环文件（如.img镜像文件，iso镜像文件，光盘驱动器）
-mount -o loop /dev/sr0 /mnt    #一般不指定参数直接挂载，系统也能智能识别
+#挂载镜像文件（如.iso，.img等回环文件）
+mount -o loop /path/to/image.iso /mnt
+
+#挂载物理光驱等块设备直接挂载即可
+mount /dev/sr0 /mnt
 
 #使用uuid挂载|可使用lsblk -o name,uuid 查看每个文件系统的uuid值
 mount UUID=<UUID> <dir>

@@ -49,8 +49,9 @@ unix（及其衍生版）和linux的常见shell，粗略分为三类：Bourne Sh
 本文以bash为基础，部分与sh差异将特别说明（标明为bash的特性除外）。查看当前shell
 
 ```shell
-echo $SHELL        #查看当前使用的shell
-echo $shell        #某些shell中可能使用小写的环境变量
+echo $0            #查看当前交互环境中运行的shell
+ps -p $$ -o comm=  #通过当前进程PID查看实际运行的shell
+echo $SHELL        #查看用户的默认登录shell（记录于/etc/passwd）
 cat /etc/shells    #查看当前系统支持的shell
 ```
 
@@ -81,11 +82,11 @@ cat /etc/shells    #查看当前系统支持的shell
   示例：
   
   ```shell
-  alias ll=`ls -al --color=auto`  #执行ll就等于执行ls -al --color=auto
+  alias ll='ls -al --color=auto'  #执行ll就等于执行ls -al --color=auto
   type ll  #查看ll对应的命令内容 ls -al --color=auto
   ```
 
-- 命令优先级顺序：绝对/相对路径执行命令 > 别名 > bash内部命令 > $PATH环境变量定义的目录查找顺序的第一个命令 。
+- 命令执行优先级顺序：绝对/相对路径执行命令 > 别名（alias） > 函数（functions） > bash内建命令（builtins） > $PATH 环境变量定义的外部程序。
 
 
 
@@ -698,16 +699,17 @@ echo ${!arr2[*]}  #one two  数组索引值
   #${变量名:起始位置:长度}   #从字符串起始位置0开始
   #${string:start:length}
   str=hello
-  echo ${str:2:3}  #llo 截取第2个字符后面的3个字符
+  echo ${str:2:3}  #llo 从索引2开始向后截取3个字符（0-indexed）
   ```
 
-`start`为起始字符序号，`length`为自`start`开始所截取的长度。如果**有冒号`:`但省略冒号后面的数字**，则`start`或`length`则默认取值为0。
+`start`为起始字符序号（从0开始算），`length`为自`start`开始向右截取的长度。如果**有冒号`:`但省略冒号后面的数字**，则截取直到字符串末尾。
 
 - 以右侧指定位置开始，向尾部截取指定长度内容
   
-  语法同上，只是起始位置以`0-N`表示，截取方向仍然是向字符串尾部。
+  语法同上，只是起始位置以`0-N`表示（即倒数第N个字符），截取方向仍然是向右/向尾部。
   
   ```shell
+  echo ${str:0-3:3}  #llo 从倒数第3个字符开始向右截取3个字符
   #${变量名:0-起始位置:长度}   #右侧起始位置为1
   #${string:start:length}
   str=hello
@@ -1157,8 +1159,8 @@ shell运算符包括：算数运算符、关系运算符、布尔运算符、字
   
   ```shell
   a=1
-  declare -i c = $a + 1  #声明为整数
-  echo c    #c为2
+  declare -i c=$a+1  #声明为整数并赋值（等号两边不能有空格）
+  echo $c    #输出2
   ```
 
 - `expr`命令（非bash shell内建命令）
@@ -1326,7 +1328,7 @@ test 2 -gt 3 && echo "front is big"
 | 选项 | 说明                                        |
 | :--: | ------------------------------------------- |
 | -nt  | 判断文件修改时间是否更新                    |
-| -ot  | 判断文件修改时间是否更晚                    |
+| -ot  | 判断文件修改时间是否更早（older than）     |
 | -ef  | 判断文件的Inode是否一致（一致则为同一文件） |
 
 ## 重定向符
@@ -1358,10 +1360,10 @@ test 2 -gt 3 && echo "front is big"
 
 - `&`（and）和`>`结合可以合并不同类型的数据流重定向
 
-  - `>&2`或`1>&2`   把标准输出重定向到标准错误
+  - `>&2`或`1>&2`   把标准输出重定向到标准错误（常用于向 stderr 输出错误信息）
 
     ```shell
-    command > log >&2  #>&2要放到后面
+    echo "Error: invalid input" >&2
     ```
 
   - `2>&1`   把标准错误输出重定向到标准输出
@@ -1586,7 +1588,7 @@ for var in value1 value2 value3 #遍历值列表
 for var in ${arr[*]}            #遍历数组
 #for var in $(cat testfile)     #从文件中获取要遍历的值列表
 
-for ((i=1;i<=10;i=i+1)) #注意：shell中不能写i+=1
+for ((i=1;i<=10;i++)) #在 (( )) 中支持 i++、i+=1 或 i=i+1
 do
   echo $i
 done
@@ -1795,20 +1797,22 @@ do
     b)
       echo "val is not necessary for option b" ;;
     c)
-      c=$
-      ;;
+      c=$OPTARG ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2 ;;
   esac
-  shift $((OPTIND -1))  #删除已处理的选项内容
 done
-echo $@  #去除掉解析完成的选项及其值后的剩余参数
-echo $1  #除掉解析完成的选项及其值后的剩余内容的第1个参数
-echo $#  #去除掉解析完成的选项及其值后的剩余的参数
+shift $((OPTIND - 1))  #在选项处理循环结束后，统一移除已解析的选项参数
+
+echo "$@"  #去除掉解析完成的选项及其值后的剩余参数
+echo "$1"  #剩余位置参数中的第1个参数
+echo "$#"  #剩余位置参数的个数
 ```
 
 使用示例：
 
 ```shell
-bash test.sh -a 111 -b -c 222
+bash test.sh -a 111 -b -c 222 other_arg1 other_arg2
 ```
 
 
@@ -1817,9 +1821,11 @@ bash test.sh -a 111 -b -c 222
 
 ```shell
 function get_args(){
-  while while getopts ':a:bc:' opt; do 
+  local OPTIND opt
+  while getopts ':a:bc:' opt; do 
       #...
   done
+  shift $((OPTIND - 1))
 }
 get_args "$@"    #传入
 ```
@@ -2001,10 +2007,10 @@ whoami
 #1. 捕捉到信号时执行特定指令
 trap <do_something> <signal_1> [signal_2, ...]
 
-#2. 捕捉到信号时什么也不做，需要使用空字符串占位
-trap '' KILL
+#2. 捕捉到信号时忽略该信号（注意：SIGKILL 和 SIGSTOP 无法被捕获或忽略）
+trap '' HUP
 
-#3. 捕捉到信号时接受信号的默认操作
+#3. 捕捉到信号时恢复信号的默认操作
 trap <signal_1> [signal_2, ...]
 ```
 
@@ -2034,7 +2040,7 @@ trap命令中捕捉到信号可使用代号或名字，但是使用信号名字�
 
 ```shell
 #在sleep期间中断执行（如按下Ctrl+C）会打印Exit now!
-trap "echo exit now!" INT QUIT KILL TERM
+trap "echo exit now!" INT QUIT TERM
 sleep 233
 ```
 

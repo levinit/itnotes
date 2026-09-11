@@ -83,13 +83,11 @@ Distributed data store，DDS
 
   AHCI协议，SATA总线
 
-- SATAe    AHCI协议，SATA总线，两个SATA接口和一个辅助接口组合而成（提升速度），目前多被M.2接口取代
+- SATAe    SATA Express，由两个 SATA 接口和一个辅助接口组合而成，直接引出 PCIe 总线通道（PCIe x2），支持 AHCI 或 NVMe 协议，现已被 M.2 接口广泛取代
 
-- SCSI
+- SCSI    Small Computer System Interface，小型计算机系统接口，传统并行总线
 
-- SAS
-
-  AHCI协议，SATA总线
+- SAS     Serial Attached SCSI，串行连接 SCSI，采用串行通信技术并向下兼容 SATA 磁盘，走 SCSI 协议与 SAS 总线
 
 - mSATA  (mini-SATA)
 
@@ -133,7 +131,7 @@ Distributed data store，DDS
 
 ## 传输协议
 
-- ACHI
+- AHCI
 - iSCSI
 - NVMe
 

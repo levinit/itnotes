@@ -1,147 +1,113 @@
-# Go 项目结构与构建指南
+[TOC]
 
----
-[toc]
+# Go 工程构建与交付核心心智模型
 
-## 环境变量与工具链
+## 模块与多模块工作区 (Go Modules & Workspace)
 
-### 核心环境变量
+### 1. 核心环境变量
+- **`GOPROXY`**: 依赖下载镜像代理（国内主流：`https://goproxy.cn,direct`）。
+- **`GOPRIVATE`**: 私有代码仓库路径前缀（如 `git.corp.internal/*`），阻止私有代码路径和包元数据泄露到公共代理或校验服务器（自动忽略 `GOPROXY` 与 `GOSUMDB`）。
 
-```shell
-go env        # 查看所有 Go 环境变量
-go env GOPATH # 查看 GOPATH 路径
-```
-
-- **`GOROOT`**: Go 语言安装根目录。
-- **`GOPATH`**: 存放第三方依赖包和编译生成的二进制文件。在 Module 模式下，主要作为本地缓存路径（`$GOPATH/pkg/mod`）。
-- **`GOBIN`**: 存放 `go install` 生成的可执行文件。
-- **`GOOS` / `GOARCH`**: 目标编译平台（如 `linux`, `windows`, `darwin`）与架构（如 `amd64`, `arm64`）。
-- **`GO111MODULE`**: 
-  - `on`: 强制使用 Go Modules。
-  - `off`: 传统 GOPATH 模式。
-  - `auto`: 根据目录下是否有 `go.mod` 自动切换。
-
-### CLI 常用操作
+### 2. 多模块工作区 (Go Workspace)
+适用于同时开发多个存在相互依赖关系的本地模块（如基础库 `pkg/core` 与服务 `services/api`），替代传统的在 `go.mod` 中临时写 `replace` 的污染方案：
 
 ```shell
-go build -o app .  # 编译当前目录，输出为 app
-go install        # 编译并安装二进制到 $GOPATH/bin 或 $GOBIN
-go run .          # 编译并直接运行（临时目录执行）
-go clean -cache   # 清理构建缓存
+# 在项目根目录初始化工作区
+go work init ./core ./api
+
+# 添加新的本地开发模块
+go work use ./common
+
+# 统一同步工作区依赖
+go work sync
 ```
+
+> **生产规范**：`go.work` 与 `go.work.sum` 属于本地开发辅助文件，通常加入 `.gitignore`，避免影响 CI/CD 纯净构建环境。
 
 ---
 
-## 模块管理 (Go Modules)
+# 纯静态编译与跨平台交叉构建
 
-Go Module 是现代 Go 项目依赖管理的标准。
+Go 标准库默认在需要 DNS 解析或特定系统调用时可能隐式调用 C 库（CGO）。生产部署（尤其是构建轻量级 Docker `scratch` / `alpine` 容器镜像）时，必须关闭 CGO 生成**纯静态二进制文件**，彻底避免动态链接库（glibc / musl）缺失事故。
 
-### 基础实战
-- **初始化**: `go mod init <module_name>`（生成 `go.mod`）。
-- **整理依赖**: `go mod tidy`（增加缺失的、删除多余的依赖）。
-- **本地缓存**: `go mod download`。
-- **离线依赖**: `go mod vendor`（将依赖复制到项目根目录下的 `vendor` 文件夹）。
+## 1. 跨平台静态构建矩阵
 
-### 多模块工作区 (Go Workspace)
-适用于同时开发多个相互依赖的本地模块。
 ```shell
-go work init ./module_a ./module_b
-go work use ./module_c  # 添加模块到工作区
-go work sync            # 同步工作区依赖配置
+# Linux amd64 纯静态构建（容器镜像首选）
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o app_linux_amd64 .
+
+# Linux arm64 纯静态构建（适配国产服务器/苹果芯片容器）
+CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o app_linux_arm64 .
+
+# Windows 64位构建（可附加 -H windowsgui 隐藏控制台黑框）
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-H windowsgui" -o app.exe .
+
+# macOS 平台
+CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o app_darwin_arm64 .
 ```
 
 ---
 
-## 工程结构与生命周期
+# 二进制瘦身与元数据注入
 
-### 源码分类
-- **命令源码 (Command)**: `package main` 且包含 `main()` 函数，编译生成可执行文件。
-- **库源码 (Library)**: 供其他包 `import`，不包含 `main()`。
-- **测试源码**: 以 `_test.go` 结尾，由 `go test` 调用。
+## 1. 去除调试符号瘦身
+默认构建的可执行文件内嵌 DWARF 调试信息与符号表。通过 `-ldflags="-s -w"` 可将二进制体积大幅缩减 30%~50%（不影响 runtime panic 堆栈跟踪行号）：
+- `-s`：禁用符号表（Symbol table）。
+- `-w`：禁用 DWARF 调试信息。
 
-### 分包逻辑与可见性
-- **目录即包**: 同一目录下所有文件必须同属一个 `package`。
-- **导出规则**: **首字母大写** 的函数、变量、结构体和字段可被包外访问；**首字母小写** 仅限包内。
-- **内嵌 (Embedding)**: 通过在一个结构体中只写另一个结构体的类型名，实现类似继承的字段与方法复用。
+## 2. 编译期元数据动态注入 (`-X`)
+在构建期动态注入 Git Commit、构建时间、语义版本号，避免在代码中硬编码：
 
-### 初始化顺序 (`init` 函数)
-1. **全局变量/常量** 初始化。
-2. 执行 **`init()`** 函数。
-3. `init` 无需参数和返回值，不能被手动调用。
-4. **导入顺序**: 如果 A 导入 B，则先递归初始化 B 及其所有依赖，最后初始化 A。
+```go
+package main
 
----
+import "fmt"
 
-## 编译与构建进阶
+// 由链接器在编译期赋值
+var (
+	Version   = "dev"
+	GitCommit = "none"
+	BuildTime = "unknown"
+)
 
-### 跨平台编译
-```shell
-# 编译为 Windows 64位执行文件
-env GOOS=windows GOARCH=amd64 go build -o app.exe main.go
-
-# 隐藏 Windows 终端窗口 (GUI 程序)
-go build -ldflags="-H windowsgui" main.go
-
-# 列出支持的所有平台
-go tool dist list
+func PrintVersion() {
+	fmt.Printf("Version: %s\nCommit: %s\nBuilt: %s\n", Version, GitCommit, BuildTime)
+}
 ```
 
-### 约束构建 (Build Tags)
-用于在同一代码库中实现平台特定的逻辑。
-- **文件名方式**: `file_linux.go`, `file_windows_amd64.go`。
-- **注释方式**: 在文件最开头（`package` 声明前）加入：
-  ```go
-  //go:build linux && !amd64
-  ```
-
-### 编译模式 (`-buildmode`)
-- `default`: 生成静态可执行文件。
-- `c-shared` / `c-archive`: 编译为供 C 语言调用的动态库 (`.so`/`.dll`) 或静态库 (`.a`)。需要使用 `//export` 注释导出函数。
-- `plugin`: 编译为能在运行时动态加载的 Go 插件（仅支持特定系统）。
-
-### 二进制瘦身与链接参数
-- **去除调试信息**: `go build -ldflags="-s -w"`（减小体积）。
-- **注入编译信息**: 可以通过链接参数在编译时向变量注入数据（如版本号）：
-  ```shell
-  go build -ldflags="-X 'main.version=1.1'" main.go
-  ```
-
----
-
-## 工程化核心概念
-
-### 逃逸分析 (Escape Analysis)
-决定变量分配在 **栈 (Stack)** 还是 **堆 (Heap)**。
-- 栈：快速分配，随函数退出自动清理。
-- 堆：较大开销，需 GC (垃圾回收) 处理。
-- **分析命令**: `go build -gcflags="-m -l" main.go`。
-- **原则**: 尽量减少逃逸以降低 GC 压力（避免在循环中创建大量短寿对象，返回局部变量指针会触发逃逸）。
-
-### 系统交互
-- **`os/exec`**: 稳健地调用 shell 命令。
-  ```go
-  cmd := exec.Command("sh", "-c", "ps -ef | grep go")
-  out, _ := cmd.CombinedOutput()
-  ```
-- **`flag`**: 标准库提供的 CLI 参数解析。
-  ```go
-  flag.StringVar(&cfg, "c", "default.yaml", "config path")
-  flag.Parse()
-  ```
-
----
-
-## 自动化测试与质量
-
-### 测试规范
-- 文件名: `xxx_test.go`。
-- **单元测试**: `func TestXxx(t *testing.T)`。
-- **基准测试 (Benchmark)**: `func BenchmarkXxx(b *testing.B)`，用于分析性能瓶颈。
-- **示例测试**: `func ExampleXxx()`。
-
-### 执行测试
 ```shell
-go test .          # 运行当前目录测试
-go test -v ./...   # 递归运行所有包测试并打印日志
-go test -bench=.   # 运行基准测试
+# 编译命令注入变量
+VERSION="v1.2.0"
+COMMIT=$(git rev-parse --short HEAD)
+BUILD_TIME=$(date "+%Y-%m-%d_%H:%M:%S")
+
+go build -ldflags="-s -w \
+  -X 'main.Version=${VERSION}' \
+  -X 'main.GitCommit=${COMMIT}' \
+  -X 'main.BuildTime=${BUILD_TIME}'" \
+  -o app .
 ```
+
+---
+
+# 条件构建与平台分发 (Build Tags)
+
+## 1. 现代 `//go:build` 语法
+在文件第一行（`package` 声明前，空一行分隔）声明构建约束：
+
+```go
+//go:build linux && !arm
+// +build linux,!arm
+
+package platform
+```
+
+- 逻辑与：`&&`
+- 逻辑或：`||`
+- 逻辑非：`!`
+
+## 2. 文件名后缀自动识别
+无需编写构建标签，Go 工具链自动根据文件命名后缀识别目标系统与架构：
+- `xxx_linux.go`：仅在 Linux 平台参与编译。
+- `xxx_windows_amd64.go`：仅在 Windows 64 位平台参与编译。
+- `xxx_test.go`：仅在执行 `go test` 时参与编译。

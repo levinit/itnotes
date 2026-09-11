@@ -10,7 +10,7 @@
    postgresql-setup initdb
    ```
 
-   如果没有上面的命令，可使用安装目录的bin下的`init`或`pg_ctl init`工具：
+   如果没有上面的命令，可使用安装目录 bin 下的 `initdb` 或 `pg_ctl initdb` 工具：
 
    ```shell
    lang=en_US.UTF-8
@@ -73,7 +73,7 @@
 
 ## 更改默认数据库目录   
 
-Linix中安装postgres后，其数据存储的目录一般是`/var/lib/pgsql/data`（或`/var/lib/postgres/data`），可根据需求修改位置。
+Linux 中安装 postgres 后，其数据存储的目录一般是`/var/lib/pgsql/data`（或`/var/lib/postgres/data`），可根据需求修改位置。
 
    示例迁移默认的`/var/lib/postgres/data`到`/home/pg/data`：
 

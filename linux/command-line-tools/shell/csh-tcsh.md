@@ -150,7 +150,8 @@ echo ${arr[1]}   #也可以同bash的用法一样使用${}
 ```shell
 #如果在周1到周5，直接goto到最后输出echo内容
 #如果在周0或周6，额外多输出一行echo
-if ( 0 < `date +%w` < 6 ) then
+set w = `date +%w`
+if ( $w > 0 && $w < 6 ) then
   goto do_some_thing
 endif
 

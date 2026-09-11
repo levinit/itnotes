@@ -24,9 +24,9 @@
 
 ```shell
 openssl_install_dir=/opt/openssl
-./config --prefix=$openssl_install_dir --shared  #如果不填加shared 在编译openssh中如果指定--with-ssl-dir会报错
+./config --prefix=$openssl_install_dir --shared  #如果不添加shared 在编译openssh中如果指定--with-ssl-dir会报错
 make -j 4
-make install  #将安装到/usr/local/bin
+make install  #将安装到指定的 $openssl_install_dir 目录
 
 #需要将其写ld环境变量 以供后面编译openssh使用
 echo "$openssl_install_dir/lib" > /etc/ld.so.conf.d/openssl.conf
@@ -46,7 +46,7 @@ prefix="--prefix=$openssh_install_dir"
 ./configure $prefix --sysconfdir=/etc/ssh   --with-ssl-dir=$openssl_install_dir --with-md5-passwords --with-pam
 chmod 600 /etc/ssh/ssh_host*  #确保文件权限正确以保证后续make install
 make -j 4
-make install   #将安装到/usr/local/bin
+make install   #将安装到指定的 $openssh_install_dir 目录
 ssh -V  #查看版本。
 ```
 
@@ -56,7 +56,7 @@ ssh -V  #查看版本。
 
 # sshd服务的启动
 
-编译安装完毕后，使用systemctl无法启动sshd服务（`/var/lib/systemd/system/sshd.service`)，可使用以下方法解决：
+编译安装完毕后，使用systemctl无法启动sshd服务（`/usr/lib/systemd/system/sshd.service`），可使用以下方法解决：
 
 - 更改`sshd.service`的type为forking（原为`notify`），修改部分如下：
 

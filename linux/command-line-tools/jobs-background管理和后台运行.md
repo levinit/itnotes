@@ -303,7 +303,7 @@ do
 read -u$fdnum
 {
   sleep 1  #换成要执行的代码，这里模拟假设普通顺序执行时 每一条代码执行要花费1s
-  echo "$j...pid is $$"
+  echo "$j...pid is $BASHPID"  #子进程真实 PID 需用 $BASHPID，$$ 会显示父进程 PID
   echo >&$fdnum  #当任务执行完后，会释放管道占位，所以补充一个占位
 }& #将进程放入后台
 done

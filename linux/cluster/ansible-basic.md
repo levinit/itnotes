@@ -71,13 +71,11 @@ inventory      = ~/.ansible/hosts         ;库存文件 该文件配置被管理
 #local_tmp      = ~/.ansible/tmp
 log_path=/var/log/ansible.log  ;默认不记录
 #---
-#ansible在被管理节点使用的ssh相关配置项，这些值也可在inventory文件中设置
+#ansible在被管理节点使用的ssh相关配置项，这些值也可在inventory文件中设置（如 ansible_ssh_private_key_file）
 host_key_checking = False
 #ansible_ssh_user=root
-#an
 #ansible_ssh_port=22
 #ansible_ssh_pass=pwd@root
-#ansible_ssh_key=/root/.ssh/id_rsa
 #private_key_file = ~/.ssh/id_rsa
 #---
 forks = 16        ;并发连接数，默认为5
@@ -161,15 +159,13 @@ ansible <host-pattern> [options]
 
 
 ```shell
-ansible all --list-host  #查看所有主机
+ansible all --list-hosts  #查看所有主机
 
 #简单的测试，-m指定使用ping模块，检查所有主机连通性
 ansible all -m ping
 
 #对于没有进行ssh密钥认证的主机，也可以调用authorized_key模块完成公钥上传
 ansible all -m authorized_key -a "user=root key='{{ lookup('file', '/root/.ssh/id_rsa.pub') }}' path=/root/.ssh/authorized_keys manage_dir=yes" --ask-pass
-
-#再不指定module的情况
 ```
 
 ansible 返回的类型是一个键值对的 json 格式的数据，`ping`返回内容示例：

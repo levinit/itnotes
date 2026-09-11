@@ -74,7 +74,8 @@ lvcreate -n swap -L 8G linux
 lvcreate -n home -l 100%FREE linux
 
 #4. 使用逻辑卷 在逻辑卷建立文件系统
-mkfs.ext4 /dev/linux/root /dev/linux/home
+mkfs.ext4 /dev/linux/root
+mkfs.ext4 /dev/linux/home
 mkswap /dev/mapper/linux-swap
 ```
 
@@ -154,24 +155,29 @@ vgremove <vg-name> #删除卷组
   lvcreate -l 50%VG <vg-name> [-n <lv-name>]
   ```
 
-  lvm**快照**（snapshot）：创建快照即创建一个逻辑卷，在创建快照时使用`-s`或`--snapshot`参数即可。lvm快照
+  lvm**快照**（snapshot）：创建快照即创建一个写时复制逻辑卷，在创建快照时使用`-s`或`--snapshot`参数。
 
-  > 使用了写入时复制(copy-on-write) 策略相比传统的备份更有效率。初始的快照只有关联到实际数据的inode的实体链接(hark-link)而已。只要实际的数据没有改变，快照就只会包含指向数据的inode的指针，而非数据本身。
+  > LVM 快照处于底层块设备层，基于**数据块级别（block-level）的写时复制（Copy-On-Write, COW）**机制运作。创建快照时仅记录原始卷的块元数据；当源逻辑卷上的数据块被首次修改覆写前，LVM 会先将原始数据块复制保存到快照卷中。
 
-  快照大小的设置主要根据日常和使用情况估量：
+  快照大小的设置主要根据快照存活期间源卷的数据变更量来估算：
 
   - 块的改变量
-  - 数据更新频率
+  - 数据写入频率
 
-  一旦快照可用空间使用完毕，该快照将被立刻被释放。因此在使用快照维护时，要保证在快照的一次生命周期里完成。
+  一旦快照预留空间被写满（100% full），该快照将会失效（dropped）。因此快照通常用于一致性备份或短期维护。
 
   示例：
 
   ```shell
-  #创建带有5g快照空间的卷
-  lvcreate -s 5G +100%FREE -n home linux
-  #####恢复快照
-  dd i=/dev/linux/home of=/path/to/
+  # 为卷组 linux 中的 home 逻辑卷创建 5G 大小的快照卷 home_snap
+  lvcreate -s -L 5G -n home_snap /dev/linux/home
+
+  # 挂载只读快照进行数据备份
+  mount -o ro /dev/linux/home_snap /mnt/snapshot
+
+  # 恢复/合并快照（源卷需卸载，合并且自动删除快照）
+  umount /mnt/snapshot /home
+  lvconvert --merge /dev/linux/home_snap
   ```
 
 - 修改
@@ -185,8 +191,8 @@ vgremove <vg-name> #删除卷组
   #lvresize变更容量 -r(--resizefs）
   lvresize -r -L +2G <vg-name>/<lv-name> #增加2G
   lvresize -r -L -2G <vg-name>/<lv-name> #减少2G
-  lvresize -r -L 10G <vg-naem>/<lv-name> #新大小为10G
-  lvresize -r -l +100%FREE <vg-naem>/<lv-name>  #增加所有剩余空间 (+加号可省略）
+  lvresize -r -L 10G <vg-name>/<lv-name> #新大小为10G
+  lvresize -r -l +100%FREE <vg-name>/<lv-name>  #增加所有剩余空间 (+加号可省略）
   ```
   
 
@@ -195,11 +201,11 @@ vgremove <vg-name> #删除卷组
 > 如果在执行`lv{resize,extend,reduce}`时没有使用`-r, --resizefs`选项， 或文件系统不支持`fsadm(8)`（如[Btrfs](https://wiki.archlinux.org/index.php/Btrfs), [ZFS](https://wiki.archlinux.org/index.php/ZFS)等），则需要在缩小逻辑卷之前或扩增逻辑卷后手动调整文件系统大小。
 
 ```shell
-  resize2fs <vg-naem>/<lv-name>
+  resize2fs <vg-name>/<lv-name>
 ```
 
 警告：xfs分区不能缩小只能扩大，可以使用xfsdump备份数据，然后进行分区缩小操作，最后使用xfsrestore还原备份的数据。
 
 - 物理区域pe
 
-  在使用`pvcreate`和`vgcreate`时使用`-s`参数指定pe大小。
+  在创建卷组 `vgcreate` 时可以使用 `-s`（或 `--physicalextentsize`）参数指定 PE 大小（默认为 4MB）。已创建的卷组也可使用 `vgchange -s` 修改。

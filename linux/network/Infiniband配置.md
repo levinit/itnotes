@@ -43,7 +43,7 @@ ibstat
 
 ## 交换机中启用子网管理器
 
-登录带有管理功能的交换机交换机，执行`config`进入配置模式：
+登录带有管理功能的交换机，执行`config`进入配置模式：
 
 ```shell
 ib sm      #启动
@@ -53,7 +53,7 @@ show ib sm #查看
 
 
 
-## 主机上启用启动子网管理器
+## 主机上启动子网管理器
 
 启用opensmd：
 
@@ -65,11 +65,11 @@ opensm -B
 systemctl enable --now opensmd
 ```
 
-一般建议在多个主机中启用opensm服务，多个oepnsm服务的主机中将至少一个生效，以保证整个子网ib网络的高可用。
+一般建议在多个主机中启用opensm服务，多个opensm服务的主机中将至少一个生效，以保证整个子网ib网络的高可用。
 
 可为不同的opensm服务主机使用`-p`参数设置不同的权重`PRIORITY`（取值0-15），权重大的主机总是优先作为SM：
 
-``` 
+```shell
 opensm -B -p 15 [-g guid]
 ```
 
@@ -85,11 +85,11 @@ PRIORITY=15
 GUIDS="0xb8599f030012a480 0xb8599f030012a364"  #ibstat -p
 ```
 
-或者编辑`/etc/opensm/opensm.conf`，示例：
+或者编辑`/etc/opensm/opensm.conf`，指定监听的端口 GUID，示例：
 
 ```shell
-#sm使用多个port时，每个port之间使用空格分隔
-guid 0xb8599f030012a480,guid 0xb8599f030012a481
+#指定特定的端口GUID（可通过 ibstat -p 获取）
+guid 0xb8599f030012a480
 ```
 
 如果没有这个文件，可以使用`opensm -c /etc/opensm/opensm.conf`生成。
@@ -100,20 +100,20 @@ guid 0xb8599f030012a480,guid 0xb8599f030012a481
 
 多个主机 之间使用多个独立的子网时，需要为不同的子网启动各自的opensm服务。
 
-在一个子网中为保证高可用，一般会有多个启动opensm服务的主机，因此也可以在多个主机上为不同子网启动一个opensm。例如需要启动两个子网，可以在一些主机上为一个子网启动opensm，在另一些主机上为另一个字网启动opensm，启动opensm时需要指定guid。
+在一个子网中为保证高可用，一般会有多个启动opensm服务的主机，因此也可以在多个主机上为不同子网启动一个opensm。例如需要启动两个子网，可以在一些主机上为一个子网启动opensm，在另一些主机上为另一个子网启动opensm，启动opensm时需要指定guid。
 
 或者在每个需要启动子网服务的主机上启动多个opensm。
 
 
 
-注意：如果使用systemctl或chkconfig管理oepnsmd服务，默认的opensmd服务启用一个字网服务（具体可检查测试相关启动脚本）。
+注意：如果使用systemctl或chkconfig管理opensmd服务，默认的opensmd服务启用一个子网服务（具体可检查测试相关启动脚本）。
 
 ```shell
 ibstat -p  #列出所有port的guid
 ibstat -l  #列出所有IB设备
 ```
 
-为每个guid启动一个oepnsm进程：
+为每个guid启动一个opensm进程：
 
 ```shell
 #!/bin/bash
@@ -139,7 +139,7 @@ echo "$devices" | while read device; do
 done
 
 # ib_guids=$(ibstat -p)
-#--deamon or -B
+# --daemon or -B
 # --guid or -g                     #specify device via guid
 # --priority or -p                 #0-15
 # --log_limit or -L
@@ -183,14 +183,14 @@ infiniband提供了IPoIB（Internet Protocol over InfiniBand）功能，利用�
   #先查看处于active状态的ib卡的Base lid值 ,例如值为16
   ibstat
   #启动ibping server
-  ibing -s
+  ibping -s
   ```
 
   在另一个节点测试ping
 
   ```shell
   #ibping [-c N] -L <lid>
-  ibping -c 100 -L 16  #例如server的lid时16, ibping 100次
+  ibping -c 100 -L 16  #例如server的lid是16, ibping 100次
   ```
 
   
@@ -312,7 +312,7 @@ flint -d <device> -i <firmware file> burn #烧录新的固件，根据提示确�
 查看当前模式：
 
 ```shell
-ibv_devinfo | grep transport
+ibv_devinfo | grep link_layer
 ```
 
 link_layer行显示当前模式，`Infiniband`或`Ethernet`
@@ -530,7 +530,7 @@ opensm服务运行节点需要在/etc/opensm/opensm.conf文件中添加`virt_ena
 
    
 
-4. 在宿主机上将虚拟出来的IB设备以直通方式到加入到虚拟机中
+4. 在宿主机上将虚拟出来的IB设备以直通方式加入到虚拟机中
 
    virt-manager图形前端中可以方便地选择虚拟出来的PCI设备添加到虚拟机中。
 
@@ -579,6 +579,6 @@ opensm服务运行节点需要在/etc/opensm/opensm.conf文件中添加`virt_ena
    virsh start $vm &>> $log
    ```
 
-   可以用crontab的`@reboot`任务或`/etc/rc.local`或stemd unit方式实现自启动。
+   可以用crontab的`@reboot`任务或`/etc/rc.local`或systemd unit方式实现自启动。
 
    如果要自启动虚拟机系统，确保虚拟机在以上命令执行后再启动。

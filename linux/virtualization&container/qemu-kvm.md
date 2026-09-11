@@ -106,8 +106,8 @@ interface=enp59s0f3
 
 #创建网桥
 ip link add name $bridge_name type bridge
-#启动王巧
-ip ip link set dev $bridge_name up
+#启动网桥
+ip link set dev $bridge_name up
 
 #添加一个网络端口（比如 eth0）到网桥中，要求先将该端口设置为混杂模式并启动该端口：
 ip link set dev $interface promisc on
@@ -161,7 +161,7 @@ bridge link show #brctl show
   
 - aarch64虚拟机
 
-  安装某些系统需要一个额外的uefi固件（AVMF, aarch vitual machine fireware) QEMU_EFI.fd用以引导。
+  安装某些系统需要一个额外的uefi固件（AAVMF, AArch64 Virtual Machine Firmware) QEMU_EFI.fd用以引导。
 
   QEMU_EFI.fd文件下载：
 
@@ -176,10 +176,10 @@ bridge link show #brctl show
   qemu-img create vm-aarch-cent 8g
   
   #创建一个虚拟机 内存2g cpu 4个 挂载一个iso文件和一个虚拟盘
-   qemu-system-aarch -m 2g -cpu cortex-a57 -M virt -bios QEMU_EFI.fd -nograhic vm-aarch-cent -cdrom centos.iso
+  qemu-system-aarch64 -m 2g -cpu cortex-a57 -M virt -bios QEMU_EFI.fd -nographic vm-aarch-cent -cdrom centos.iso
    
   #启动系统（可从任意安装系统的虚拟盘文件中进行引导，内存和cpu数量可根据使用需求情况定义）
-  qemu-system-aarch -m 2g -cpu cortex-a57 -M virt -bios QEMU_EFI.fd -nograhic vm-aarch-cent
+  qemu-system-aarch64 -m 2g -cpu cortex-a57 -M virt -bios QEMU_EFI.fd -nographic vm-aarch-cent
   ```
   
   aarch64虚拟机启动必须指定这些选项：

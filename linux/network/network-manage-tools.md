@@ -70,8 +70,8 @@ iproute（或iproute2）的相关命令替代net-tools的`ifconfig`、`arp`和`r
   #为网卡添加描述信息
   #ip link set dev ${interface name} alias "${description}"
   
-  #网卡重命名
-  #ip link set dev ${interface name} alias "${description}"
+  #网卡重命名（需先 down 网卡）
+  #ip link set dev ${interface name} down && ip link set dev ${interface name} name ${new_name} && ip link set dev ${new_name} up
   
   #修改MAC地址
   ip link set dev ${interface name} address ${address}
@@ -172,16 +172,16 @@ iproute（或iproute2）的相关命令替代net-tools的`ifconfig`、`arp`和`r
   
   #通过网关添加路由  dev关键字变成via
   #ip route add ${address}/${mask} via ${next hop}
-  ip route add 10.1.1.111/24 via 10.1.1.1
+  ip route add 10.1.1.0/24 via 192.168.1.1
   ip route add 2001:db8:1::/48 via 2001:db8:1::1
   
   #添加默认路由  在add后面使用 default 关键字即可
-  #ip route add default via ${address}/${mask}
+  #ip route add default via ${gateway_ip}
   #ip route add default dev ${interface name}
   
   #添加黑洞路由
   #ip route add blackhole ${address}/${mask}
-  µip route add blackhole 192.0.2.1/32.
+  ip route add blackhole 192.0.2.1/32
   
   #---修改 与添加路由方法类似，只是使用change/replace替换add
   ip route change 192.168.2.0/24 via 10.0.0.1
@@ -201,7 +201,7 @@ iproute（或iproute2）的相关命令替代net-tools的`ifconfig`、`arp`和`r
 
 - 桌面中可使用GUI前端
 - 终端中可使用TUI的nmtui
-- `nmcli con edit`可使用交换式编辑
+- `nmcli con edit`可使用交互式编辑
 
 ### nmcli
 
@@ -227,7 +227,7 @@ nmcli connection add type ethernet  #nmcli c a type ethernet
 nmcli con add type ethernet con-name <name> ifname <interface-name>
 
 #修改链接（如果不存在将创建）
-nmcli con mod <con-name> ipv.method manual ipv4.address <ip-addr> ipv4.getway <gateway-addr> ipv4.dns <dns-addr>
+nmcli con mod <con-name> ipv4.method manual ipv4.addresses <ip-addr>/<prefix> ipv4.gateway <gateway-addr> ipv4.dns <dns-addr>
 
 #wifi连接
 SSID=xxx

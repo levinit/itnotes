@@ -50,8 +50,8 @@ fio -bs=4k
   - trim、randtrim、trimwrite  块设备（仅Linux）
 
 - `rwmixwrite`  值为数字，指混合读写模式下写占的比例（百分比）
-- `direct`    值为1时使用非缓冲（non-bufferd）I/O（通常是O_DIRECT），默认0
-- `bufferd`   值为1时使用缓冲（bufferd）I/O，默认为1。该选项值始终与`direct`的取值相反。
+- `direct`    值为1时使用非缓冲（non-buffered）I/O（通常是O_DIRECT），默认0
+- `buffered`   值为1时使用缓冲（buffered）I/O，默认为1。该选项值始终与`direct`的取值相反。
 
 
 
@@ -119,7 +119,7 @@ I/O分发的数据块大小，一个固定的值或取值区间，参数：
 
 - `max_latency`   最大延迟，当延迟超过该值，fio会自动退出，整数，单位微秒
 - `latency_target`    目标延迟，最大可接受的延迟，整数，单位微秒
-- `latency_window`    延迟窗口，工作在不同队列深度下测试性能的窗口，整数，单位微妙
+- `latency_window`    延迟窗口，工作在不同队列深度下测试性能的窗口，整数，单位微秒
 - `latency_percentile`     延迟时间百分比，浮点数，默认为100.0，意味着所有IO延迟必须等于或低于目标设置的值。
 - `minimum`
 
@@ -276,7 +276,7 @@ fio还有一组保留关键字，内部将用适当的值替换。这些关键�
 
 - `$pagesize`    当前系统的页文件大小
 - `$mb_memory`    当前系统内存大小（单位mb）
-- `ncpus`    当前系统可用cpu数量
+- `$ncpus`    当前系统可用cpu数量
 
 
 

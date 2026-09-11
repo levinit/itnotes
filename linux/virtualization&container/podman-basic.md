@@ -87,7 +87,7 @@ location = "ghcr.io"
 
   
 
-在运行容器的命令中使用`--users=keep-id`可以保持容器中UID/GID与外部的一致性，也可以使用`--uidmap`和`--gidmap`选项手动映射容器中的用户或组到主机上的用户或组。
+在运行容器的命令中使用`--userns=keep-id`可以保持容器中运行用户的 UID/GID 与外部当前用户一致，也可以使用`--uidmap`和`--gidmap`选项手动映射容器中的用户或组到主机上的用户或组。
 
 
 
@@ -95,7 +95,7 @@ location = "ghcr.io"
 
 参考docker的build。
 
-注意：Podman 默认使用 `crun` 作为其 OCI 运行时，Docker file中如果使用`RUN`指令则需要 `runc`。可以通过编辑 `/etc/containers/containers.conf` 文件来更改运行时。
+Podman 默认使用轻量高效的 `crun`（C 语言编写）作为其 OCI 运行时，同时也全面兼容 `runc`（Go 语言编写）。可以通过编辑 `/etc/containers/containers.conf` 文件中的 `runtime = "crun"` 来配置或切换运行时。
 
 
 

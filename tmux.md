@@ -34,7 +34,7 @@ tmux 是一款终端复用命令行工具，一般用于 Terminal 的窗口管�
 
     ```shell
     tmux ls           #查看后台会话
-    tmux a            #连接会话(a或者attatch) 默认连接到最近一个创建的会话
+    tmux a            #连接会话(a或者attach) 默认连接到最近一个创建的会话
     tmux a -t xx      #连接到指定会话 xx为会话编号或名称
     tmux switch -t xx #切换会话 也在tmux会话中使用前缀键+s
     ```
@@ -101,7 +101,7 @@ tmux 是一款终端复用命令行工具，一般用于 Terminal 的窗口管�
 
 ## 窗格操作
 
-- tmux命令管理窗口
+- tmux命令管理窗格
 
   ```shell
   #---划分窗格
@@ -183,7 +183,7 @@ tmux new -s $session -d
 #可以在会话中创建窗口 例如窗口名为main
 #tmux new -s $session -n $window -d
 
-#向回话发送指令
+#向会话发送指令
 tmux send-keys -t $session "$command" C-m
 #可以指定发送某个窗口
 #tmux send-keys -t $session:$window "$command" C-m
@@ -193,7 +193,7 @@ tmux send-keys -t $session "$command" C-m
 
 ```shell
 #分割指定会话的窗口（不指定窗口时使用每个会话默认的窗口）
-tmux split-window -v -t $session  #-v水平分割 -h 垂直分割
+tmux split-window -v -t $session  #-v 上下分割，-h 左右分割
 
 tmux select-layout -t $session main-horizontal  #分割模式
 ```

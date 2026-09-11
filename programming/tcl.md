@@ -1,623 +1,249 @@
+[TOC]
 
-Tcl (Tool Command Language)
+# Tcl 快速上手核心心智模型
 
-- 脚本语言
-- 解释器tclsh
+> 适用读者：具备 Python / C / Bash / Go 等多门语言经验的开发者。用最短篇幅建立 Tcl（Tool Command Language）的底层心智模型与语法映射。
 
-# 基本语法
+---
 
-- 后缀`.tcl`
+## 核心心智模型：一切皆字符串与命令替换
 
-- 可以在文件头部指定默认解释器，如`#!/usr/bin/tclsh`
+Tcl 区别于主流语言的最核心特征：**没有原生类型系统，一切皆字符串；一切语法皆命令调用**。
 
-- 代码行以`;`结尾，但不是必须的，但是如果要使用`#`内注释则需要`;`结尾
+### 1. 命令调用结构
+在 Tcl 中，代码行不存在 `func(a, b)` 这种形式，结构完全类似 Shell：
+```tcl
+command arg1 arg2 arg3 ...
+```
+- 每行的第一个单词即为**命令名**，后续以**空格**分隔的所有内容均为传递给该命令的字符串参数。
+- 换行或分号 `;` 表示一条命令结束。
 
-- 注释
+### 2. 三大替换机制与分组法则
 
-  - 单行注释：`#`后面内容为注释
+解释器在执行命令前，仅对参数执行一轮从左到右的扫描与替换：
 
-  - 多行注释或块注释：使用`if 0 {}`语句
+| 语法符号 | 机制类型 | 行为说明 | 对应其他语言认知 |
+| :--- | :--- | :--- | :--- |
+| **`$var`** | **变量替换** | 将变量名替换为其对应的值 | 类似 Shell 的 `$VAR` |
+| **`[cmd]`** | **命令替换** | 执行中括号内部的命令，并用其标准输出/返回值替换自身 | 类似 Shell 的 `$(cmd)` 或反引号 |
+| **`\`** | **转义** | 转义特殊字符或换行符延续代码行 | 标准转义 |
+| **`{}`** | **字面量分组** | **彻底禁用所有替换**，保留内部原始文本（延迟求值） | 类似 Shell 单引号 `''`，但在 Tcl 中支持完美嵌套 |
+| **`""`** | **文本分组** | 允许空格作为一个整体，**内部仍会触发 `$`, `[]`, `\` 替换** | 类似 Shell 双引号 `""` |
 
+### 3. 最常踩的陷阱：什么时候带 `$`？
+- **传递变量“名”（写/修改/引用绑定）** ➜ **不带 `$`**：
   ```tcl
-  #this is a comment line
-  
-  if 0 {
-    all contents here is ignored.
-    comments
-  }
-  puts "hello"; #inline comment
+  set a 10        ;# 声明/赋值变量 a，传入的是变量名 "a"
+  incr a          ;# 将 a 的值自增 1，传入的是变量名 "a"
+  lappend mylist  ;# 向列表追加元素，传入变量名
+  ```
+- **读取变量“值”** ➜ **带 `$`**：
+  ```tcl
+  puts $a         ;# 读取 a 的值并打印
+  set b $a        ;# 将 a 的值赋予 b
   ```
 
+---
 
+## 核心数据结构
 
-- 标识符
-
-  *用于标识变量、函数或任何其他用户定义项的名称，区分大小写。*
-
-  以字母 A 到 Z 或 a 到 z 或下划线 (_) 开头，后跟零个或多个字母、下划线、美元 ($) 和数字（0 到 9）。
-
-
-
-- 空白字符
-
-  Tcl 中用来描述空白、制表符、换行符和注释的术语。
-
-   空格将语句的一部分与另一部分分隔开，并使解释器能够识别语句中的一个元素的结束位置和下一个元素的开始位置。
-
-  如调用函数时，函数名和其参数直接需要空白。
-
-
-# 变量
-
-## 定义和引用
+### 1. 列表 (List)
+Tcl 列表在底层仍是经过空格与转义规范化的字符串，为一等公民。
 
 ```tcl
-# 定义变量 set 变量名 变量值
-set a 1;
+# 创建列表
+set fruits [list apple banana "cherry pie"]  ;# 推荐显式 list 构建
+set colors {red green blue}                  ;# 使用字面量分组创建
 
-# 引用变量 变量名前加上$引用变量
-puts $a;  #puts函数 打印（输出到标准输出）
+# 基础操作
+lindex $colors 0           ;# 获取索引 0 的元素: "red"
+llength $colors            ;# 列表长度: 3
+lrange $colors 0 1         ;# 切片: "red green"
+
+# 修改列表（就地追加变量需传变量名，不带 $）
+lappend colors yellow      ;# colors 变为 {red green blue yellow}
+
+# 赋值拆包
+lassign $colors c1 c2 c3   ;# c1="red", c2="green", c3="blue"
+
+# 排序并返回新列表
+set sorted [lsort -dictionary $colors]
 ```
 
-## 内置特殊变量
-
-在 Tcl 中，我们将一些变量归类为特殊变量，它们具有预定义的用法/功能。 下面列出了特殊变量的列表。
-
-- 参数列表
-
-  - `argc`  命令行参数
-  - `argv`  令行参数的列表
-  - `argv0`  当前执行的文件名
-
-- 错误信息
-
-  - `errCode`  最后一个 Tcl 错误的错误代码
-  - `errInfo`  最后一个 Tcl 错误的堆栈跟踪
-
-- 解释执行相关
-
-  - `tcl_interactive`  交互模式（值为1）和非交互模式（值为0）之间切换
-  - `tcl_rcFileName`  用户特定的启动文件
-  - `tcl_traceCompile` 控制字节码编译的跟踪。 使用 0 表示无输出，1 表示摘要，2 表示详细。
-  - `tcl_traceExec`  控制字节码执行的跟踪。 使用 0 表示无输出，1 表示摘要，2 表示详细。
-
-- 环境和解释器版本
-
-  - `env`  环境变量的元素数组
-
-  - `tcl_library`  tcl标准库位置
-
-  - `tcl_pkgPath`  通常安装软件包的目录列表
-
-  - `tcl_platform`  程序执行的平台信息
-
-  - `tcl_version` 解释器版本
-
-  - `tcl_patchLevel`  解释器的当前补丁级别
-
-    包含 byteOrder、machine、osVersion、platform 和 os 等对象的元素数组
-
-  - `tcl_precision`  精度，即在将浮点数转换为字符串时要保留的位数。 默认值为 12。
-
-- 提示内容
-
-  - `tcl_prompt1`  主要提示
-  - `tcl_prompt2`  无效命令的辅助提示
-
-
-
-# 数据类型
-
-## 字符串
-
-可不用引号包裹，如果一个字符串有空格则需要使用双引号包裹。
+### 2. 关联数组 (Array)
+散列表哈希，**不是一等公民**（不能作为函数参数直接传值，不能嵌套，通常需配合全局或 `upvar` 使用）。
 
 ```tcl
-set str1 "hello world" #"hello world"是一个字符串
-```
-
-### 转义字符
-
-这些特殊字符需要在前面添加转义符号`\`以表示其自身：`\  '  "  ?`，例如`\\`表示无特殊含义的`\`本身
-
-这些添加了转义符号的组合有特殊的含义：
-
-- `\a`  Alert or bell 响铃
-- `\b`  Backspace 回退符
-- `f`  Form feed 换页符
-- `\n`  Newline新行符  和  `\r`  Carriage return 回车符
-- `\t`  Horizontal tab 水平方向tab符 和 `\v`  Vertical tab 垂直方向tab符
-
-### 常用字符串命令
-
-```tcl
-#按字典顺序比较 string1 和 string2
-#如果相等返回 0，如果 string1 在 string2 之前则返回 -1，否则返回 1。
-compare string1 string2;
-
-first string1 string2; #返回 string1 在 string2 中第一次出现的索引。 如果没有找到则返回-1。
-
-index string index; #返回索引处的字符。
-
-last string1 string2; #返回 string1 在 string2 中最后一次出现的索引。 如果没有找到，则返回-1。
-
-length string; #返回字符串的长度。
-
-match pattern string; #如果字符串与模式匹配，则返回 1。
-
-range string index1 index2; #返回字符串中从索引 1 到索引 2 的字符范围。
-
-tolower string; #返回小写字符串。
-
-toupper string; #返回大写字符串。
-
-trim string ?trimcharacters?; #删除字符串两端的修剪字符。 默认的修剪字符是空格。
-
-trimleft string ?trimcharacters?; #删除字符串左开头的修剪字符。 默认的修剪字符是空格。
-
-trimright string ?trimcharacters?; #删除字符串左端的修剪字符。 默认的修剪字符是空格。
-
-wordend findstring index; #返回包含索引处字符的单词之后的字符在 findstring 中的索引。
-
-wordstart findstring index; #返回包含索引处字符的单词中第一个字符在 findstring 中的索引。
-```
-
-
-
-### 字符串格式化
-
-`format 格式化字符串 参数值...`
-
-格式化字符串中使用的占位符：
-
-- `%s`	字符串表示
-- `%d`	整数表示
-- `%f`	浮点表示
-- `%e`	尾数指数形式的浮点表示
-- `%x`	十六进制表示
-
-```tcl
-puts [format "%f" 43.5] ;  #43.500000
-```
-
-
-
-### 日期时间格式化
-
-```tcl
-#获取当前日期时间 四位数年-月-日 时：分：秒 的形式
-puts [clock format [clock seconds] -format "%Y-%m-%d %H:%M:%S"]
-```
-
-- 年份：`%y`两位数的年份，`%Y`两位数的年份。
-- 月份：`%b`缩写为三个字母如Jun，`%B`完整月份入June，`%m`月份数字。
-- 日期：`%d`日期数字
-- 时：`%I`12小时制的时，`%H`24小时制的时。
-- 分：`%M`
-- 秒：`%S`
-- 上午下午：`%p`显示为AM或PM。
-- 星期：`%a`缩写为三个字母如Sun，`%A`完整形式如Sunday。
-- 日期mm/dd/yy形式：`%D`
-- 12 小时制时间：`%r`
-- 24 小时制时间：`%T`含有秒数，`%R`不带秒。
-- 时区：`%Z`时区名称如 GMT、IST、EST 等。
-
-
-
-## 列表
-
-项目的有序集合。
-
-```tcl
-set 列表名 { 项目1 项目2 ... 项目N }
-set 列表名 [ 项目1 项目2 ... 项目N ]
-
-#如果省略分割符号则使用空白符号
-set 列表名 [split "items separated by a character" 分割符号];
-
-set colors {red cyan};
-#set colors "red cyan"
-puts [lindex $colors 0];
-```
-
-常用列表命令：
-
-```tcl
-lindex $listName index; #索引指定位置的项目
-
-#追加项目到列表
-append $listName split_character value
-lappend $listName valu
-
-#在索引处插入项目
-linsert $listName index value1 value2..valuen
-
-llength $listName;  #列表长度
-
-#替换索引处的项目
-lset $listName index value
-#替换索引范围内的多个项目
-lreplace $listName firstindex lastindex value1 value2..valuen
-
-#将列表转换为变量
-lassign $listName variable1 variable2.. variablen
-
-#列表排序
-lsort $listName
-```
-
-## 关联数组
-
-类似于键值对的字符串，索引（键）对应的值即是数组的元素。
-
-Tcl 中所有数组本质上都是关联的。 数组的存储和检索没有任何特定的顺序， 关联数组的索引不一定是数字，并且可以稀疏填充。 
-
-```tcl
-set 数组名(索引) 值；
-
-set price(apple) 10;
-set price(pear) 15;
-
-puts $price(pear); #通过索引获取指对应的值
-```
-
-- 数组元素个数 `array size 数组名`
-
-## 字典
-
-键值对映射集合
-
-```tcl
-dict set 字典名 键 值
-# or 
-set 字典名 [dict create 键1 值1 键2 值2 ... 键n 值n]
-```
-
-常用字典命令：
-
-```tcl
-dict get $dictname $keyname; #获取键对应的值
-dict exists $dictname $key;  #字典中是否存在指定的键
-
-dict keys $dictname;  #字典所有的键（组成的列表）
-dict values $dictnam; #字典所有的值（组成的列表）
-
-dict size $dictname; #字典大小（键值对数量）
-```
-
-
-
-# 数学计算
-
-## expr数学表达式
-
-参与计算的数字都是整数，则计算结果为整数；如果包含一个浮点数，则计算结果为浮点数。
-
-```tcl
-expr 3.0/7; #0.42857142857142855
-
-set tcl_precision 5; #设置精度（默认12），参看内置特殊变量
-expr 3/0.7; #4.2857
-
-expr 4*(1+2); #同数学中小括号可提升计算优先级
-
-expr 4<<2; #16
-```
-
-## 运算符
-
-- 算数：加、减、乘、除、余数 ` +  -  *  /  %`
-- 关系：（数值大小比较） `==  !=  >  <  >=  <=`
-- 位运算：位与、位或、异或、二进制左移位、二进制右移位 `&  |  ^  <<  >>`
-- 逻辑：与、或、非 `&&  || !`
-- 三元：`?:` （语法格式：`如果条件为真 ? 则值 X ：否则值 Y`）
-
-# 流程控制
-
-## 条件
-
-### if语句
-
-`if...elseif...else`
-
-```tcl
-if {条件} {
-	#body1
-} elseif {条件} {
-  #body2
-#more elseif ...
-}else{
-  #body others
+# 声明与赋值
+set port_speed(eth0) 1000
+set port_speed(eth1) 10000
+
+# 访问与检查
+puts $port_speed(eth0)
+info exists port_speed(eth2)  ;# 返回 0
+
+# 遍历数组键
+foreach iface [array names port_speed] {
+    puts "$iface -> $port_speed($iface)"
 }
 ```
 
-
-
-### switch语句
-
-使用场景为分支条件为特定的值。
+### 3. 字典 (Dict)
+现代 Tcl（8.5+）引入的一等公民键值映射结构，**完全支持嵌套并可作为参数传递**。
 
 ```tcl
-switch 匹配项 {
-   匹配字符串1 {
-      #body1
-   }
-   匹配字符串2 {
-      #body2
-   }
-#...
-   default {
-      #body for default
-   }
+# 创建与读写
+set config [dict create host "localhost" port 8080 timeout 30]
+dict set config debug 1
+
+# 获取与检查
+set port [dict get $config port]
+if {[dict exists $config timeout]} {
+    puts "timeout defined"
+}
+
+# 遍历字典
+dict for {k v} $config {
+    puts "$k: $v"
 }
 ```
 
-`default` 块可选，只能出现在 `switch` 的末尾，当所有情况都不成立时，可以使用默认情况来执行任务。
+---
 
+## 控制流与表达式 (expr)
 
-
-
-
-# 循环
-
-`break`语句立即终止整个循环语句
-
-`continue`语句立即进入循环的下一次迭代
-
-
-
-### for循环
-
-在达到边界条件前循环执行，每次循环按照一定条件逐步迭代初始值，直到达到特定边界条件则停止。
+> **黄金安全与性能准则**：**`expr` 表达式必须永远用花括号 `{}` 包裹**！
+> - 不用花括号会导致参数在传入前发生多余的双重替换，引发极其隐蔽的代码注入漏洞并破坏字节码预编译性能。
 
 ```tcl
-for {初始值} {终止循环的边界条件表达式} {变化控制语句} {
-   #statement(s);
+# 正确写法（字节码预编译，安全高效）
+set sum [expr {$a + $b * 2}]
+
+# 错误写法（严禁使用）
+# set sum [expr $a + $b * 2]
+```
+
+### 1. 条件分支 (if / switch)
+注意：开花括号 `{` 必须与 `if`/`elseif`/`else` 保持在同一行（防止换行被误认为命令结束）。
+
+```tcl
+if {$score >= 90} {
+    puts "A"
+} elseif {$score >= 80} {
+    puts "B"
+} else {
+    puts "C"
 }
-#例子
-for { set a 10}  {$a < 20} {incr a} {
-   puts "value of a: $a"
+
+# 字符串 switch 匹配
+switch -exact -- $state {
+    "INIT"  { init_system }
+    "RUN"   { start_work }
+    default { puts "unknown state" }
 }
 ```
 
-### while循环
-
-给定条件为真时执行
-
+### 2. 循环结构
 ```tcl
-while {condition} {
-   #statement(s)
+# 遍历列表
+foreach item $fruits {
+    puts "Fruit: $item"
+}
+
+# 并行遍历多个列表
+foreach name {Alice Bob} age {25 30} {
+    puts "$name is $age"
+}
+
+# 计数循环
+for {set i 0} {$i < 5} {incr i} {
+    if {$i == 2} continue
+    puts "Step $i"
 }
 ```
 
-### foreach
+---
 
-迭代列表
+## 过程、作用域与 upvar
+
+### 1. 过程定义与默认参数
+Tcl 使用 `proc` 定义函数，默认情况下其内部变量与外部完全隔离（局部作用域）：
 
 ```tcl
-foreach 迭代项变量 可迭代数据{
-  #codes
+proc connect {host {port 22} {timeout 10}} {
+    # host 为必选参数，port 默认 22，timeout 默认 10
+    puts "Connecting to $host:$port (timeout: ${timeout}s)"
+    return 1
 }
+
+connect "192.168.1.1"       ;# 使用默认 port 与 timeout
+connect "10.0.0.1" 8080 5   ;# 显式覆盖
 ```
 
-
-
-# 命令
-
-在 Tcl (Tool Command Language) 中，通常使用 "命令" 这个词来描述一种特殊的操作。
-
-例如`puts`命令用于将数据输出到标准输出。
-
-
-
-格式：
+### 2. 杀手级特性：`upvar` 跨栈帧引用传递
+由于 Tcl 变量传递默认是值复制（字符串），`upvar` 允许过程绑定上层调用者的变量（类似 C 语言传递指针）：
 
 ```tcl
-命令名 参数1 参数2 ... 参加n
+# 在函数内部直接就地修改调用方传递过来的变量
+proc increment_caller_var {var_name step} {
+    # 将上一层栈帧（1 表示上一层）的 var_name 绑定到当前局部的 v
+    upvar 1 $var_name v
+    incr v $step
+}
+
+set my_counter 100
+increment_caller_var my_counter 5
+puts $my_counter  ;# 输出 105
 ```
 
+---
 
+## I/O 与异常处理
 
-命令替换：用于复杂的命令嵌套，将被嵌套的命令放在`[ ]`中
-
+### 1. 文件读写
 ```tcl
-puts [ expr 1 + 2 ]
-```
-
-
-
-## 自定义命令
-
-`proc` 是 Tcl 中定义新命令的方式，可视作其他编程语言的函数概念。
-
-# 
-
-```tcl
-proc 名字 {参数1 参数2 ... 参数n} {
-   #body
-}
-
-proc myfirstproc {args} {
-  puts "args: \"$args\"" ;
-  puts [info level 0] ;
-}
-myfirstproc a b c d;
-```
-
-如果要为参数设置默认值，以`{参数名 默认参数值}`形式置于参数列表的`{}`中：
-
-```tcl
-proc add {a {b 100} } {
-   return [expr $a+$b]
-}
-add 10; #110
-```
-
-# 命名空间
-
-命名空间是一组标识符的容器，用于对变量和过程进行分组。
-
-```tcl
-#创建命名空间
-namespace eval 命名空间名称 {
-	variable 变量名
-}
-
-#在命名空间中创建procedure
-proc 命名空间名称::函数名 {}{
-  #codes
-}
-
-#调用命名空间中的procedure
-命名空间名称::函数名 参数
-
-#导入一个命名空间中的所有方法
-namespace import 命名空间名字::*
-#导入后即可直接调用该命名空间中的函数
-
-#删除命名空间
-namespace forget 命名空间::*
-#不能再直接使用这个命名空间中的函数了
-
-#例子
-namespace eval MyMath {
-  variable myResult
-}
-
-proc MyMath::Add {a b } {  
-  set ::MyMath::myResult [expr $a + $b]
-}
-MyMath::Add 10 23
-
-puts $::MyMath::myResult
-
-namespace import MyMath::*
-puts [Add 10 30]
-
-namespace forget MyMath::*
-```
-
-
-
-# 包
-
-包（package）由提供特定功能的文件集合组成， 该文件集合由包名称标识，并且可以具有相同文件的多个版本，用于创建可重用的代码单元。
-
-包使用[命名空间](#命名空间)的概念来避免变量名和过程名的冲突
-
-一个包含有两种文件：
-
-- 代码文件
-- 包索引文件（在包目录中使用 `pkg_mkIndex` 命令创建）
-
-例子：包目录为`~/hello`
-
-文件1 代码文件`~/hello/test1.tcl`
-
-```tcl
-namespace eval ::HelloWorld {
- 
-  # Export MyProcedure
-  namespace export MyProcedure
- 
-  # My Variables
-   set version 1.0
-   set MyDescription "HelloWorld"
- 
-  # Variable for the path of the script
-   variable home [file join [pwd] [file dirname [info script]]]
- 
-}
- 
-# Definition of the procedure MyProcedure
-proc ::HelloWorld::MyProcedure {} {
-   puts $HelloWorld::MyDescription
-}
-
-package provide HelloWorld $HelloWorld::version
-package require Tcl 8.0
-```
-
-
-
-文件2 索引文件，切换到`tclsh`，进入包目录`~/hello`后使用以下命令完成：
-
-```tcl
-pkg_mkIndex . *.tcl
-lappend auto_path "~/hello"； #也可使用[pwd]或$::env(PWD)获取当前目录
-package require HelloWorld 1.0
-puts [HelloWorld::MyProcedure]
-```
-
-
-
-# I/O
-
-读取和写入操作都需要先打开文件，操作完毕后应该关闭文件。
-
-- 打开文件 `open 文件路径 读写模式`，其返回文件句柄（handle）
-
-  - 读写模式
-
-    - 读`r`  未指定读写模式时的默认模式，文件必须存在.
-
-    - 写`w`  如果文件不存在将创建，如果文件存在将覆盖已有内容.
-
-    - 追加 `a`  文件必须存在
-
-    - `r+`  打开一个文本文件以进行读写, 文件必须已经存在。
-
-    - `w+`  打开一个文本文件以进行读写，如果文件存在，它首先将其截断为零长度，否则创建文件（如果不存在）。
-
-    - `a+`  打开一个文本文件以进行读写。 如果文件不存在，它将创建该文件。 阅读会从头开始，但写作只能追加。
-
-- 关闭文件  `close 文件句柄`
-- 读取文件  `read 文件句柄`
-- 写入文件  `puts 文件句柄 内容`
-
-
-
-读写示例： 
-
-```tcl
-#写入内容 test
-set fp [open "input.txt" w+]
-puts $fp "test"
+# 写入文件
+set fp [open "report.txt" "w"]
+puts $fp "Task finished successfully"
 close $fp
 
-#读取写入的内容
-set fp [open "input.txt" r]
-set file_data [read $fp]
-puts $file_data
+# 逐行读取文件
+set fp [open "report.txt" "r"]
+while {[gets $fp line] >= 0} {
+    puts "Read: $line"
+}
 close $fp
 ```
 
-
-
-# 错误处理
-
-- error命令抛出错误
-
+### 2. 错误捕获 (catch / try)
+- **极简模式 (`catch`)**：返回 0 表示正常，非 0 表示抛出错误。
   ```tcl
-  error message ?info? ?code?
-  
-  error "Error generated by error" "Info String for error" 401
-  ```
-
-  - `message` 描述错误的字符串，这将成为生成的错误的 `-errorinfo` 选项的值。
-  - `info` 可选参数，如果提供，它将成为生成的错误的 `-errorinfo`选项的值。这通常是一个调用堆栈跟踪。
-  - `code` 可选参数，如果提供，它将成为生成的错误的 `-errorcode` 选项的值。这通常是一个列表，描述了错误的具体类型。
-
-  
-
-- catch命令
-
-  ```tcl
-  catch 语句 返回的信息
-  
-  if {[catch {puts "Result = [expr 10/0]"} errmsg]} {
-     puts "ErrorMsg: $errmsg"
-     puts "ErrorCode: $errorCode"
-     puts "ErrorInfo:\n$errorInfo\n"
+  if {[catch {
+      open "not_exist.txt" "r"
+  } err_msg]} {
+      puts "Captured error: $err_msg"
   }
   ```
+
+- **现代结构化捕获 (`try / trap`)**：
+  ```tcl
+  try {
+      set fp [open "data.bin" "r"]
+  } trap {POSIX ENOENT} {err} {
+      puts "File not found: $err"
+  } finally {
+      puts "Cleanup executed"
+  }
+  ```
+
+---
+
+## CAD / EDA 开发者特别认知
+
+1. **宿主环境集成**：在 DC、Innovus、Virtuoso 等 EDA 工具中，Tcl 直接作为交互式命令行与脚本引擎。
+2. **Collection vs List**：
+   - EDA 工具通常返回内部 C 结构封装的“集合（Collection）”（如 `get_cells *`、`all_fanin`）。
+   - **集合不是 Tcl 原生 List**，不能直接用 `lindex` 或 `foreach`。必须使用 EDA 提供的专有命令：
+     - 获取数量：`sizeof_collection $col`
+     - 迭代集合：`foreach_in_collection itm $col { ... }`
+     - 转为普通 Tcl 字符串列表：`get_object_name $col`

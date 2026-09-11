@@ -1,258 +1,204 @@
+# SSSD 加入 Windows AD 域
 
+在企业网络环境中，通常使用微软 Active Directory (AD) 作为集中账号源。Linux 主机通过 **realmd + SSSD + adcli** 工具链加入 Windows AD 域，实现使用 AD 域账号密码统一登录 Linux 系统，并支持离线凭据缓存与动态权限控制。
 
-以下所述以CentOS7.x为例
+[TOC]
 
 ---
 
-# 准备工作
+## 1. 准备工作
 
-- windows域控服务器配置AD域相关操作
-
-- DNS
-
-  linux客户端配置好DNS解析(网卡配置DNS或者`/etc/resolv.conf`中添加`nameserver`)
-
-  *如果AD域控服务器即DNS服务器，则DNS填写域控服务器的IP或主机名或域名。*
-
-  hosts文件可解析AD域控服务器（可选）
-
-- 时间同步
-
-  保证AD域控服务器和客户端时间一致性。（或者差距不要太大）
-
-- 防火墙
-
-  windows和linux主机均要主要防火墙策略，临时关闭防火墙或放行相关端口。
-
-  如网络中有其他防火墙存在，应当放行相关端口。
-
-  linux要临时修改SELINUX为允许或添加相关放行规则。
-
-  ```shell
-  systemctl stop firewalld
-  setenforce 0
-  ```
-
-# realm加入AD域
-
-1. 安装相关包
-
-   ```shell
-    yum install -y realmd sssd oddjob oddjob-mkhomedir adcli samba-common \
-    krb5-libs krb5-devel pam_krb5 krb5-workstation \
-    # #openldap-clients policycoreutils-python \
-    winbind samba-client samba-winbind-clients
-    #yum install -y smaba-winbind
-   ```
-
-2. 使用realm加入AD域
-
-   ```shell
-   #ad_server也可以使用ip，建议配置好DNS或hosts，使用域名而非IP
-   realm join <ad_server> -U <ad_user> -v
-   #realm join <ad_server> --user=<ad_user> -v
-   ```
-
-   - `-v`打印详细信息
-   - `-U`或`--user`指定AD域控服务器上的用户（需要有添加到域的权限），如不指定则为`Administrator`
-
-   *可参看[常见问题解决](常见问题解决)。*
-
-   相关命令：
-
-   ```shell
-   realm discover <ad_server>  #发现域控服务器
-   realm leave [ad] #离开已经加入的域
-   realm list  #列出域
-   #（加入域后）指定允许登录的用户组
-   realm permit -g <group-name>@<ad>
-   # realm deny拒绝用户登录　realm -h查看更多使用参数
-   ```
-
-3. 验证
-
-   - 检查sssd服务
-
-     ```shell
-     systemctl status sssd
-     ```
-
-     使用realm加入域后会自动生成或更新sssd配置文件sssd.conf（一般在`/etc/sssd/sssd.conf`），并自动启用sssd服务。
-
-   - 验证用户信息
-
-     ```shell
-     id <username>@<ad>    #例如test@office.cluster
-     #或
-     id <username>//<ad>
-     ```
-
-   *可参看[常见问题解决](常见问题解决)。*
-
-## 配置
-
-
-
-## sssd.conf
-
-更改sssd.conf后需重启sssd服务。
-
-配置示例及说明：
+### 1.1 DNS 解析
+Linux 客户端必须能够正确解析 AD 域控的域名与 SRV 记录。将主机的 DNS 指向 Windows AD 域控服务器 IP：
 
 ```shell
- [sssd]
- domains = xxx.yy
- config_file_version = 2
- services = nss, pam
-  
- [domain/xxx.yy] #域名
-ad_domain = xxx.yy
-krb5_realm = XXX.YY  #大写的ad_domain
-#realmd_tags = manages-system joined-with-adcli
-realmd_tags = manages-system joined-with-samba
-cache_credentials = True
-id_provider = ad
-krb5_store_password_if_offline = True
-default_shell = /bin/bash   #登陆时的默认shell
-ldap_id_mapping = True
-#是否使用用户全名（包含域名的长用户名）如 test@xxx.yy
-#值为Fasle则可以不加上域名使用，例如直接使用test
-use_fully_qualified_names = False
-#用户家目录　％u表示用户名　%d表示域名
-#fallback_homedir = /home/%u@%d
-fallback_homedir = /home/%u
-access_provider = ad
+# 测试能否解析域控
+ping -c 2 ad.company.com
+
+# 检查 SRV 记录
+dig -t SRV _ldap._tcp.ad.company.com
 ```
 
-
-
-# 附
-
-## 常见问题解决
-
-- could not connect xxx, Couldn't authenticate to active directory: SASL(-1): generic failure
-
-  该问题与DNS（反向DNS解析）有关。
-
-  创建/etc/krb5.conf（如果没有），并确保如下配置：
-
-  ```shell
-  [libdefaults]
-  default_realm = xxx.com #改为实际的AD server域名
-  rdns = false
-  ```
-
-- GSSAPI Error: Unspecified GSS failure.  Minor code may provide more information (Server not found ...
-
-  查看`/etc/sssd/sssd.conf`是否存在`ad_server=`行，注释或删除该行；
-
-  查看`/etc/krb5.conf`，在`[libdefaults]`这个区块下添加：
-
-  ```shell
-  rdns = false  #如果存在该行且值为True，修改值为False
-  ```
-
-  重启sssd服务
-
-- 如果sssd的log中提示类似：
-
-  > Unable to load module [ad] with path [/usr/lib64/sssd/libsss_ad.so]: libwbclient.so.0: cannot open shared object file: No such file or directory
-
-  samba库依赖问题，确认已经安装libwbclient，手动添加其到LD_LIBRARY环境变量中。也可将配置写入到`/etc/ld.so.conf.d/`目录下的文件中，示例：
-
-  ```shell
-   #rhel/centos可使用rqm -ql libwbclient查看位置，其他发行版思路类似
-   echo '
-   /usr/lib64/samba/wbclient/
-   ' >/etc/ld.so.conf.d/samba.conf
-  ldconfig -v | grep libwbclient
-  ```
-
-- 无错误但是没有验证到用户信息
-
-  设置`/etc/resolv.conf`的`nameserver`值为正确的DNS服务器地址（也可以直接设置网卡的DNS）。
-
-  DNS应该和AD服务器配置的DNS一致。
-
-  *当AD服务器作为DNS服务器时，nameserver应为AD服务器的IP或域名。*
-
-## sssd配置脚本示例
+### 1.2 时间同步
+Kerberos 认证要求客户端与 AD 域控的时钟偏差必须在 5 分钟以内。确保使用 Chrony 同步时间：
 
 ```shell
-#!/bin/sh
-#===ad信息
-ad='xxx'  #ad域的名字
-#ad_server_ip为ad域控主机的IP，ad_server为AD域控主机的域名
-#只要客户端能解析ad_server，ad主机IP也可不填写，只填写ad_server
-ad_server_ip='10.0.48.31'
-ad_server="xxx.yyy.zzz" # $(timeout 10 nslookup $ad_server_ip|cut -d "=" -f 2|sed -E "s/.$//" )
-ad_user='xxx' #在AD主机上具有添加欲权限的用户，默认是 Administrator
-ad_user_pwd='xxx'  #ad_user对应的密码
+# 检查同步状态
+chronyc sources
+systemctl enable --now chronyd
+```
 
-#===sssd.conf配置相关
-user_home_parent_dir='/home'
-user_shell='csh' #defautl is bash
+### 1.3 防火墙端口
+确保客户端与 AD 域控之间的关键端口连通：
+* Kerberos: 88, 464 (TCP/UDP)
+* LDAP: 389, 636 (TCP)
+* MS-RPC / SMB: 135, 445 (TCP)
 
-#===
-yum install sssd realmd oddjob oddjob-mkhomedir adcli krb5-libs openldap-clients ipa-client pam_krb5 krb5-workstation samba-winbind samba-common-tools ntp -y #sssd-winbind-idmap samba-winbind
+---
 
-#firewalld和selinux判断
-firewall=$(systemctl status firewalld|grep -E "active.+running")
+## 2. 软件包安装与加入 AD 域
 
-setenforce=0
+使用 `adcli` 作为加域后端组件，无需安装额外的 Samba Winbind 组件。
 
-#sync time (optional)
-ntpdate $ad_server_ip
+### 2.1 安装软件包
 
-#add nameserver -- /etc/resolv.conf
-echo "
-search $ad
-nameserver $ad_server_ip
-" >/etc/resolv.conf
+```shell
+dnf install -y realmd sssd adcli oddjob oddjob-mkhomedir krb5-workstation
+```
 
-#add ad_server -- /etc/hosts
-if [[ -n $ad_server ]]; then
-  if [[ ! $(grep "$ad_server_ip $ad_server" /etc/hosts) ]]; then
-    sed -i "2a $ad_server_ip $ad_server" /etc/hosts
-  fi
-fi
+### 2.2 探测与加入域
 
-#samba libarary
-if [[ ! $(ldconfig -v | grep libwbclient.so.0 2>/dev/null) ]]; then
-  echo '/usr/lib64/samba/wbclient/' >/etc/ld.so.conf.d/samba.conf
-  ldconfig -v | grep libwbclient
-fi
+```shell
+# 1. 探测 AD 域信息
+realm discover ad.company.com
 
-#leave AD
-#realm leave
+# 2. 交互式加入 AD 域（使用具有加域权限的 AD 账号）
+realm join ad.company.com -U Administrator --verbose
 
-#discover AD server (optional)
-realm discover -v $ad_server_ip
+# 也可以通过标准输入非交互式传递密码：
+# echo "YourPassword" | realm join ad.company.com -U Administrator --verbose
+```
 
-if [[ $? -eq 0 ]]; then
-  #add to AD
-  [[ $(which expect 2>/dev/null) ]] || yum install -y expect
-  expect -c "
-spawn realm join --user=$ad_user $ad_server_ip -v
-expect {
-"Password*" { send "$ad_user_pwd"\r }
-}
-expect eof
-"
-else
-  echo "cant not discover AD server $ad_server_ip"
-fi
+### 2.3 权限控制与验证
 
-#modify config sssd file
-sed -i -E \
-  -e "s/bash/$user_shell/" \
-  -e "/fallback_homedir/ c fallback_homedir = $user_home_parent_dir/%u@%d" \
-  -e "/use_fully_qualified_names/ s/True/False/" \
-  -e "/ad_server/d" \
-  /etc/sssd/sssd.conf
+```shell
+# 查看当前加入的域状态
+realm list
 
+# 默认允许所有域用户登录。如需限制仅特定组登录：
+# 1. 拒绝所有人登录
+realm deny --all
+
+# 2. 仅允许指定的 AD 安全组登录
+realm permit -g "IC_Designers@ad.company.com"
+
+# 3. 允许特定用户登录
+realm permit zhangsan@ad.company.com
+
+# 验证用户信息（支持带域名后缀查询）
+id zhangsan@ad.company.com
+```
+
+---
+
+## 3. SSSD 常用配置 (`/etc/sssd/sssd.conf`)
+
+`realm join` 会自动生成 `/etc/sssd/sssd.conf`。根据实际运维习惯，可调整如下常用参数：
+
+```ini
+[sssd]
+domains = ad.company.com
+config_file_version = 2
+services = nss, pam
+
+[domain/ad.company.com]
+default_shell = /bin/bash
+krb5_store_password_if_offline = True
+cache_credentials = True
+krb5_realm = AD.COMPANY.COM
+realmd_tags = manages-system joined-with-adcli
+id_provider = ad
+access_provider = ad
+
+# 用户名格式控制：
+# 设置为 False 时，登录与查询可直接使用短用户名（如 zhangsan），无需输入 @ad.company.com 后缀
+use_fully_qualified_names = False
+
+# 家目录路径规则：%u 表示用户名，%d 表示域名
+# fallback_homedir = /home/%u@%d
+fallback_homedir = /home/%u
+
+# 自动将 AD 的 SID 映射为固定数值型 UID/GID
+ldap_id_mapping = True
+```
+
+修改配置文件后需确保权限正确并重启服务：
+```shell
+chmod 600 /etc/sssd/sssd.conf
 systemctl restart sssd
 ```
 
+---
 
+## 4. 自动创建家目录配置
 
+如果家目录未通过 NFS/Lustre 等共享存储集中挂载，需在用户首次登录时自动在本地生成家目录：
+
+```shell
+# 开启 PAM 自动创建家目录功能
+authselect enable-feature with-mkhomedir
+
+# 启动 oddjob 守护进程
+systemctl enable --now oddjobd
+```
+
+---
+
+## 5. 常见问题排查
+
+### 5.1 SASL(-1): generic failure (反向 DNS 解析校验失败)
+* **现象**：`Couldn't authenticate to active directory: SASL(-1): generic failure`
+* **原因**：Kerberos 默认会尝试进行反向 DNS (rDNS) 校验，当内网缺少 PTR 反向解析记录时报错。
+* **解决**：在 `/etc/krb5.conf` 的 `[libdefaults]` 中关闭反向解析校验：
+  ```ini
+  [libdefaults]
+  default_realm = AD.COMPANY.COM
+  rdns = false
+  ```
+  修改后重启 SSSD：`systemctl restart sssd`。
+
+### 5.2 GSSAPI 错误 (Server not found in Kerberos database)
+* **原因**：SSSD 配置中如果显式指定了 `ad_server = IP`，可能导致 Kerberos SPN 服务主体名称匹配失败。
+* **解决**：在 `/etc/sssd/sssd.conf` 中注释或删除 `ad_server` 行，让 SSSD 依靠 DNS SRV 记录自动发现域控；同时确保 `/etc/krb5.conf` 中包含 `rdns = false`。
+
+### 5.3 用户信息未即时刷新
+* **解决**：SSSD 本地存在缓存，AD 侧改动后若需立即生效，执行缓存清理：
+  ```shell
+  sss_cache -E
+  systemctl restart sssd
+  ```
+
+---
+
+## 6. 自动化批量加域脚本示例
+
+适用于物理机或虚机批量交付时的一键加域：
+
+```shell
+#!/bin/bash
+set -e
+
+AD_DOMAIN="ad.company.com"
+AD_SERVER_IP="192.168.1.10"
+AD_ADMIN_USER="Administrator"
+AD_ADMIN_PASS="YourPassword"
+DEFAULT_SHELL="/bin/bash"
+
+# 1. 安装必要依赖（采用 adcli，无 winbind 冲突）
+dnf install -y realmd sssd adcli oddjob oddjob-mkhomedir krb5-workstation
+
+# 2. 配置 DNS 指向域控
+if ! grep -q "$AD_SERVER_IP" /etc/resolv.conf; then
+    echo "nameserver $AD_SERVER_IP" >> /etc/resolv.conf
+fi
+
+# 3. 避免反向 DNS 校验失败
+mkdir -p /etc/krb5.conf.d
+cat <<EOF > /etc/krb5.conf.d/ad_rdns.conf
+[libdefaults]
+rdns = false
+EOF
+
+# 4. 非交互式加入 AD 域
+echo "$AD_ADMIN_PASS" | realm join "$AD_DOMAIN" -U "$AD_ADMIN_USER" --verbose
+
+# 5. 调整 SSSD 参数（支持短用户名、自定义 Shell）
+sed -i -E   -e "s|default_shell = .*|default_shell = $DEFAULT_SHELL|"   -e "s|use_fully_qualified_names = .*|use_fully_qualified_names = False|"   -e "s|fallback_homedir = .*|fallback_homedir = /home/%u|"   /etc/sssd/sssd.conf
+
+# 6. 开启自动创建家目录
+authselect enable-feature with-mkhomedir
+systemctl enable --now oddjobd
+systemctl restart sssd
+
+echo "Successfully joined $AD_DOMAIN"
+```

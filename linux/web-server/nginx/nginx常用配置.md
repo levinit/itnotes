@@ -32,11 +32,10 @@ http3(quic)需要nginx支持。
 server{
   listen 443 ssl http2;        # TCP listener for HTTP/2
   
-  #=http3 config start=以下行为http3配置 需要安装支持quic的nginx
-  #--http3不支持时将启用http2 
-  #listen 443 http3 reuseport;  # UDP listener for QUIC+HTTP/3
-  #add_header Alt-Svc 'quic=":443"; h3-27=":443";h3-25=":443"; h3-T050=":443"; h3-Q050=":443";h3-Q049=":443";h3-Q048=":443"; h3-Q046=":443"; h3-Q043=":443"'; # Advertise that QUIC is available
-  #ssl_protocols       TLSv1.3; # QUIC requires TLS 1.3
+  #=http3 config start=以下为官方 Nginx 1.25+ 的 HTTP/3(QUIC) 配置
+  #listen 443 quic reuseport;  # UDP 监听 QUIC+HTTP/3
+  #add_header Alt-Svc 'h3=":443"; ma=86400'; # 向客户端宣告 HTTP/3 支持
+  #ssl_protocols       TLSv1.2 TLSv1.3; # QUIC 必须运行在 TLS 1.3 上
   #=http3 config end=
   
   ssl_certificate /etc/letsencrypt/live/xx.xxx/fullchain.pem;
@@ -177,7 +176,7 @@ server {
   
   	#其他内容略...
 
-    if ($host != '$server_name') {
+    if ($host != $server_name) {
         return 444;
     }
 }

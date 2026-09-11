@@ -3,21 +3,21 @@
 - /dev/nvme0n1p1  EFI 分区      512M
 
   ```shell
-  mkfs.fat32 /dev/nvme0n1p1  #！如果要保留已有系统的efi，不要格式化
+  mkfs.vfat -F 32 /dev/nvme0n1p1  #！如果要保留已有系统的efi，不要格式化
   ```
 
 - /dev/nvme0n1p2   swap分区   可选，大小例如8G
 
   ```shell
-  mkswap dev/nvme0n1p2
+  mkswap /dev/nvme0n1p2
   ```
 
   
 
-- /dev/nvme0n1p13  btrfs分区    系统和数据
+- /dev/nvme0n1p3  btrfs分区    系统和数据
 
   ```shell
-  mkfs.btrfs [-m <meta-data-profile>] [-L <lable-name>] /dev/nvme0n1p3
+  mkfs.btrfs [-m <meta-data-profile>] [-L <label-name>] /dev/nvme0n1p3
   
   mkfs.btrfs /dev/nvme0n1p3
   ```
@@ -86,7 +86,7 @@
    #4.2 挂载subvolume
    mount -o noatime,nodiratime,ssd,compress=zstd,subvol=@home /dev/nvme0n1p3 /mnt/home
    
-   mount -o noatime,nodiratime,ssd,compress=zstd,subvol=@logs /dev/nvme0n1p3 /mnt/var/log
+   mount -o noatime,nodiratime,ssd,compress=zstd,subvol=@log /dev/nvme0n1p3 /mnt/var/log
    
    mount -o noatime,nodiratime,ssd,compress=zstd,subvol=@cache /dev/nvme0n1p3 /mnt/var/cache
    
@@ -100,4 +100,3 @@
    # 辅助工具
    
    - snapper
-   - 

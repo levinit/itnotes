@@ -230,33 +230,26 @@ intel构架列表：[List of Intel CPU microarchitectures](https://en.wikipedia.
 
 2. 在bootloader 中增加resume内核参数
 
-   假如使用swap文件为/home/swap，需要编辑[/etc/default/grub](config/etc/default/grub) 文件，在`GRUB_CMDLINE_LINUX_DEFAULT`中添加`resume=/home/swap`，让系统在启动时读取swap分区中的内容。（如果使用swap分区，则resume对应的为swap的盘符，例如/dev/sdc）
+   - **使用独立 swap 分区**：`resume=UUID=<swap分区的UUID>`（可通过 `blkid` 查看）。
+   - **使用 swapfile 文件**（例如 `/swapfile`）：内核在尚未挂载文件系统时无法解析文件路径，必须指定其所在底层的分区 UUID 以及文件在磁盘上的物理偏移量 `resume_offset`（使用 `filefrag -v /swapfile | awk '{if($1=="0:"){print substr($4, 1, length($4)-2)}}'` 查看第一块偏移量）。
 
-   例如该行的原有内容是：
+   编辑 `/etc/default/grub`，在 `GRUB_CMDLINE_LINUX_DEFAULT` 中添加参数，例如：
 
-   > GRUB_CMDLINE_LINUX_DEFAULT=”quiet intel_pstate=enable”
+   > GRUB_CMDLINE_LINUX_DEFAULT="quiet resume=UUID=xxxx-xxxx resume_offset=34816"
 
-   添加resume参数后就是：
+   然后更新 grub 配置：`grub-mkconfig -o /boot/grub/grub.cfg`。
 
-   > GRUB_CMDLINE_LINUX_DEFAULT="quiet resume=/home/swap"
+3. 配置 initramfs 的 resume 钩子
 
-   然后更新 grub 配置 `grub-mkconfig -o /boot/grub/grub.cfg`
+   编辑 `/etc/mkinitcpio.conf`，在 `HOOKS` 行中添加 `resume` 钩子。**注意**：`resume` 必须放置在 `block` 钩子之后（让系统先探测识别块设备），若使用了 LVM 或加密卷（encrypt），则必须放在 `lvm2` 或 `encrypt` 之后：
 
-3. 配置 initramfs的resume钩子
+   > HOOKS=(base udev autodetect modconf block resume filesystems keyboard fsck)
 
-   编辑[/etc/mkinitcpio.conf](config/etc/mkinitcpio.conf)，在`HOOKS`行中添加`resume`钩子，例如该行原有内容是：
+   若是 LVM 环境：
 
-   > HOOKS="base udev autodetect modconf block filesystems keyboard fsck"
+   > HOOKS=(base udev autodetect modconf block lvm2 resume filesystems keyboard fsck)
 
-   添加`resume`后就是：
-
-   > HOOKS="base udev resume autodetect modconf block filesystems keyboard fsck"
-
-   **注意**：如果使用lvm分区，需要将`resume`放在`lvm2`后面，示例：
-
-   > HOOKS="base udev autodetect modconf block lvm2 resume filesystems keyboard fsck"
-
-   重新生成 initramfs 镜像: `mkinitcpio -p linux`
+   重新生成 initramfs 镜像：`mkinitcpio -P`。
 
 ## 显卡管理
 

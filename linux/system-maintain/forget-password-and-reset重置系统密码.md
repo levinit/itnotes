@@ -7,7 +7,7 @@
 2. mount系统根分区，例如：
 
    ```shell
-   mount -o /dev/sda2 /mnt
+   mount /dev/sda2 /mnt
    ```
 
 3. 重置密码，可选择以下方法
@@ -37,27 +37,34 @@
 
 
 
-# 单用户模式
+# 单用户模式 / 救援模式
 
-1. 在grub引导界面，按下`e`修改选项（进入nano编辑器）。
+### 方法一：RHEL/CentOS 系推荐（rd.break 方式）
 
-2. 移动光标到包含`vmlinuz`的最后，添加空格，再添加`rd.break`
+1. 在 GRUB 引导界面，按下 <kbd>e</kbd> 编辑启动项。
+2. 找到以 `linux` 或 `linux16`（包含 `vmlinuz`）开头的行末尾，添加空格和 `rd.break`。
+3. 按下 <kbd>Ctrl</kbd>+<kbd>x</kbd> 开始引导，进入 switch_root 前的 initramfs 紧急 shell。
+4. 重新挂载 `/sysroot` 为可读写：
+   ```shell
+   mount -o remount,rw /sysroot
+   chroot /sysroot
+   ```
+5. 修改密码并触发 SELinux 重新打标：
+   ```shell
+   passwd root
+   touch /.autorelabel
+   exit
+   exit
+   ```
 
-   或者添加`init=/sysroot/bin/sh`
+### 方法二：通用 Linux 方式（init=/bin/sh 方式）
 
-3. <kbd>ctrl</kbd> <kbd>x</kbd>完成修改，开始系统引导。
-
-4. 进入系统后执行`mount -o remount,rw /sysroot` 重新挂载`/sysroot`以使其可写。
-
-5. `chroot /sysroot` 更改根目录；
-
-1. 修改密码
-   1. `passwd root`或者其他修改命令修改密码；
-
-      或清空`/etc/shadow`文件中root用户第二字段——第一个冒号和第二个冒号之间的内容。
-
-   2. `touch /.autorelabel`  开启了SELinux的情况下必须执行该步骤；
-
-   3. `exit`或<kbd>ctrl</kbd> <kbd>d</kbd>退出`chroot`；
-
-   4. `exit`或<kbd>ctrl</kbd> <kbd>d</kbd>或`reboot`重启系统。
+1. 在 GRUB 引导行末尾追加 `init=/bin/sh`（切勿写成 `/sysroot/bin/sh`，否则切换真实根文件系统后内核会报 panic 崩溃）。
+2. 按下 <kbd>Ctrl</kbd>+<kbd>x</kbd> 启动，直接进入根目录的只读 sh 环境。
+3. 重新挂载根目录为可写并修改密码：
+   ```shell
+   mount -o remount,rw /
+   passwd root
+   touch /.autorelabel  # 如果开启了 SELinux
+   exec /sbin/init      # 或重启机器
+   ```

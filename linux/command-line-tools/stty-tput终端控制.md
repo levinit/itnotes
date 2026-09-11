@@ -82,7 +82,7 @@ tput reset #重置终端
   使用 cup 选项，在各行和各列中将光标移动到任意 X 或 Y 坐标（以左上光标提示符后为坐标原点0,0）。
 
   ```shell
-  tput cup 10 13 # 将光标移动到指定行列位置 10列 13行
+  tput cup 10 13 # 将光标移动到指定行列位置（第10行、第13列，0-indexed）
   ```
 
   示例，定位光标到指定位置输出提示信息后，再将光标恢复到原来的位置等待用户输入内容：
@@ -154,9 +154,10 @@ echo -e "$(tput bold) Bold Texts$(tput sgr0)"  #粗体显示Bold Texts文字
   ```
 
 - 其他
-
-  ```shell
-  tput ed  #删除从当前光标到行尾所有内容
-  tput smso  #开启标准输出模式
-  tput rmso  #取消标准输出模式
-  ```
+ 
+   ```shell
+   tput el  #清除从当前光标到行尾的所有内容
+   tput ed  #清除从当前光标到屏幕末尾的所有内容
+   tput smso  #开启突出/高亮显示模式（standout mode）
+   tput rmso  #取消突出/高亮显示模式
+   ```

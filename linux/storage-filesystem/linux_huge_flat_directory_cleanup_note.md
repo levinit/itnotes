@@ -50,8 +50,8 @@ others = 0
 with os.scandir(path) as it:
     for e in it:
         n += 1
-		if < 20:
-            print(e.name)  #获取下前面20文件名字
+        if n <= 20:
+            print(e.name)  # 获取前20个文件名
         try:
             if e.is_dir(follow_symlinks=False):
                 dirs += 1

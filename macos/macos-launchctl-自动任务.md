@@ -1,4 +1,4 @@
-# launctld
+# launchd
 
 > macOS 使用 `launchd` 进程来管理守护进程和代理
 
@@ -12,7 +12,7 @@ launchd是pid为1的超级进程（类似于linux中的init或systemd），其�
 
 
 
-# launctl 操作
+# launchctl 操作
 
 使用 [launchctl](x-man-page://launchctl) 命令来载入或卸载 `launchd` 守护进程和代理。
 
@@ -21,10 +21,10 @@ launchd是pid为1的超级进程（类似于linux中的init或systemd），其�
 launchctl list
 
 # 禁用服务
-launchctl disable <plist file path>
+launchctl disable <service-target>
 
 # 启用服务
-launchctl disable <plist file path>
+launchctl enable <service-target>
 
 # 杀死进程（不优雅地杀，直接杀进程）并重启服务。对一些停止响应的服务有效。
 launchctl kickstart -k <plist file path>

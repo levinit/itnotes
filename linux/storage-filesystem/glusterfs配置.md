@@ -52,21 +52,11 @@ GlusterFS 是一个高扩展性、高可用性、高性能、可横向扩展的�
 - 基本卷类型
   - 分布式 Distributed
 
-    文件分布到brick server上，无冗余，可看作文件级RAID0，如果有一个存储块所在硬盘损坏，**对应的数据也丢失**。
+    文件通过 DHT（Distributed Hash Table，分布式哈希表算法），使用 Davies-Meyer 哈希算法对完整文件名计算 32 位哈希值。卷中的每个目录会在其包含的各个 Subvolume 上分配一段连续的哈希范围（layout/range）。文件创建时，根据其完整文件名的哈希值落入该目录的哪个 Subvolume 范围段，决定存放到对应的 Brick。
 
-    文件通过DHT（Distributed Hash Table，分布式哈希表算法），对文件名进行hash计算，以确定文件存放的位置，因此分布式卷又称为哈希卷。其有以下特点：
-
-    - hash计算时不包含文件名对后缀
-
-      例如`1.txt`和`1`等同
-
-    - 不包含文件所在的目录的路径
-
-      例如`a/b/1.txt`、`a/1.txt`与`1.txt`也是等同的
-  
-    - 根据以上两条原则，一旦确定某个名字的文件存放在哪个节点的brick上，以后创建的任何路径的同名文件总是存放在相同的节点的brick上
-  
-      例如`1.txt`hash后被存放在`io01`的brick上，其后创建的任何同名（`1`）文件均存放到`io01`的brick上。
+    - 文件名完全相同且处于同一目录结构下的文件，其哈希值和目标 Brick 映射一致；
+    - 完整文件名（包含后缀，如 `1.txt` 与 `1` 哈希值完全不同）参与哈希运算；
+    - 不同的子目录拥有独立的哈希空间切片布局。
   
     
   
@@ -162,7 +152,7 @@ io1:/storage/brick3 io2:/storage/brick3 io3:/storage/brick3  #子卷3
 
 # 客户端挂载卷
 
-## navtive client
+## native client
 
 在linux上使用glusterfs-fuse。
 
@@ -171,7 +161,7 @@ client节点挂载示例：
 ```shell
 yum install -y glusterfs glusterfs-fuse
 mkdir /share
-mount -t -o reader-thread-count=8,acl glusterfs io01:/share /share
+mount -t glusterfs -o reader-thread-count=8,acl io01:/share /share
 ```
 
 挂载参数
@@ -252,7 +242,7 @@ gluster v set $vol nfs.disable off
 
 ```shell
 yum install samba-vfs-glusterfs samba
-systemctl enable --now samba
+systemctl enable --now smb # Debian/Ubuntu 为 smbd
 ```
 
 配置samba文件`/etc/samba/smb.conf`，示例：
@@ -357,13 +347,11 @@ vm参数：
 
 | 参数                      | 默认值 | 调整值 | 说明                                                         |
 | ------------------------- | ------ | ------ | ------------------------------------------------------------ |
-| vm.swappiness             | 10     | 0      | 触发使用交换分区的剩余内存百分比。                           |
+| vm.swappiness             | 60/10  | 1或10  | 控制内核回收匿名页（swap）与缓存页（cache）的权重倾向比。     |
 | vm.dirty_ratio            | 20     | 5      | 脏数据占可用内存的百分比达到该值触发同步写。                 |
-| vm.dirty_background_ratio | 10     | 3      | 脏数据占可用内存的百分比达到该值触发触发数据回刷（异步写入磁盘）。 |
+| vm.dirty_background_ratio | 10     | 3      | 脏数据占可用内存的百分比达到该值触发数据回刷（异步写入磁盘）。 |
 
-vm.swappiness值为0表示完全不使用交换分区，当内存耗尽时会触发OOM killer终止内存占用最大的进程。
-
-*swappiness值可以设置为0，但稳妥起见该值不宜为0，避免glusterd某些场景下被终止的可能，具体值根据实际内存配置情况设置。glusterfs某些版本有偶发内存泄漏问题导致glusterd内存占用飙升。*
+`vm.swappiness` 并非剩余内存百分比，而是控制内核换出匿名页的相对激进程度。调低该值（如设置为 1 或 10）可尽可能保留进程物理内存，避免存储服务因频繁 swap 造成延迟抖动；尽量避免设为 0，以防极端内存耗尽时失去缓冲直接触发 OOM killer 终止关键存储进程。
 
 对于大文件顺序IO场景使用较大的dirty值，对于小文件和随机IO场景使用较小的值：
 
@@ -374,7 +362,7 @@ vm.swappiness值为0表示完全不使用交换分区，当内存耗尽时会触
 
 ```shell
 #/etc/sysctl.d/vm.conf  |  sysctl -f
-vm.swappiness=0
+vm.swappiness=10
 vm.vfs_cache_pressure=150
 vm.dirty_ratio=5
 vm.dirty_background_ratio=3

@@ -220,12 +220,20 @@ export EDITOR="/usr/bin/vim"  #修改默认编辑器为vim
 
 
 
-读取指定文件（按照[cron文件语法](#cron文件语法)编写）并将其内容添加到当前用户cron文件中：
+**重要警告**：`crontab <file>` 会**完全覆盖替换**当前用户原有的所有 cron 任务，而非追加！
+
+若需要从文件加载并全量替换当前用户的 cron 任务：
 
 ```shell
 cronlist=$(mktemp)
 echo "1 * * * * whoami" >> $cronlist
 crontab $cronlist
+```
+
+若希望在保留已有任务的基础上**追加**新任务，推荐使用管道追加：
+
+```shell
+(crontab -l 2>/dev/null; echo "1 * * * * whoami") | crontab -
 ```
 
 
@@ -286,7 +294,7 @@ cron文件中**每一行一个任务**，
 0 0 1 * * /usr/bin/reboot  #每月1日0时0分重启系统
 
 #每周三周六1点到3点和11点到13点每5分钟执行一次/home/test/update.sh
-*0,*5 1-3,11-13 * * 3,6 /home/test/update.sh
+*/5 1-3,11-13 * * 3,6 /home/test/update.sh
 
 #每次启动后执行
 @reboot  /usr/bin/echo $(/usr/bin/date) > /tmp/newboot

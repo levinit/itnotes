@@ -6,7 +6,7 @@
 
 # docker与容器技术
 
-docker是一种Linux 容器（Linux Containers，缩写为 LXC）解决方案。
+Docker 是一种基于 Linux 内核特性（Namespaces、Cgroups 等）的轻量级操作系统级虚拟化容器解决方案（早期曾使用 LXC，后转向自研的 runc 与 containerd）。
 
 容器Contanier将运行环境打包，提供标准的接口，能够运行在众多操作系统上。
 
@@ -82,15 +82,17 @@ newgrp docker
   ln -sf /home/docker /var/lib/docker  #将新位置软连接到原来的存放位置
   ```
 
-- 修改全局配置文件
+- 修改全局配置文件（推荐）
 
-  各个操作系统中的存放位置不一致， Ubuntu 中的位置是：`/etc/default/docker`，在 CentOS 中的位置是：`/etc/sysconfig/docker`。在配置文件中添加：
+  编辑 `/etc/docker/daemon.json`（若不存在则创建），配置 `data-root`：
 
-  ```shell
-  OPTIONS=--graph="/root/data/docker" -H fd://
-  #如果系统有selinux并已经开启，可添加关闭selinux的参数
-  OPTIONS=--graph="/root/data/docker" --selinux-enabled -H fd://
+  ```json
+  {
+    "data-root": "/home/docker"
+  }
   ```
+
+  修改后重启 Docker 服务：`systemctl restart docker`。
 
 ## docker信息
 
@@ -310,7 +312,7 @@ docker create -t archlinux
 docker run -itd archlinux
 
 #使用其他创建容器时的常用参数
-docker run -it --rm --name 容器名 --hostname 主机名 -v 宿主机目录:容器目录:读写权限 -p 容器端口:宿主机器端口 --network 网络 archlinux 要执行的命令
+docker run -it --rm --name 容器名 --hostname 主机名 -v 宿主机目录:容器目录:读写权限 -p 宿主机端口:容器端口 --network 网络 archlinux 要执行的命令
 
 # 以centos 镜像为基础创建一个名为webserver的容器
 # 主机名webserver 以只读权限挂载宿主机的/home/data到容器的/srv/web 使用主机网络 创建成功后立即进入bash shell
@@ -388,10 +390,6 @@ docker run -itd --name webserver --hostname webserver -v /home/data:/srv/web:ro 
   - `--memory-swap=内存大小`  内存+交换分区限额
 
     提示：指定了 `-m` 而不指定 `--memory-swap`，那么 `--memory-swap` 默认为 `-m` 的两倍。
-
-  - `--vm 线程数`  启用指定个数的内存工作线程
-
-  - `--vm-bytes 给定内存大小`  每个线程分配的内存大小
 
 - cpu
 

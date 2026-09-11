@@ -1,21 +1,19 @@
 
 
-# firewalld和iptables
+# firewalld与底层过滤框架
 
-firewalld服务底层仍然是调用iptables。
+firewalld 是用户态的防火墙管理守护进程，其默认后端为 `nftables`（亦可配置为 `iptables`），规则最终交由 Linux 内核的 netfilter 子系统执行过滤。
 
-> - firewalld可以动态修改单条规则，动态管理规则集，允许更新规则而不破坏现有会话和连接；iptables，在修改了规则后必须得全部刷新才可以生效。
+> - firewalld 支持动态规则管理（D-Bus 接口），允许在不中断现有连接和会话的情况下即时生效规则；传统 iptables 脚本通常需要重载整套规则链。
 >
 >   ```shell
->   firewall-cmd --reload  #firewalld 重载配置
->   iptables-save          #保存iptables的配置
+>   firewall-cmd --reload                     #firewalld 重载配置
+>   iptables-save > /etc/sysconfig/iptables   #保存 iptables 的当前规则至文件
 >   ```
 >
-> - firewalld使用区域和服务而不是链式规则。
+> - firewalld 使用区域（Zone）和服务（Service）进行抽象管理，而非直接编辑原始的链式规则。
 >
-> - firewalld默认是拒绝的，需要设置以后才能放行；iptables默认是允许的，需要拒绝的才去限制。
->
-> - firewalld自身并不具备防火墙的功能，而是和iptables一样需要通过内核的netfilter来实现。firewalld和iptables一样，它们的作用都用于维护规则，而真正使用规则干活的是内核的netfilter。只不过firewalld和iptables的结果以及使用方法不一样！
+> - firewalld 默认各区域的入站策略通常为拒绝（只放行显式允许的服务或端口）；iptables 默认规则链策略通常为 ACCEPT。
 
 
 
@@ -69,7 +67,7 @@ firewalld通过将网络划分成不同的区域，制定出不同区域之间�
     你相信网络上的大多数其他计算机，只接受选定的传入连接。
 
 
-  - 信任区域（trueted）
+  - 信任区域（trusted）
 
     所有网络连接都可以接受
 
@@ -213,11 +211,11 @@ iptables -F #清空规则链
 iptables -I INPUT -p icmp -j ACCEPT
 iptables -A INPUT -s 192.168.10.0/24 -p tcp --dport 22 -j ACCEPT
 
-iptables -A POSTROUTING -t nat -o eno2 -j MASQUERADE
+iptables -A POSTROUTING -t nat -o eno1 -j MASQUERADE
 
-iptables-save #保存规则
-#一些发型版执行以下命保存
-iptables-save >>/etc/iptables/iptables.rules
+iptables-save #打印当前规则
+#一些发行版可重定向至配置文件保存（注意使用覆盖 > 避免损坏规则文件）：
+iptables-save > /etc/iptables/iptables.rules
 ```
 
 - 对要处理的数据包添加规则
@@ -252,6 +250,6 @@ iptables-save >>/etc/iptables/iptables.rules
 
 
 
-firewalld和iptables在规则上的一大区别是：firewalld默认是拒绝的（大多数zone，除了像trusted之类的zone），需要设置以后才能放行。而iptables默认是允许的，需要拒绝的才去限制；
+firewalld和iptables在默认安全哲学上的一大区别是：firewalld 的大多数区域默认策略是严格拒绝（除了 trusted 等区域），按需显式放行；而原生 iptables 默认内置链的 Policy 通常为 ACCEPT，按需显式限制。
 
-因此，当iptables和firewall同时存在时，如果在firewalld上已经添加了某个禁止策略，单依然能访问，应当排查下iptables是否启用了。
+注意：在 Linux 内核 netfilter 体系中，数据包在任意一条链中一旦被 DROP 或 REJECT，该数据包就会被立即丢弃，绝不可能被后续规则放行。firewalld 与 iptables 守护进程严禁同时开启运行，否则两者会自动刷新（flush）并互相覆盖破坏彼此在内核中注入的规则链，造成防火墙过滤策略彻底失效。

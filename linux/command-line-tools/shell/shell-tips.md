@@ -17,15 +17,15 @@
 生成一定范围内的整数
 
 ```shell
-echo $(($RANDOM%99))    #生成0-99的数
-echo $(($RANDOM%82+6))  #生成6-87（81+6)的数
+echo $(($RANDOM%100))   #生成0-99的数（模100余数范围为0~99）
+echo $(($RANDOM%82+6))  #生成6-87（余数0~81加上6）的数
 ```
 
 从shell数组中随机选择一个元素
 
 ```shell
 arr=(1 3 5 7 9)
-rand_index=$(($RANDOM % ${#a[*]})) #随机获取一个下标值
+rand_index=$(($RANDOM % ${#arr[*]})) #随机获取一个下标值
 echo ${arr[$rand_index]}
 ```
 

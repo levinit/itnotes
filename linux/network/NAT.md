@@ -8,15 +8,15 @@ NAT实现了内部网络中的主机访问外部资源，以及外部网络中�
 
 附：IPv4的3组私有IP地址
 
-- A  10.0.0.0~10.255.255.255.255
-- B  172.16.0.0.0~172.31.255.255
-- C  192.168.0.0~192.168.255.255
+- A  10.0.0.0 ~ 10.255.255.255
+- B  172.16.0.0 ~ 172.31.255.255
+- C  192.168.0.0 ~ 192.168.255.255
 
 ## NAT转换类型
 
 - 静态转换
 
-  私有IP地址转换为固定的共有IP地址——一对一固定映射。
+  私有IP地址转换为固定的公有IP地址——一对一固定映射。
 
 - 动态转换
 
@@ -55,7 +55,7 @@ echo "
 net.ipv4.ip_forward=1
 net.ipv6.conf.default.forwarding=1
 net.ipv6.conf.all.forwarding=1
-" > /sysctl.d/ip_forward.conf
+" > /etc/sysctl.d/ip_forward.conf
 #使用该命令可以立即读取上面增加的配置文件 使配置生效
 sysctl --system
 ```
@@ -84,8 +84,8 @@ firewall-cmd --permanent  --zone=external --add-masquerade
 #关闭NAT时需要去掉masquerade
 #firewall-cmd --remove-masquerade
 
-#开放DNS使用的53端口，否则可能导致内网服务器虽然设置正确的DNS，但是依然无法进行域名解析。
-# firewall-cmd --zone=public --add-port=53/tcp --permanent
+#开放DNS使用的53端口（TCP与UDP），否则可能导致内网服务器虽然设置正确的DNS，但是依然无法进行域名解析。
+# firewall-cmd --zone=public --add-port=53/tcp --add-port=53/udp --permanent
 
 
 #3. NAT规则（可选）　将来自内网172.16.1.0/24子网的数据转发到外部网口eno1上
@@ -108,8 +108,8 @@ firewall-cmd --query-masquerade
 firewall-cmd --zone=external --list-all
 
 # 只允许特定端口转发
-firewall-cmd --add-forward-port=proto=80:proto=tcp:toaddr=192.168.0.1
-firewall-cmd --add-forward-port=proto=80:proto=tcp:toaddr=192.168.0.1:toport=8080
+firewall-cmd --add-forward-port=port=80:proto=tcp:toaddr=192.168.0.1
+firewall-cmd --add-forward-port=port=80:proto=tcp:toaddr=192.168.0.1:toport=8080
 ```
 
 ### iptables
@@ -119,16 +119,16 @@ firewall-cmd --add-forward-port=proto=80:proto=tcp:toaddr=192.168.0.1:toport=808
 
 ```shell
 #1. 添加SNAT规则  示例
-# 172.16.1.0/24为内网网卡eno2的子网　192.168.1.1为外网网卡eno1的IP
-iptables -A POSTROUTING -t nat -o eno2 -j MASQUERADE
+# 172.16.1.0/24为内网网卡eno2的子网　192.168.1.1为外网网卡eno1的IP（注意：出口网卡为外部网口eno1）
+iptables -A POSTROUTING -t nat -o eno1 -j MASQUERADE
 #或使用SNAT
-#iptables -t nat -A POSTROUTING -s 172.16.1.0/24 -o eno2 -j SNAT --to-source 192.168.1.1
+#iptables -t nat -A POSTROUTING -s 172.16.1.0/24 -o eno1 -j SNAT --to-source 192.168.1.1
 
 #改变TCP MSS以适应PMTU(Path MTU)
 #iptables -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
 #或设置固定tcp mss
 #通常以太网的mtu为1500，tcp的mss就是1460（1500-20（IP头）-20（tcp头）
-# iptables -A FORWARD -p tcp --syn -s 172.6.1.0/24 -j TCPMSS --set-mss 1460
+# iptables -A FORWARD -p tcp --syn -s 172.16.1.0/24 -j TCPMSS --set-mss 1460
 
 #2. 保存设置的规则
 service iptables save            

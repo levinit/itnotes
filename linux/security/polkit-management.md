@@ -20,7 +20,7 @@ Polkit 定义了两种不同的内容：
   org.freedesktop.timesync1.policy       #时间同步
   ```
 
-  以`org.freedesktop.NetworkManager.policy`中的部分内容为例：
+  以`org.freedesktop.login1.policy`中的部分内容为例：
 
   ```xml
   <action id="org.freedesktop.login1.power-off">
@@ -37,10 +37,10 @@ Polkit 定义了两种不同的内容：
 
   - no 验证不通过（不允许）
   - yes 验证通过（无需密码）
-  - auth_self  使用任意本地用户验证
-  - auth_admin  需要管理员身份验证
+  - auth_self  需要当前发起操作的用户自身输入密码进行验证
+  - auth_admin  需要管理员（root或wheel组）身份验证
   - auth_self_keep  同auth_self ，在一段时间内（如5分钟）保持验证（例如输入过一次密码，一段时间内无需再次输入密码）
-  - auth_self_admin  同auth_admin ，在一段时间内（如5分钟）保持验证
+  - auth_admin_keep  同auth_admin ，在一段时间内（如5分钟）保持验证
 
   
 
@@ -57,7 +57,7 @@ Polkit 定义了两种不同的内容：
   });
   ```
 
-  固定写法是使用`polkit.addRule()`函数，其参数为一个匿名函数，接收action和subject两个参数，action即上文中那些以`.policy`结尾的action文件名去掉`.policy`的部分，action.id是获取action文件中`<action>`标签的id属性的值，subject即触发这个action操作的用户对象。
+  固定写法是使用`polkit.addRule()`函数，其参数为一个匿名函数，接收action和subject两个参数。action 是代表本次请求操作的 Action 对象，action.id 是获取 policy 文件中 `<action>` 标签唯一的 id 属性值（如 `org.libvirt.unix.manage`）；subject 即触发这个 action 操作的用户/会话主体对象。
 
   函数内部对action和subject（或其中之一）进行判断，返回一个以`polkit.Result.`开头的权限结果值，后面部分为前面action列出的可选值中的任意一个，例如`polkit.Result.YES`中的YES就表示通过。
 
@@ -93,7 +93,7 @@ polkit.addRule(function(action, subject) {
 });
 ```
 
-## 禁止普通控制电源
+## 禁止普通用户控制电源
 
 例如在多用户使用的场景中，避免普通用户在远程桌面连接（如VNC）中关闭主机。
 

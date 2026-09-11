@@ -82,8 +82,8 @@ authconfig --update <密码策略配置参数>
 
 参看`authconfig --help`：
 
->     --passminlen=<number>         密码最大长度 
->     --passminclass=<number>       密码中最多字符数
+>     --passminlen=<number>         密码最小长度 
+>     --passminclass=<number>       密码中最少字符类别数（大写/小写/数字/特殊字符）
 >     --passmaxrepeat=<number>      密码中同一字符最多连续使用次数
 >     --passmaxclassrepeat=<number> 密码同一类别中最多连续使用同一字符次数
 >     
@@ -147,14 +147,14 @@ auth               sufficient    pam_unix.so  nullok try_first_pass
 
 ### 密码复杂度
 
-redhat系列中，配置文件为：`/etd/pam.d/system-auth-ac`。
+redhat系列中，配置文件为：`/etc/pam.d/system-auth-ac`。
 
 debian系列中，配置文件为：`/etc/pam.d/common-password`。其他相关配置文件：`/etc/pam.d/common-account`、`/etc/pam.d/common-auth`、`/etc/pam.d/common-session`。
 
 如果缺少相关模块，安装：
 
 ```shell
-apt install -y libpam_cracklib libpam-pwquality  #可能默认未安装
+apt install -y libpam-cracklib libpam-pwquality  #可能默认未安装
 ```
 
 
@@ -171,7 +171,7 @@ apt install -y libpam_cracklib libpam-pwquality  #可能默认未安装
   > retry=5      #最大尝试次数为5
   > minlen=8     #最小密码长度8
   > 
-  > difok=3      #新旧密码相同字符数不少于3个
+  > difok=3      #新旧密码中不同的字符数至少为3个（Different OK）
   > minclass=2   #密码必须包含至少2种不同的字符类型
   > #以下是密码的字符类型
   > lcredit=-1   #密码至少包含1个小写字母
@@ -183,7 +183,7 @@ apt install -y libpam_cracklib libpam-pwquality  #可能默认未安装
   > maxrepeat=N        #拒绝包含超过N个连续字符的密码，默认值为0表示此检查已禁用
   > maxsequence=N      #拒绝包含大于N的单调字符序列（如1234）的密码
   > maxclassrepeat=N   #拒绝包含相同类别的N个以上连续字符的密码。默认值为0表示此检查已禁用。
-  > use_authtok        #强制使用先前的密码，不提示用户输入新密码(不允许用户修改密码)
+  > use_authtok        #强制直接采用前置模块已验证通过的新密码令牌，避免重复提示用户输入密码
   > ```
 
 
@@ -198,13 +198,13 @@ apt install -y libpam_cracklib libpam-pwquality  #可能默认未安装
 
   ```shell
   remember=N     #记录用户N个历史密码，新密码不能和这些密码相同
-  sha512    #当用户下一次更改密码时，使用SHA256算法进行加密
+  sha512    #当用户下一次更改密码时，使用SHA512算法进行加密
   md5       #当用户更改密码时，使用MD5算法对其进行加密
   try_first_pass  #在提示用户输入密码之前，模块首先尝试先前的密码，以测试是否满足该模块的需求。
-  use_first_pass  #该模块强制使用先前的密码(不允许用户修改密码)，如果密码为空或者密码不对，用户将被拒绝访问
+  use_first_pass  #直接使用上一个模块传入的认证密码，不提示输入
   shadow        #用户保护密码
-  nullok        #默认不允许空密码访问服务
-  use_authtok   #强制使用先前的密码，不提示用户输入新密码(不允许用户修改密码)
+  nullok        #显式允许空密码账户访问服务（默认禁止空密码）
+  use_authtok   #强制直接采用前置模块已验证通过的新密码令牌，避免重复提示用户输入密码
   ```
 
   
@@ -217,7 +217,7 @@ apt install -y libpam_cracklib libpam-pwquality  #可能默认未安装
 auth required pam_wheel.so use_uid
 ```
 
-`sudo`和`su -l`（`su -`）配置类似，只是第一步分别修改的是`/etc/pam.d/sudo`和`/etc/pam.d/su-l`。
+`sudo` 限制与 `su` 类似，对应修改 `/etc/pam.d/sudo`。注意 `su -` 或 `su -l` 同样调用 `/etc/pam.d/su`。
 
 
 

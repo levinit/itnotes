@@ -250,21 +250,21 @@ ls /sys/firmware/efi/  #如果该文件存在则表示使用UEFI启动
 
 - 使用标准方式创建其他分区
 
-  使用cfdisk或其他工具创建`/`根分区（*假设为/dev/nvme0n1p2*）和home（*假设为/dev/nvme0n1p2*）用户家目录分区，创建文件系统：
+  使用cfdisk或其他工具创建`/`根分区（*假设为/dev/nvme0n1p2*）和home（*假设为/dev/nvme0n1p3*）用户家目录分区，创建文件系统：
 
   ```shell
-  #1. 挂载根分区
+  #1. 格式化并挂载根分区
   mkfs.ext4 /dev/nvme0n1p2
   mount /dev/nvme0n1p2 /mnt    #挂载根分区
   
-  #2. 挂载home分区
-  mkfs.ext4 /dev/nvme0n1p2
+  #2. 格式化并挂载home分区（独立分区 nvme0n1p3，切勿与根分区相同）
+  mkfs.ext4 /dev/nvme0n1p3
   mkdir /mnt/home    #建立home挂载点
-  mount /dev/nvme0n1p2 /mnt/home    #挂载home逻辑卷到/home
+  mount /dev/nvme0n1p3 /mnt/home    #挂载home分区到/mnt/home
   
-  #3.挂载esp
+  #3. 挂载esp
   mkdir -p /mnt/boot/efi  #建立efi系统分区的挂载点
-  mount /dev/nvme0n1p1 /mnt/boot/efi    #挂载esp到/boot/efi
+  mount /dev/nvme0n1p1 /mnt/boot/efi    #挂载esp到/mnt/boot/efi
   ```
 
 
@@ -324,27 +324,27 @@ ls /sys/firmware/efi/  #如果该文件存在则表示使用UEFI启动
        #1. 根分区 @root子卷
        mount -o noatime,nodiratime,ssd,compress=zstd,subvol=@ /dev/nvme0n1p2 /mnt
        
-       #2. EFI
-       mkdir -p /mnt/boot/efi  #EFI分区挂载点
-       mount /dev/nvme0n1p1 /mnt/boot/efi
-       
-       #3. swap （如有）
-       swapon /dev/nvme0n1p2
-       
-       #4.1 创建subvolume的挂载点
-       mkdir /mnt/home
-       mkdir -p /mnt/var/{log,cache}
-       
-       #4.2 挂载subvolume
-       mount -o noatime,nodiratime,ssd,compress=zstd,subvol=@home /dev/nvme0n1p2 /mnt/home
-       
-       mount -o noatime,nodiratime,ssd,compress=zstd,subvol=@log /dev/nvme0n1p2 /mnt/var/log
-       
-       mount -o noatime,nodiratime,ssd,compress=zstd,subvol=@cache /dev/nvme0n1p2 /mnt/var/cache
-       
-       #...依次挂载完毕
-       
-       lsblk #查看
+        #2. EFI
+        mkdir -p /mnt/boot/efi  #EFI分区挂载点
+        mount /dev/nvme0n1p1 /mnt/boot/efi
+        
+        #3. swap（如有独立的 swap 分区，切勿指向正在运行 btrfs 的 nvme0n1p2 分区）
+        # mkswap /dev/nvme0n1p3 && swapon /dev/nvme0n1p3
+        
+        #4.1 创建subvolume的挂载点
+        mkdir /mnt/home
+        mkdir -p /mnt/var/{log,cache}
+        
+        #4.2 挂载subvolume
+        mount -o noatime,nodiratime,ssd,compress=zstd,subvol=@home /dev/nvme0n1p2 /mnt/home
+        
+        mount -o noatime,nodiratime,ssd,compress=zstd,subvol=@log /dev/nvme0n1p2 /mnt/var/log
+        
+        mount -o noatime,nodiratime,ssd,compress=zstd,subvol=@cache /dev/nvme0n1p2 /mnt/var/cache
+        
+        #...依次挂载完毕
+        
+        lsblk #查看
        ```
        
        
@@ -355,12 +355,11 @@ ls /sys/firmware/efi/  #如果该文件存在则表示使用UEFI启动
 无ESP相关部分，其余参看其他分区模式
 
 ```shell
-#创建文件系统
-#挂载根分区到/mnt
-#挂载其他分区
-mkdir /mnt/boot分区
-mkfs.vfat /dev/sda1
-mount /dev/sda1 /boot
+#创建文件系统并挂载根分区到/mnt
+#挂载独立 boot 分区（如有）
+mkdir -p /mnt/boot
+mkfs.ext4 /dev/sda1
+mount /dev/sda1 /mnt/boot
 ```
 
 
@@ -375,12 +374,16 @@ dhcpcd    #连接到有线网络
 
 WIFI：
 
-iwctl 或 iw命令：
+使用 Archiso 默认内置的 `iwctl` 工具连接无线网络：
 
 ```shell
-ip a #查看无限网卡名字 一般可能是wlan0
-iw dev wlan0 scan #wlan0网卡扫描wifi接入点
-iw dev wlan0 connect wifi接入点名字 wifi密码
+iwctl
+# 进入交互界面后执行：
+# device list                          # 查看无线网卡接口名称（如 wlan0）
+# station wlan0 scan                   # 扫描周围热点
+# station wlan0 get-networks           # 列出可用无线网络
+# station wlan0 connect <WiFi-SSID>    # 连接热点（输入密码）
+# exit                                 # 连接成功后退出
 ```
 
 检查：

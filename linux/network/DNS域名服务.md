@@ -21,14 +21,14 @@
      zone "example.com" {
          type master;
          file "example.com.zone";
-     }
+     };
      ```
 
    - `/var/named/*.zone`  zone文件（域的dns信息）
-     ``/var/named/example.com.zone`文件示例：
+     `/var/named/example.com.zone` 文件示例：
 
      ```shell
-     $TTL 3600;
+     $TTL 3600
      @ IN SOA example.com. user1.example.com. (222 1H 15M 1W 1D)
      @ IN NS dns1.example.com.
      dns1 IN A 123.123.123.123
@@ -44,5 +44,5 @@
 
 
 TTL值
- TTL值全称是“生存时间（Time To Live)”，表示解析记录在DNS服务器中的缓存时间，`TTL`的时间长度单位是秒。
+ TTL值全称是“生存时间（Time To Live)”，是权威 DNS 服务器指示客户端及下游递归解析器缓存该解析记录的最长时间，单位是秒。
 

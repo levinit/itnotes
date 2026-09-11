@@ -1,11 +1,22 @@
-[toc]
+# 磁盘性能核心指标（IOPS 与吞吐量）
+
+- **IOPS (Input/Output Operations Per Second)**：每秒处理的 I/O 次数。
+  - **核心场景**：衡量**随机小文件读写**（如 OLTP 数据库、高并发 Web 请求、虚拟化/容器混合负载）的关键指标。
+- **数据吞吐量 (Throughput / Bandwidth)**：单位时间内传输的数据流量（通常以 MB/s 或 GB/s 计）。
+  - **核心场景**：衡量**顺序大文件读写**（如视频流、离线备份、大日志回放、大数据批处理）的关键指标。
+- **核心换算关系**：
+  $$
+  \text{吞吐量 (MB/s)} = \frac{\text{IOPS} \times \text{块大小 (KB)}}{1024}
+  $$
+  - *示例*：4KB 随机写达到 10,000 IOPS 时，吞吐量约为 $10000 \times 4 / 1024 \approx 39\text{ MB/s}$；而在 1MB 顺序读写时，仅需 500 IOPS 即可占满 500 MB/s 带宽。
+- **介质特性差异**：
+  - **机械硬盘 (HDD)**：受限于机械臂寻道时间（Seek Time 约 3~15ms）与盘片旋转延时（7200 RPM 延时约 4.16ms），单盘随机 IOPS 物理极限通常仅在 75 ~ 200 之间。
+  - **固态硬盘 (SSD / NVMe)**：基于电子闪存与多通道并发控制器，消除寻道开销，随机 IOPS 可达数万至数百万级；测试重点由单纯 IOPS 转向**高队列深度（Queue Depth）下的并发性能**与**长尾延迟（P99/P999 Latency）**。
 
 # io监控工具
 
 - atop
-
 - iotop
-
 - iostat
 
 # 测试工具
@@ -15,11 +26,11 @@
 dd只能进行简单的单线程串行读写操作测试。
 
 ```shell
-if=/dev/zearo  #读取的文件
-of=test_file     #写入到该文件
-bs=4k                #block size  每个块文件的大小
-count=64k      #块文件个数 64k=64000
-time dd if=/dev/zero of=$of bs=$bs count=$count conv=fdatasync
+if=/dev/zero   #读取的文件
+of=test_file   #写入到该文件
+bs=4k          #block size 每个块文件的大小
+count=64k      #块文件个数 64k=65536 (4k*64k = 256MB)
+time dd if=$if of=$of bs=$bs count=$count conv=fdatasync
 ```
 
 if文件也可以是已经存在的一个文件。（创建一个测试用的大文件可以使用`fallocate -l <size> <filename>`。）
@@ -88,5 +99,5 @@ conv和oflag/iflag参数的选择可按实际应用场景需要选择。
 
 # 其他测试工具
 
-- hparm
+- hdparm
 - gnome-disks的测试工具

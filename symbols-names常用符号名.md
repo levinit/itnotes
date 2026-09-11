@@ -2,7 +2,7 @@
 
 ---
 
-[全形和半形](https://zh.wikipedia.org/wiki/%E5%85%A8%E5%BD%A2%E5%92%8C%E5%8D%8A%E5%BD%A2)（全角形式和半角形式）：全形-Halfwidth forms  半形- fullwidth forms。
+[全形和半形](https://zh.wikipedia.org/wiki/%E5%85%A8%E5%BD%A2%E5%92%8C%E5%8D%8A%E5%BD%A2)（全角形式和半角形式）：全形- Fullwidth forms，半形- Halfwidth forms。
 
 [TOC]
 
@@ -113,8 +113,8 @@
   - 大小于号、尖括号、书名号
 
     -  `<>`  angle bracket, angular brackets  尖括号
-    -  `<`  greater-than sign 小于号
-    -  `>`  less-then sign 小于号
+    -  `<`  less-than sign 小于号
+    -  `>`  greater-than sign 大于号
     - `<<>>`  double angle bracket  双尖括号
     - `《》`   guillemet  UK :[ɡiːəˈmeɪ], US[ˈɡɪləmɛt]  书名号
     - `«»`   French quotes 法文引号

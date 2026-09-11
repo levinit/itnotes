@@ -18,7 +18,7 @@
 
   - `-v`或`--show-nonprinting`  使用`^`和`M-`符号（除`LFD`和`TAB`）
   - `-E`  `--show-ends  `  在行尾显示`$`符号（即在行尾显示`$` ）
-  - `-T`  `--show-tabs`  将tab字符显示为`^|`符号
+  - `-T`  `--show-tabs`  将tab字符显示为`^I`符号
 
 示例：
 
@@ -276,7 +276,7 @@ echo 'cooel' | tr -d 'eo'  # cool 删除所有e和o
 - \n Ctrl-J 新行
 - \r Ctrl-M 回车
 - \t Ctrl-I tab键
-- \v Ctrl-X 水平制表符
+- \v Ctrl-K 垂直制表符
 - CHAR1-CHAR2 ：字符范围从 CHAR1 到 CHAR2 的指定，范围的指定以 ASCII 码的次序为基础，只能由小到大，不能由大到小。
 - [CHAR*] ：这是 SET2 专用的设定，功能是重复指定的字符到与 SET1 相同长度为止
 - [CHAR*REPEAT] ：这也是 SET2 专用的设定，功能是重复指定的字符到设定的 REPEAT 次数为止(REPEAT 的数字采 8 进位制计算，以 0 为开始)
@@ -363,16 +363,16 @@ cat <file> | wc  #输出的三列内容为：行数 单词数 字节数
 
 ## grep常用选项
 
-- `-v`或`--revert-match` **反向**选择（**除匹配项所在行之外的行**，相当于过滤功能）grep使用`-V`查看版本号
+- `-v`或`--invert-match` **反向**选择（**除匹配项所在行之外的行**，相当于过滤功能）grep使用`-V`查看版本号
 - `-i`或`--ignore-case` 忽略大小写
 - `-n`或`--line-number `  显示行号
 - `-o`或`--only-matching`   只显示匹配的部分
 - `-c`或`--count`  找到匹配内容的次数
 - `-a`或`--text`  将binary（二进制）文件以text（文本）文件的方式搜寻数据
-- `-l`或`-file-with-matches`  从多个文件中查找匹配项
+- `-l`或`--files-with-matches`  从多个文件中查找匹配项
 - `-f`或`--file=FILE`  从指定文件中取得匹配规则
 - `-r`或`--recursive `  在文件夹中递归查找
-- `-q`或 `-quiet`或`--silent` 不显示匹配结果而是输出退出码（0表示匹配成功）
+- `-q`或`--quiet`或`--silent` 不显示匹配结果而是输出退出码（0表示匹配成功）
 - `--color=auto`  将找到的关键词部分加上颜色的显示
 
 ### 匹配

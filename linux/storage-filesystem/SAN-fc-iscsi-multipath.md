@@ -14,23 +14,23 @@
 
    ```shell
    #获取iscsi目标 sendtargets可缩写为st  端口默认为3260时可省略
-   iscsiadm -m discovery -t st -p <iscsci-server>[:port]
+   iscsiadm -m discovery -t st -p <iscsi-server>[:port]
    #指定要登录的目标
    iscsiadm -m node -T <target-name> -p <iscsi-server>[:port] --login
    ```
 
-   在发现**一个**目标后，也可以使用`session`直接注册登录，而无需指定target等参数：
+   在发现**一个**目标后，也可以使用`session`直接查看当前已建立的会话：
 
    ```shell
-   iscsiadm -m session  #查看登录的session
+   iscsiadm -m session  #查看登录的session会话
    
-   iscsiadm -m node -l  #查看所有登录的目标
+   iscsiadm -m node -l  #登录到所有已发现的目标节点（-l 即 --login）
    ```
 
    或者添加多个target后使用以下命令登录到所有目标：
 
    ```shell
-   iscsiadm -m node -L all  #登入到有所有效的目标
+   iscsiadm -m node -L all  #登入到所有有效的目标
    ```
 
    设置自动登录：
@@ -54,7 +54,7 @@
    #登出某个目标
    iscsiadm -m node -T <target-name> -p <iscsi-server>[:port] --logout
    iscsiadm -m node -U all  #登出所有
-   iscsiadm -m node  #查看登录目标的信息
+   iscsiadm -m node  #查看本地记录的目标节点列表
    ```
 
 4. 挂载
@@ -78,7 +78,7 @@
 
 1. 连接
 
-   连接服务器和存储后，存储端需要设置主机映射，映射时需要获取WWN(WWPN/WWNN）编号，该值可从`/sys/class/fc_host/host*/port_name`（主要一般不包括前面的`0x`）。
+   连接服务器和存储后，存储端需要设置主机映射，映射时需要获取WWN(WWPN/WWNN）编号，该值可从`/sys/class/fc_host/host*/port_name`（注意一般不包括前面的`0x`）。
 
    ```shell
    #查看wwn
@@ -127,19 +127,16 @@
    - 通过/sys下的属性设置运行SCSI扫描
 
      ```shell
-     #host*换成实际的字符 如host1
-     echo "- - - " > /sys/class/fc_host/host*/scan #/sys/class/scsi_host/host*/scan 
-     #或
-     echo "c t l" > /sys/class/fc_host/host*/scan
-     #或
+     #host*换成实际的字符 如host1（扫描控制器）
+     echo "- - -" > /sys/class/scsi_host/host*/scan
+     #或触发 FC 端口重协商 (LIP)
      echo "1" > /sys/class/fc_host/host*/issue_lip
      
      #批量处理：
-     cd /sys/class/scsi_host #/sys/class/fc_host/
+     cd /sys/class/scsi_host
      for dir in $(ls -1)
      do
-       #echo "1" > /sys/class/fc_host/$dir/issue_lip
-       echo "- - -" > /sys/class/scsi_host/$dir/scan #/sys/class/fc_host/$dir/scan
+       echo "- - -" > /sys/class/scsi_host/$dir/scan
      done
      cd -
      ```
@@ -175,7 +172,7 @@
 
 windows server可使用服务管理器中的工具中的MPIO（多路径I/O工具）图形界面工具。
 
-Linux安装多路径软件包`device-mapper-multipath`，启动`multipath`服务。
+Linux安装多路径软件包`device-mapper-multipath`，启动`multipathd`服务。
 
 ```shell
 multipath -F  #刷新所有多路径设备映射
@@ -256,7 +253,7 @@ mount /dev/mapper/mpatha /data
 echo "UUID=`lsblk -o uuid /dev/mapper/mpatha |grep -iv uuid` /data xfs _netdev,defaults 0 0" >> /etc/fstab
 ```
 
-重启`multipath`服务，查看多路径设备情况。
+重启`multipathd`服务，查看多路径设备情况。
 
 ```shell
 multipath -ll  #查看多路径服务情况

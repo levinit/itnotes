@@ -108,43 +108,19 @@
 
   ```shell
   cat << EOF >> ceph.conf
-  osd_journal_size = 10000
-  osd_pool_default_size = 2
-  osd_pool_default_min_size = 2
-  osd_crush_chooseleaf_type = 1
-  osd_crush_update_on_start = true
-  max_open_files = 131072
-  osd pool default pg num = 128
-  osd pool default pgp num = 128
-  mon_pg_warn_max_per_osd = 0
-  EOF
+
+[global]
+osd_journal_size = 10000
+osd_pool_default_size = 2
+osd_pool_default_min_size = 2
+osd_crush_chooseleaf_type = 1
+osd_crush_update_on_start = true
+max_open_files = 131072
+osd pool default pg num = 128
+osd pool default pgp num = 128
+mon_pg_warn_max_per_osd = 0
+EOF
   ```
-
-  
-
-- node1安装ceph-deploy安装 = Minimal，及一个可用的时间长注程序（即是可靠的 NTP 来源） 
-
-  5GB 系统磁盘、swap = 512MiB，及主目录 = 3GiB 
-
-  2GiB 内存及每台系统一个虚拟处理器 
-
-  每台系统一个固定的 IP 
-
-  所有系统必须能用*简称*（hostname -s）互相 ping。要是没有 DNS 服务，可采用一致的 /etc/hosts 档，内有所有简称（而不是群集的 FQDN）。 
-
-- ```shell
-yum install -y epel-release
-  yum install -y ceph-deploy
-  ```
-  
-- 部署ceph到各个io节点
-
-  ```shell
-  mkdir deploy-ceph && cd deploy-ceph
-  ceph-deploy new m1
-  ```
-
-  
 
 ---
 
@@ -157,7 +133,7 @@ yum install -y ceph-common
 装载rbd模块
 
 ```shell
-modprobe rbd       #装载rb生成d模块
+modprobe rbd       #装载rbd模块
 lsmod | grep rbd   #查看模块是否已经装载
 ```
 

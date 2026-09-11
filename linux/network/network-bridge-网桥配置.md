@@ -33,7 +33,7 @@
 
 - 其他常用命令
 
-  bridge-utils的命令格式是`brctl [commonds]` ，更多命令查看`brctl --help` 。
+  bridge-utils的命令格式是`brctl [commands]` ，更多命令查看`brctl --help` 。
 
   - 显示当前已存在的网桥`brctl show`
 
@@ -73,7 +73,9 @@
   ip a
   ```
 
-- 显示当前已存在的网桥 `bridge link show`  （ bridge 工具包含在iproute2中）
+- 显示已存在的网桥与端口：
+  - 显示所有网桥设备：`ip link show type bridge`
+  - 显示网桥下的从属端口：`bridge link show`（bridge 工具包含在 iproute2 中）
 
 - 删除网桥
 

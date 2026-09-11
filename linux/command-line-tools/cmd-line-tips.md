@@ -122,7 +122,7 @@ find  <path>   -option   [   -print ]   [ -exec   -ok   command ]   {} \;
 
     - `cnewer file`：比文件 file 更新的文件
 
-    - `ctime n`：在过去 n 天内创建的文件
+    - `ctime n`：在过去 n 天内文件状态/元数据（Change Time，如权限、属主、重命名等）被修改的文件
 
     - `mtime n`：在过去 n 天内修改过的文件
 
@@ -294,8 +294,8 @@ eval echo $(echo 'ab c')
 使用expr截取指定区间（前开后闭区间）的字符串：
 
 ```shell
-#expr substr <string> <start-index> <end-index>
-expr substr "this-string" 3 5    #is  在[3,5)区间查找字符串
+#expr substr <string> <start-index> <length>  # 1-indexed，第三个参数是截取长度
+expr substr "this-string" 3 5    #输出 "is-st"（从第3个字符开始截取5个字符）
 ```
 
 ## seq序列化输出
@@ -328,7 +328,8 @@ seq -s "" 3  #无分隔符 输出一行123
 提示：使用`{m..n}`展开也能输出数字m到n的所有整数，所有数字只占用一行，两个数字间使用空格分隔；可使用`seq m n|xargs`将输出数字合并为一行，两个数字间使用空格分隔。
 
 ```shell
-seq -w 99 101  #倒序生成数字
+seq -w 99 101  #-w等宽输出，用0补齐位数（输出 099 100 101）
+seq 101 -1 99   #显式指定负步长实现倒序输出（输出 101 100 99）
 ```
 
 

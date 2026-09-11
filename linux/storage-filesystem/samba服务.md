@@ -345,7 +345,7 @@ usermod -s /sbin/nologin
   卸载
   
   ```powershell
-  net share ShareFiel /del
+  net use Z: /delete
   ```
   
 

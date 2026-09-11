@@ -130,7 +130,7 @@ xCAT使用数十种**tables**（表）来存储不同的数据。常用tables（
 - 关闭selinux（或者自行进行相应配置）
 
   1. 编辑`/etc/selinux/config`，设置`SELINUX=disabled` 。（需要重启后生效）
-  2. `setenfore 0`本次临时关闭。
+  2. `setenforce 0`本次临时关闭。
 
 - 关闭iptables/firewalld。（或者自行配置相关规则）
 
@@ -145,7 +145,7 @@ xCAT使用数十种**tables**（表）来存储不同的数据。常用tables（
   本文中，域（domain）为cluster，设置管理节点的主机名为**master.cluster** ，集群的节点名均为xx.xcat的形式：
 
   ```shell
-  hostname master.cluster
+  hostnamectl set-hostname master.cluster
   echo -e "search cluster\nnameserver 192.168.1.251" >> /etc/resolv.conf
   ```
 
@@ -256,7 +256,7 @@ DOMAINNAME=cluster
 如果要自行添加一个networks，可使用类似命令：
 
 ```shell
-mkdef -t network -o net1 net=192.168.100.0 mask=255.255.0.0 gateway=192.168.100.1
+mkdef -t network -o net1 net=192.168.100.0 mask=255.255.255.0 gateway=192.168.100.1
 ```
 
 ### passwd表
@@ -416,7 +416,7 @@ rm -rf /etc/xcat
   - `tabedit 表名`命令，将开启文本编辑器以编辑某个表的信息，例如`tabedit site`编辑site表。
   - 类似`chtab key=master site.value=192.168.1.251`的命令更改表中的属性值。
   - 类似`chdef -t site domain="xcatdomain"`的命令更改表中的属性值。
-- 创建对象：类似`mkdef -t network -o net1 net=192.168.186.0   mask=255.255.255.0 gateway=192.168.100.1`
+- 创建对象：类似`mkdef -t network -o net1 net=192.168.186.0   mask=255.255.255.0 gateway=192.168.186.1`
 - 查看对象信息：` lsdef -t 对象名 -l`，例如`lsdef -t network -l` `lsdef -t osimage -l`
 
 ## 

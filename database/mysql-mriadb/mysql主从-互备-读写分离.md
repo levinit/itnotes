@@ -69,12 +69,14 @@ MySQL 主从复制是指数据可以从一个MySQL数据库服务器主节点复
 
    示例，在各个服务器均创建用户`sync`，密码`your_password`：
    
-   ```mysql
-   --允许访问的主机可以限定为指定的从服务器
-   grant replication slave,file on *.* to 'sync'@'%' identified by 'your_password';
-   flush privileges;
-   --check
-   select user,host,password  from mysql.user;
+   ```sql
+   -- MySQL 8.0+ 需分开执行 CREATE USER 和 GRANT
+   CREATE USER 'sync'@'%' IDENTIFIED BY 'your_password';
+   GRANT REPLICATION SLAVE, FILE ON *.* TO 'sync'@'%';
+   FLUSH PRIVILEGES;
+
+   -- 查询用户（MySQL 5.7+ 密码列为 authentication_string，5.6及更早版本为 password）
+   SELECT user, host, authentication_string FROM mysql.user;
    ```
    
    重启mysql，检查状态：
@@ -343,12 +345,14 @@ slave-net-timeout = 60
 
 示例，在各个服务器均创建用户`sync`，密码`your_password`：
 
-```mysql
---允许访问的主机可以限定为可以访问的从服务器
-grant replication slave,file on *.* to 'sync'@'%' identified by 'your_password';
-flush privileges;
---check
-select user,host,password  from mysql.user;
+```sql
+-- MySQL 8.0+ 需分开执行 CREATE USER 和 GRANT
+CREATE USER 'sync'@'%' IDENTIFIED BY 'your_password';
+GRANT REPLICATION SLAVE, FILE ON *.* TO 'sync'@'%';
+FLUSH PRIVILEGES;
+
+-- 验证用户
+SELECT user, host, authentication_string FROM mysql.user;
 ```
 
 重启mysql，检查状态：
@@ -403,7 +407,8 @@ INSTALL PLUGIN rpl_semi_sync_slave SONAME 'semisync_slave.so';
 cnf文件添加：
 
 ```ini
-#半同步，10s超时pl_semi_sync_master_enabled=1
+# 半同步，10s超时
+rpl_semi_sync_master_enabled=1
 rpl_semi_sync_master_timeout=10000
 rpl_semi_sync_slave_enabled=1
 ```

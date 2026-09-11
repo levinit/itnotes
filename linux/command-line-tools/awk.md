@@ -77,7 +77,7 @@ awk [options] -f scriptfile var=value file(s)
 awk语句由*pattern*和*action*组成：
 
 ```shell
-awk '{pattern + action}' {filenames}
+awk 'pattern { action }' file(s)
 ```
 
 
@@ -90,7 +90,7 @@ awk '{pattern + action}' {filenames}
 
   - 关系表达式：使用运算符进行操作，可以是字符串或数字的比较测试。
 
-  - 模式匹配表达式：使用运算符`~`（匹配）和`~!`（不匹配）
+  - 模式匹配表达式：使用运算符`~`（匹配）和`!~`（不匹配）
 
   - BEGIN语句块、pattern语句块、END语句块
 
@@ -158,5 +158,5 @@ awk常用内置变量
 | RS          | 记录分隔符（默认是一个换行符）             |
 | RSTART      | 由match函数所匹配的字符串的第一个位置      |
 | RLENGTH     | 由match函数所匹配的字符串的长度            |
-| SUBSEP      | 数组下标分隔符（默认值是34）               |
+| SUBSEP      | 数组下标分隔符（默认值是 "\034"，即八进制 034 不可打印字符） |
 

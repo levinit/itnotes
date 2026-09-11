@@ -195,11 +195,9 @@ mount --bind /home /srv/nfs/home
 
       
 
-  - 任何用户的映射
-
     - `no_all_squash`  不映射用户（默认）
 
-    - `all_squash`  任何用户映射成匿名用户nfsnobody，NFS 服务器在客户端访问文件时，会检查该文件是否仍然属于已导出的目录（即“子树”）。这种检查的目的是防止**文件被移动或权限发生变化**后，客户端仍然访问错误的文件。
+    - `all_squash`  将所有访问客户端的用户映射成匿名用户（通常为 nfsnobody 或 nobody）。
 
       
 
@@ -326,9 +324,9 @@ mount 192.168.0.251:/music /music   #挂载子目录
 
 - `intr`   允许用户通过 信号（如 `SIGINT`、`SIGKILL`）强制中断挂起的 NFS 操作
 
-- `timeo=<num>,retrans=<num>`   超时时间（单位秒）和重试次数。
+- `timeo=<num>,retrans=<num>`   超时时间（单位为 0.1 秒，即十分之一秒，例如 600 表示 60 秒）和重试次数。
 
-  *在`soft`模式下，这两个值限制了客户端挂载失败后每次尝试挂载的超时最大值和可尝试挂载的次数，`hard`模式下，客户端会一直尝试挂载，这两个值只限制前`retrans`次及这些次数中的单次超时限制，尝试次数超过设置后仍然继续尝试挂载，这些设值不再影响。*
+  *在`soft`模式下，这两个值限制了客户端挂载失败后每次尝试挂载的超时最大值和可尝试挂载的次数；`hard`模式下，客户端会一直尝试挂载，这两个值只限制前`retrans`次及这些次数中的单次超时限制，尝试次数超过设置后仍然继续尝试挂载，这些设值不再影响。*
 
 - `vers=<ver-num>`  NFS协议版本，如`3`、`4.2`，每个客户端系统的默认值根据具体情况而定。
 
@@ -340,7 +338,7 @@ mount 192.168.0.251:/music /music   #挂载子目录
 
 - `port`  指定NFS服务器的端口号（默认为2049）
 
-- `proc`  指定通信协议为还是tcp
+- `proto=`  指定网络传输协议，如 `proto=tcp` 或 `proto=udp`
 
 - `_netdev`   声明这是网络设备，等待网络就绪后挂载
 
@@ -353,9 +351,9 @@ mount 192.168.0.251:/music /music   #挂载子目录
 
   默认3秒，用于控制客户端缓存文件元数据信息（attributes）的时间。
 
-- `realtime`   仅在mtime（修改时间）变化或`atime`过旧才更新`atime`，和`noatime` 二选一
+- `relatime`   仅在mtime（修改时间）变化或`atime`过旧才更新`atime`，和`noatime` 二选一
 
-- `x-system.auto`  通知 systemd 此挂载应自动处理（和 auto 类似），兼容 systemd 自动挂载系统
+- `x-systemd.automount`  启用 systemd 按需访问自动挂载机制，避免开机因网络未就绪导致阻塞
 
 - `nofail`  即使挂载失败也不阻止系统启动（防止 boot 卡死）
 

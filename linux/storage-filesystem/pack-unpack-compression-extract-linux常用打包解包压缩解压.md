@@ -63,10 +63,9 @@
 压缩目录可配合[tar](#tar)使用。
 
 ```shell
-#gzip或gnuzip
-gzip test.gz     #解压
-gzip -d test.gz  #解压 -d选项
-gzip test  #压缩
+#使用 gzip 或 gunzip
+gzip test        # 压缩生成 test.gz
+gzip -d test.gz  # 解压（或者使用 gunzip test.gz）
 ```
 
 pigz可以多线程并行压缩gzip
@@ -243,7 +242,7 @@ tar添加以下参数指定压缩算法一次性实现归档tar包+压缩/解压
   tar -acvf test.tar.zst test/  #tar检测到.zst后缀，使用zstd压缩
   tar -acvf test.tar.xz  test/  #tar检测到.xz后缀，使用xz压缩
   
-  tar -xvf  tets.tar.xz. #tar自动检测压缩算法并解压
+  tar -xvf test.tar.xz          #tar自动检测压缩算法并解压
   ```
 
   
@@ -278,9 +277,9 @@ tar添加以下参数指定压缩算法一次性实现归档tar包+压缩/解压
   示例：
   
   ```shell
-  tar -xJvf test.tar.xz test        #解压xz后解包tar
-  tar -cJvf tets.tar.xz test        #打包tar后压缩为xz格式
-  tar -cvf --zstd test.tar.zst test #使用zstd
+  tar -xJvf test.tar.xz              #解压xz后解包tar
+  tar -cJvf test.tar.xz test         #打包tar后压缩为xz格式
+  tar --zstd -cvf test.tar.zst test  #使用zstd打包压缩（注意-f后须紧随文件名）
   ```
   
   
@@ -342,8 +341,8 @@ unzip -P 123 files.zip
 unzip -O gbk test.zip
 
 #分卷
-zip -s 100m files.zip --out part.zip #按大小分割，输出文件带数字编号的后缀
-cat part.zip* > all.zip && unzip all.zip #合并分卷并解压
+zip -s 100m files.zip --out part.zip #按大小分割，输出 part.z01, part.z02 ... part.zip
+zip -s 0 part.zip --out all.zip && unzip all.zip #将分卷文件合并为单一完整压缩包并解压
 ```
 
 
@@ -478,13 +477,9 @@ cat file.tar.xz-part* > file.tar.xz && tar xJvf file.tar.xz
 
 ## redhat系安装包rpm
 
-- 解包/解压缩：
+- 解包/提取内容：
 
-  ```shell
-  tar -xf <rpm file>
-  ```
-
-  如果不能解压，使用rpm2cpio工具（RPM使用cpio格式打包，因此可以先转成cpio然后解压），如下所示：
+  使用 rpm2cpio 工具将 RPM（底层为 cpio 归档）转换为 cpio 流并解包：
 
   ```shell
   rpm2cpio <file.rpm> | cpio -div
