@@ -912,3 +912,81 @@ FreeIPA 内部所有组件（LDAP、KDC、HTTP、CA 复制）均强依赖证书�
   ipactl restart
   ```
 
+
+
+### 忘记 admin 密码与账号解锁
+
+FreeIPA 的 `admin` 用户凭据同步存储在底层的 389 Directory Server (LDAP) 与 Kerberos 中，**切忌使用 `kadmin.local` 直接修改密码**（会导致 LDAP 与 Kerberos 凭据脱节）。拥有 FreeIPA Server 主机 root 权限时，可按以下方式恢复。
+
+- **方法 1：利用 root 权限通过本地套接字重置（推荐，无需 DM 密码）**
+
+  389-ds 支持 LDAPI Autobind（通过 SASL EXTERNAL 机制），本地 root 用户通过 UNIX Socket 连接时会自动映射为目录管理员权限：
+
+  ```shell
+  # 1. 查找本地 slapd socket 路径（通常为 /run/slapd-REALM.socket 或 /var/run/slapd-REALM.socket）
+  ls /run/slapd-*.socket /var/run/slapd-*.socket
+  # 例如得到 /run/slapd-GRP-HPC.socket
+
+  # 2. 通过 LDAPI 重置 admin 密码（按提示输入两次新密码，可先设为临时密码）
+  # 注意替换 socket 路径中的 %2f 转义与实际的 Base DN
+  ldappasswd -Y EXTERNAL -H ldapi://%2frun%2fslapd-GRP-HPC.socket -S "uid=admin,cn=users,cn=accounts,dc=grp,dc=hpc"
+
+  # 3. 强制修改已过期的临时密码
+  # FreeIPA 策略规定管理员重置的密码会被标记为立即过期，必须首次登录时修改
+  kinit admin
+  # 系统会提示 Password expired. You must change it now. 输入旧临时密码并设置正式密码
+  ```
+
+- **方法 2：使用 Directory Manager 密码通过 LDAP 重置**
+
+  如果记得安装时设置的 Directory Manager 密码（`--ds-password`）：
+
+  ```shell
+  # 1. 设置证书信任环境变量
+  export LDAPTLS_CACERT=/etc/ipa/ca.crt
+
+  # 2. 执行密码重置
+  ldappasswd -ZZ -D "cn=Directory Manager" -W -S "uid=admin,cn=users,cn=accounts,dc=grp,dc=hpc"
+
+  # 3. 同步修改过期密码
+  kinit admin
+  ```
+
+- **账号锁定解锁（输错密码次数过多）**
+
+  若密码未遗忘，仅因触发密码策略被锁定（Lockout），可使用 root 权限通过 LDAPI 清除失败计数与锁定标识：
+
+  ```shell
+  ldapmodify -Y EXTERNAL -H ldapi://%2frun%2fslapd-GRP-HPC.socket <<EOF
+  dn: uid=admin,cn=users,cn=accounts,dc=grp,dc=hpc
+  changetype: modify
+  delete: krbLoginFailedCount
+  -
+  delete: nsAccountLock
+  EOF
+  ```
+
+- **脱机重置底层 Directory Manager 密码（终极兜底）**
+
+  若同时忘记了 Directory Manager 密码，需脱机修改 `dse.ldif`：
+
+  ```shell
+  # 1. 停止 FreeIPA 全部服务
+  ipactl stop
+
+  # 2. 生成新密码哈希
+  /usr/bin/pwdhash "NewDMPassword"
+  # 输出示例：{SSHA512}xxxxxxxx...
+
+  # 3. 备份并替换 dse.ldif 中的 rootpw
+  cp /etc/dirsrv/slapd-GRP-HPC/dse.ldif /etc/dirsrv/slapd-GRP-HPC/dse.ldif.bak
+  # 编辑 /etc/dirsrv/slapd-GRP-HPC/dse.ldif，找到 nsslapd-rootpw: 行，替换为其哈希值
+
+  # 4. 注意：若部署了集成 CA（Dogtag/pki-tomcat），需同步更新其内部数据库连接密码
+  # 编辑 /etc/pki/pki-tomcat/password.conf，更新 internaldb=NewDMPassword
+
+  # 5. 启动服务
+  ipactl start
+  ```
+
+
