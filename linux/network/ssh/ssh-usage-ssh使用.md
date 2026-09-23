@@ -477,6 +477,35 @@ ssh -t user@host "cd /data/project; bash --login"
 
 
 
+自动化常用参数：`BatchMode` 与 `ConnectTimeout`：
+
+```shell
+ssh -o BatchMode=yes -o ConnectTimeout=5 user@host "echo OK"
+```
+
+- **`BatchMode=yes`**：禁用所有交互式输入提示（密码、私钥口令、主机指纹确认等）。若凭证不可用，立即报错退出，而不是挂起等待。认证须依赖完全免密凭证（无口令私钥 / `ssh-agent` 已加载的私钥 / GSSAPI Kerberos 票据等）。
+- **`ConnectTimeout=5`**：限制 TCP 连接的最长等待秒数，避免目标主机不可达时脚本长时间阻塞。
+
+另外，可信内网下可配合 `-o StrictHostKeyChecking=accept-new` 解决（注意中间人攻击风险）首次连接或指纹变更造成的交互阻塞。
+
+
+
+**常见场景**：
+
+- 批量健康检查：探测一批主机 SSH 服务是否存活，跳过超时或鉴权失败的节点并捕获非零退出码；
+- Ansible / pdsh / Shell 循环脚本：避免因某台主机需要密码输入而导致整批任务挂起。
+
+也可在 `~/.ssh/config` 中针对特定 Host 持久化配置：
+
+```ssh-config
+Host deploy-*
+    BatchMode yes
+    ConnectTimeout 5
+    StrictHostKeyChecking accept-new
+```
+
+
+
 # 文件传输实用工具
 
 
